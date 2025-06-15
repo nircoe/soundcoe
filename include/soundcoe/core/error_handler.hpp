@@ -11,8 +11,10 @@ namespace soundcoe
     public:
         static std::string getOpenALErrorAsString(ALenum error);
         static bool checkOpenALError(const std::string &operation);
+        static void clearOpenALError();
 
         static std::string getALCErrorAsString(ALCenum error);
         static bool checkALCError(ALCdevice *device, const std::string &operation);
+        static void clearALCError(ALCdevice *device);
     };
 } // namespace soundcoe

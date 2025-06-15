@@ -2,6 +2,7 @@
 #include <logcoe.hpp>
 #include <iostream>
 #include <sstream>
+#include "error_handler.hpp"
 
 namespace soundcoe
 {
@@ -38,6 +39,11 @@ namespace soundcoe
         return true;
     }
 
+    void ErrorHandler::clearOpenALError()
+    {
+        alGetError();
+    }
+
     std::string ErrorHandler::getALCErrorAsString(ALCenum error)
     {
         switch(error)
@@ -69,5 +75,10 @@ namespace soundcoe
         ss << "ALC Error: " << operation << getALCErrorAsString(error);
         logcoe::error(ss.str());
         return true;
+    }
+
+    void ErrorHandler::clearALCError(ALCdevice *device)
+    {
+        alcGetError(device);
     }
 } // namespace soundcoe

@@ -27,14 +27,15 @@ namespace soundcoe
         AudioContext(AudioContext &&) = delete;
         AudioContext &operator=(AudioContext &&) = delete;
 
-    public:
         bool initialize(const std::string &deviceName = "");
+
+    public:
         void shutdown();
 
         bool isInitialized() const;
         ALCdevice *getDevice() const;
         ALCcontext *getContext() const;
 
-        static AudioContext& getInstance();
+        static AudioContext& getInstance(const std::string &deviceName = "");
     };
 } // namespace soundcoe
