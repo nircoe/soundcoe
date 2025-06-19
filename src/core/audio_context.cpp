@@ -5,7 +5,6 @@
 
 namespace soundcoe
 {
-    std::optional<AudioContext> AudioContext::s_instance;
 
     AudioContext::AudioContext() :
         m_device(nullptr),
@@ -113,17 +112,13 @@ namespace soundcoe
 
     AudioContext &AudioContext::getInstance(const std::string &deviceName)
     {
-        static std::once_flag initInstanceFlag;
+        static AudioContext instance;
 
-        std::call_once(initInstanceFlag, []() 
-        { 
-            s_instance.emplace(); 
-        });
 
-        if(!s_instance->isInitialized())
-            if(!s_instance->initialize(deviceName))
+        if(!instance.isInitialized())
+            if(!instance.initialize(deviceName))
                 throw std::runtime_error("Failed to initialize AudioContext");
 
-        return *s_instance;
+        return instance;
     }
 } // namespace soundcoe
