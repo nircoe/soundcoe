@@ -3,6 +3,7 @@
 #include <string>
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <soundcoe/core/types.hpp>
 
 namespace soundcoe
 {
