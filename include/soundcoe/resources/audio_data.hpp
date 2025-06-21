@@ -27,6 +27,7 @@ namespace soundcoe
         ALenum calculateOpenALFormat(ALsizei channels, ALsizei bitsPerSample);
 
     public:
+        AudioData() = default;
         AudioData(const AudioData &) = delete;
         AudioData &operator=(const AudioData &) = delete;
         AudioData(AudioData &&other) noexcept;

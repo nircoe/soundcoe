@@ -7,10 +7,9 @@
 
 namespace soundcoe
 {
-    AudioData::AudioData(ALvoid *pcmData, ALsizei pcmDataSize, ALsizei channels, ALsizei bitsPerSample, 
-        ALsizei sampleRate, AudioFormat sourceFormat) :
-        m_pcmData(pcmData), m_pcmDataSize(pcmDataSize), m_channels(channels), m_bitsPerSample(bitsPerSample), 
-        m_sampleRate(sampleRate), m_sourceFormat(sourceFormat)
+    AudioData::AudioData(ALvoid *pcmData, ALsizei pcmDataSize, ALsizei channels, ALsizei bitsPerSample,
+                         ALsizei sampleRate, AudioFormat sourceFormat) : m_pcmData(pcmData), m_pcmDataSize(pcmDataSize), m_channels(channels), m_bitsPerSample(bitsPerSample),
+                                                                         m_sampleRate(sampleRate), m_sourceFormat(sourceFormat)
     {
         m_openALFormat = calculateOpenALFormat(m_channels, m_bitsPerSample);
         ALsizei bytesPerSample = (m_bitsPerSample / 8) * m_channels;
@@ -19,65 +18,68 @@ namespace soundcoe
 
     void AudioData::cleanup()
     {
-        if(!m_pcmData) return;
+        if (!m_pcmData)
+            return;
 
-        switch(m_sourceFormat)
+        switch (m_sourceFormat)
         {
-            case AudioFormat::Wav:
-                drwav_free(m_pcmData, nullptr);
-                break;
-            case AudioFormat::Mp3:
-                drmp3_free(m_pcmData, nullptr);
-                break;
-            case AudioFormat::Ogg:
-            default:
-                free(m_pcmData);
-                break;
+        case AudioFormat::Wav:
+            drwav_free(m_pcmData, nullptr);
+            break;
+        case AudioFormat::Mp3:
+            drmp3_free(m_pcmData, nullptr);
+            break;
+        case AudioFormat::Ogg:
+        default:
+            free(m_pcmData);
+            break;
         }
     }
 
     ALenum AudioData::calculateOpenALFormat(ALsizei channels, ALsizei bitsPerSample)
     {
-        if(channels == 1)
+        if (channels == 1)
         {
-            if(bitsPerSample == 8) return AL_FORMAT_MONO8;
-            if(bitsPerSample == 16) return AL_FORMAT_MONO16;
+            if (bitsPerSample == 8)
+                return AL_FORMAT_MONO8;
+            if (bitsPerSample == 16)
+                return AL_FORMAT_MONO16;
         }
-        else if(channels == 2)
+        else if (channels == 2)
         {
-            if(bitsPerSample == 8) return AL_FORMAT_STEREO8;
-            if(bitsPerSample == 16) return AL_FORMAT_STEREO16;
+            if (bitsPerSample == 8)
+                return AL_FORMAT_STEREO8;
+            if (bitsPerSample == 16)
+                return AL_FORMAT_STEREO16;
         }
 
         return AL_NONE;
     }
 
-    AudioData::AudioData(AudioData &&other) noexcept :
-        m_pcmData(other.m_pcmData), m_pcmDataSize(other.m_pcmDataSize), m_channels(other.m_channels), 
-        m_bitsPerSample(other.m_bitsPerSample), m_sampleRate(other.m_sampleRate), m_duration(other.m_duration),
-        m_openALFormat(other.m_openALFormat), m_sourceFormat(other.m_sourceFormat)
+    AudioData::AudioData(AudioData &&other) noexcept : m_pcmData(other.m_pcmData), m_pcmDataSize(other.m_pcmDataSize), m_channels(other.m_channels),
+                                                       m_bitsPerSample(other.m_bitsPerSample), m_sampleRate(other.m_sampleRate), m_duration(other.m_duration),
+                                                       m_openALFormat(other.m_openALFormat), m_sourceFormat(other.m_sourceFormat)
     {
-        other.m_pcmData = nullptr;
+        other = AudioData{};
     }
 
     AudioData &AudioData::operator=(AudioData &&other) noexcept
     {
-        if(this != &other)
-        {
-            cleanup();
+        if (this == &other)
+            return *this;
 
-            m_pcmData = other.m_pcmData;
-            m_pcmDataSize = other.m_pcmDataSize;
-            m_channels = other.m_channels;
-            m_bitsPerSample = other.m_bitsPerSample;
-            m_sampleRate = other.m_sampleRate;
-            m_duration = other.m_duration;
-            m_openALFormat = other.m_openALFormat;
-            m_sourceFormat = other.m_sourceFormat;
+        cleanup();
 
-            other.m_pcmData = nullptr;
-        }
+        m_pcmData = other.m_pcmData;
+        m_pcmDataSize = other.m_pcmDataSize;
+        m_channels = other.m_channels;
+        m_bitsPerSample = other.m_bitsPerSample;
+        m_sampleRate = other.m_sampleRate;
+        m_duration = other.m_duration;
+        m_openALFormat = other.m_openALFormat;
+        m_sourceFormat = other.m_sourceFormat;
 
+        other = AudioData{};
         return *this;
     }
 
@@ -96,26 +98,25 @@ namespace soundcoe
         drwav_uint64 totalFrameCount;
         void *pcmData;
         drwav wav;
-        if(!drwav_init_file(&wav, filename.c_str(), nullptr))
+        if (!drwav_init_file(&wav, filename.c_str(), nullptr))
             throwError(filename, AudioFormat::Wav, AudioDecoderOperation::OpenFile);
 
         bitsPerSample = wav.bitsPerSample;
         drwav_uninit(&wav);
 
-        pcmData = (bitsPerSample <= 16) ? 
-                    (void*)drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sampleRate,
-                                                                    &totalFrameCount, nullptr) :
-                    (void*)drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sampleRate,
-                                                                    &totalFrameCount, nullptr);
+        pcmData = (bitsPerSample <= 16) ? (void *)drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sampleRate,
+                                                                                          &totalFrameCount, nullptr)
+                                        : (void *)drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sampleRate,
+                                                                                          &totalFrameCount, nullptr);
 
-        if(!pcmData)
+        if (!pcmData)
             throwError(filename, AudioFormat::Wav, AudioDecoderOperation::DecodeAudio);
 
         ALsizei bytesPerSample = (bitsPerSample <= 16) ? sizeof(drwav_int16) : sizeof(drwav_int32);
         ALsizei pcmDataSize = static_cast<ALsizei>(totalFrameCount * channels * bytesPerSample);
 
-        return AudioData(pcmData, pcmDataSize, static_cast<ALsizei>(channels), static_cast<ALsizei>(bitsPerSample), 
-                            static_cast<ALsizei>(sampleRate), AudioFormat::Wav);
+        return AudioData(pcmData, pcmDataSize, static_cast<ALsizei>(channels), static_cast<ALsizei>(bitsPerSample),
+                         static_cast<ALsizei>(sampleRate), AudioFormat::Wav);
     }
 
     AudioData AudioData::loadFromOgg(const std::string &filename)
@@ -137,8 +138,8 @@ namespace soundcoe
         drmp3_config config;
         drmp3_uint64 totalFrameCount;
 
-        drmp3_int16* pcmData =  drmp3_open_file_and_read_pcm_frames_s16(filename.c_str(), &config, &totalFrameCount, nullptr);
-        if(!pcmData)
+        drmp3_int16 *pcmData = drmp3_open_file_and_read_pcm_frames_s16(filename.c_str(), &config, &totalFrameCount, nullptr);
+        if (!pcmData)
             throwError(filename, AudioFormat::Mp3, AudioDecoderOperation::DecodeAudio);
 
         ALsizei pcmDataSize = static_cast<ALsizei>(totalFrameCount * config.channels * sizeof(drmp3_int16));
