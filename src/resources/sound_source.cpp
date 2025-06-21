@@ -267,4 +267,20 @@ namespace soundcoe
 
     ALuint SoundSource::getSourceId() const { return m_sourceId; }
 
+    ALuint SoundSource::getBufferId() const
+    {
+        if(!m_created)
+        {
+            logcoe::warning("SoundSource not created");
+            return 0;
+        }
+
+        ALint bufferId;
+        alGetSourcei(m_sourceId, AL_BUFFER, &bufferId);
+        if (ErrorHandler::checkOpenALError("Get Buffer Id"))
+            return 0;
+
+        return static_cast<ALuint>(bufferId);
+    }
+
 } // namespace soundcoe

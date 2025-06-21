@@ -56,6 +56,7 @@ namespace soundcoe
         bool isStopped() const;
 
         ALuint getSourceId() const;
+        ALuint getBufferId() const;
     };
 
 } // namespace soundcoe
