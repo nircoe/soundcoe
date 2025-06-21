@@ -2,7 +2,6 @@
 #include <logcoe.hpp>
 #include <iostream>
 #include <sstream>
-#include "error_handler.hpp"
 
 namespace soundcoe
 {
@@ -80,10 +79,5 @@ namespace soundcoe
     ALCenum ErrorHandler::clearALCError(ALCdevice *device)
     {
         return alcGetError(device);
-    }
-
-    bool ErrorHandler::checkAudioDecoderError(const std::string &filename, AudioFormat decoderType, AudioDecoderOperation operation)
-    {
-        return false;
     }
 } // namespace soundcoe
