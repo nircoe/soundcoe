@@ -17,8 +17,6 @@ namespace soundcoe
         ALboolean m_looping;
         bool m_created;
 
-        bool checkSourceValid() const;
-
     public:
         SoundSource();
         SoundSource(const SoundBuffer &buffer);
@@ -56,6 +54,7 @@ namespace soundcoe
         bool isStopped() const;
 
         ALuint getSourceId() const;
+        ALuint getBufferId() const;
     };
 
 } // namespace soundcoe
