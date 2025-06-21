@@ -2,9 +2,17 @@
 #include <logcoe.hpp>
 #include <iostream>
 #include <sstream>
+#include <exception>
 
 namespace soundcoe
 {
+    std::string createErrorMessage(const std::string& errorType, const std::string& operation, const std::string& error)
+    {
+        std::stringstream message;
+        message << errorType << operation << " - " << error;
+        return message.str();
+    }
+
     std::string ErrorHandler::getOpenALErrorAsString(ALenum error)
     {
         switch(error)
@@ -32,10 +40,19 @@ namespace soundcoe
         if(error == AL_NO_ERROR)
             return false;
 
-        std::stringstream ss;
-        ss << "OpenAL Error: " << operation << " - " << getOpenALErrorAsString(error);
-        logcoe::error(ss.str());
+        std::string message = createErrorMessage("OpenAL Error: ", operation, getOpenALErrorAsString(error));
+        logcoe::error(message);
         return true;
+    }
+
+    void ErrorHandler::throwOnOpenALError(const std::string &operation)
+    {
+        ALenum error = alGetError();
+        if (error == AL_NO_ERROR) return;
+
+        std::string message = createErrorMessage("OpenAL Error: ", operation, getOpenALErrorAsString(error));
+        logcoe::error(message);
+        throw std::runtime_error(message);
     }
 
     ALenum ErrorHandler::clearOpenALError()
@@ -70,10 +87,19 @@ namespace soundcoe
         if(error == ALC_NO_ERROR)
             return false;
 
-        std::stringstream ss;
-        ss << "ALC Error: " << operation << " - " << getALCErrorAsString(error);
-        logcoe::error(ss.str());
+        std::string message = createErrorMessage("ALC Error: ", operation, getALCErrorAsString(error));
+        logcoe::error(message);
         return true;
+    }
+
+    void ErrorHandler::throwOnALCError(ALCdevice *device, const std::string &operation)
+    {
+        ALCenum error = alcGetError(device);
+        if (error == ALC_NO_ERROR) return;
+
+        std::string message = createErrorMessage("ALC Error: ", operation, getALCErrorAsString(error));
+        logcoe::error(message);
+        throw std::runtime_error(message);
     }
 
     ALCenum ErrorHandler::clearALCError(ALCdevice *device)

@@ -26,11 +26,10 @@ namespace soundcoe
     void SoundBuffer::generateBuffer(const void* data)
     {
         alGenBuffers(1, &m_bufferId);
-        if (ErrorHandler::checkOpenALError("Generate buffer"))
-            throw std::runtime_error("Failed to Generate Sound Buffer");
+        ErrorHandler::throwOnOpenALError("Generate buffer");
 
         alBufferData(m_bufferId, m_format, data, m_size, m_sampleRate);
-        if (ErrorHandler::checkOpenALError("Buffer data"))
+        if (ErrorHandler::checkOpenALError("Buffer data")) // Should we keep using checkOpenALError instead of throwOnOpenALError?
         {
             alDeleteBuffers(1, &m_bufferId);
             m_bufferId = 0;
@@ -66,8 +65,7 @@ namespace soundcoe
 
     SoundBuffer &SoundBuffer::operator=(SoundBuffer &&other) noexcept
     {
-        if (this == &other)
-            return *this;
+        if (this == &other) return *this;
 
         unload();
 
@@ -169,7 +167,7 @@ namespace soundcoe
 
     ALfloat SoundBuffer::getDuration() const { return m_duration; }
 
-    ALboolean SoundBuffer::isLoaded() const { return m_loaded; }
+    bool SoundBuffer::isLoaded() const { return m_loaded; }
 
     const std::string &SoundBuffer::getFileName() const { return m_filename; }
 
