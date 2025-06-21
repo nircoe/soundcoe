@@ -26,7 +26,7 @@ namespace soundcoe
         if (!m_device)
         {
             ErrorHandler::checkALCError(nullptr, "Open Audio Device: \"" + deviceName + "\"");
-            logcoe::error("Failed to initialize ALCdevice");
+            logcoe::shutdown();
             return false;
         }
 
@@ -35,9 +35,9 @@ namespace soundcoe
         if(!m_context)
         {
             ErrorHandler::checkALCError(m_device, "Create Audio Context");
-            logcoe::error("Failed to initialize AudioContext");
             alcCloseDevice(m_device);
             m_device = nullptr;
+            logcoe::shutdown();
             return false;
         }
 
@@ -45,11 +45,11 @@ namespace soundcoe
         if(!alcMakeContextCurrent(m_context))
         {
             ErrorHandler::checkALCError(m_device, "Make Context Current");
-            logcoe::error("Failed to make context current");
             alcDestroyContext(m_context);
             alcCloseDevice(m_device);
             m_device = nullptr;
             m_context = nullptr;
+            logcoe::shutdown();
             return false;
         }
 
@@ -67,14 +67,13 @@ namespace soundcoe
 
         logcoe::info("Shutting down AudioContext");
 
-        if(!alcMakeContextCurrent(nullptr) && ErrorHandler::checkALCError(m_device, "Make Context Current NULL"))
-            logcoe::error("Failed to clear current context during shutdown, attempting to continue cleanup");
+        if(!alcMakeContextCurrent(nullptr))
+            ErrorHandler::checkALCError(m_device, "Make Context Current NULL");
         
         if(m_context)
         {
             alcDestroyContext(m_context);
-            if(ErrorHandler::checkALCError(m_device, "Destroy Context"))
-                logcoe::error("Failed to destroy OpenAL context during shutdown, attempting to continue cleanup");
+            ErrorHandler::checkALCError(m_device, "Destroy Context");
             m_context = nullptr;
         }
 

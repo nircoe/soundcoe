@@ -133,8 +133,8 @@ TEST(ErrorHandlerTests, ALCErrorStringConversion)
 
 TEST(ErrorHandlerTests, CheckErrorFunctions)
 {
-    EXPECT_NO_THROW(ErrorHandler::checkOpenALError("Test Operation"));
-    EXPECT_NO_THROW(ErrorHandler::checkALCError(nullptr, "Test Operation"));
+    EXPECT_NO_THROW(ErrorHandler::throwOnOpenALError("Test Operation"));
+    EXPECT_NO_THROW(ErrorHandler::throwOnALCError(nullptr, "Test Operation"));
 }
 
 TEST(ErrorHandlerTests, ClearErrorFunctions)
