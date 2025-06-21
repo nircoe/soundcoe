@@ -113,7 +113,6 @@ namespace soundcoe
     {
         static AudioContext instance;
 
-
         if(!instance.isInitialized())
             if(!instance.initialize(deviceName))
                 throw std::runtime_error("Failed to initialize AudioContext");

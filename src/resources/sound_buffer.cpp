@@ -7,6 +7,7 @@
 #include <iostream>
 #include <exception>
 #include <cassert>
+#include <filesystem>
 
 namespace soundcoe
 {
@@ -86,15 +87,14 @@ namespace soundcoe
         unload();
 
         m_filename = filename;
-        std::size_t dotPos = m_filename.find_last_of('.');
-        if (dotPos == std::string::npos)
+        auto extension = std::filesystem::path(m_filename).extension();
+        if (extension.empty())
         {
             std::string message = "Unknown file format: " + m_filename;
             logcoe::error(message);
             throw std::runtime_error(message);
         }
 
-        std::string extension = m_filename.substr(dotPos + 1);
         AudioData audioData;
         if (extension == "wav")
             audioData = AudioData::loadFromWav(m_filename);
@@ -104,7 +104,7 @@ namespace soundcoe
             audioData = AudioData::loadFromMp3(m_filename);
         else
         {
-            std::string message = "Unsupported audio format: " + extension;
+            std::string message = "Unsupported audio format: " + extension.string();
             logcoe::error(message);
             throw std::runtime_error(message);
         }

@@ -5,16 +5,6 @@
 
 namespace soundcoe
 {
-    bool SoundSource::checkSourceValid() const
-    {
-        if(!m_created) return false;
-
-        ALboolean valid = alIsSource(m_sourceId);
-        ErrorHandler::throwOnOpenALError("Check if Source is valid");
-
-        return static_cast<bool>(valid);
-    }
-
     SoundSource::SoundSource() : m_sourceId(0), m_volume(1.0f), m_pitch(1.0f), m_position(Vec3::zero()),
                                  m_velocity(Vec3::zero()), m_looping(AL_FALSE), m_created(false) { }
 
@@ -69,6 +59,8 @@ namespace soundcoe
     {
         if(!m_created) return;
 
+        if(isPlaying() || isPaused()) stop();
+
         try { detachBuffer(); }
         catch(...) { }
 
@@ -96,6 +88,8 @@ namespace soundcoe
     {
         if(!m_created) return;
 
+        if(isPlaying() || isPaused()) stop();
+
         alSourcei(m_sourceId, AL_BUFFER, 0);
         ErrorHandler::throwOnOpenALError("Detach Buffer from Source");
     }
@@ -106,6 +100,12 @@ namespace soundcoe
         {
             logcoe::warning("SoundSource not created");
             return false;
+        }
+
+        if(isPlaying())
+        {
+            logcoe::debug("SoundSource is already playing");
+            return true;
         }
 
         alSourcePlay(m_sourceId);
@@ -123,6 +123,12 @@ namespace soundcoe
             return false;
         }
 
+        if(isPaused())
+        {
+            logcoe::debug("SoundSource is already paused");
+            return true;
+        }
+
         alSourcePause(m_sourceId);
         if(ErrorHandler::checkOpenALError("Pause Source"))
             return false;
@@ -136,6 +142,12 @@ namespace soundcoe
         {
             logcoe::warning("SoundSource not created");
             return false;
+        }
+
+        if(!(isPlaying() || isPaused()))
+        {
+            logcoe::debug("SoundSource is already stopped or in initial state");
+            return true;
         }
 
         alSourceStop(m_sourceId);
@@ -266,5 +278,21 @@ namespace soundcoe
     bool SoundSource::isStopped() const { return getState() == SoundState::Stopped; }
 
     ALuint SoundSource::getSourceId() const { return m_sourceId; }
+
+    ALuint SoundSource::getBufferId() const
+    {
+        if(!m_created)
+        {
+            logcoe::warning("SoundSource not created");
+            return 0;
+        }
+
+        ALint bufferId;
+        alGetSourcei(m_sourceId, AL_BUFFER, &bufferId);
+        if (ErrorHandler::checkOpenALError("Get Buffer Id"))
+            return 0;
+
+        return static_cast<ALuint>(bufferId);
+    }
 
 } // namespace soundcoe
