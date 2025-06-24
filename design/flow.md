@@ -7,14 +7,14 @@ flowchart TD
     classDef utils fill:#d5e5f9,stroke:#333,stroke-width:1px
     
     %% Core Layer Nodes
-    AudioContext["AudioContext\n[Singleton]"]:::core
+    AudioContext["AudioContext"]:::core
     ErrorHandler["ErrorHandler"]:::core
     Types["Types\n(Enums, Structs)"]:::core
     
     %% Resource Layer Nodes
     SoundBuffer["SoundBuffer"]:::resources
     SoundSource["SoundSource"]:::resources
-    ResourceManager["ResourceManager\n[Singleton]"]:::resources
+    ResourceManager["ResourceManager"]:::resources
     
     %% Playback Layer Nodes
     SoundEffect["SoundEffect"]:::playback
@@ -35,6 +35,7 @@ flowchart TD
     SoundSource --> AudioContext
     SoundSource --> ErrorHandler
     SoundSource --> Types
+    ResourceManager --> AudioContext
     ResourceManager --> SoundBuffer
     ResourceManager --> SoundSource
     

@@ -1,4 +1,5 @@
 #include <soundcoe/resources/audio_data.hpp>
+#include <soundcoe/core/error_handler.hpp>
 #include <dr_libs/dr_wav.h>
 #include <dr_libs/dr_mp3.h>
 #include <stb/stb_vorbis.c>
@@ -60,7 +61,7 @@ namespace soundcoe
                                                        m_bitsPerSample(other.m_bitsPerSample), m_sampleRate(other.m_sampleRate), m_duration(other.m_duration),
                                                        m_openALFormat(other.m_openALFormat), m_sourceFormat(other.m_sourceFormat)
     {
-        other = AudioData{};
+        other.m_pcmData = nullptr;
     }
 
     AudioData &AudioData::operator=(AudioData &&other) noexcept
@@ -79,18 +80,11 @@ namespace soundcoe
         m_openALFormat = other.m_openALFormat;
         m_sourceFormat = other.m_sourceFormat;
 
-        other = AudioData{};
+        other.m_pcmData = nullptr;
         return *this;
     }
 
     AudioData::~AudioData() { cleanup(); }
-
-    auto throwError = [&](const std::string &filename, AudioFormat format, AudioDecoderOperation operation)
-    {
-        std::string message = createAudioErrorMessage(filename, format, operation);
-        logcoe::error(message);
-        throw std::runtime_error(message);
-    };
 
     AudioData AudioData::loadFromWav(const std::string &filename)
     {
@@ -99,7 +93,7 @@ namespace soundcoe
         void *pcmData;
         drwav wav;
         if (!drwav_init_file(&wav, filename.c_str(), nullptr))
-            throwError(filename, AudioFormat::Wav, AudioDecoderOperation::OpenFile);
+            ErrorHandler::throwOnAudioError(filename, AudioFormat::Wav, AudioDecoderOperation::OpenFile);
 
         bitsPerSample = wav.bitsPerSample;
         drwav_uninit(&wav);
@@ -110,7 +104,7 @@ namespace soundcoe
                                                                                           &totalFrameCount, nullptr);
 
         if (!pcmData)
-            throwError(filename, AudioFormat::Wav, AudioDecoderOperation::DecodeAudio);
+            ErrorHandler::throwOnAudioError(filename, AudioFormat::Wav, AudioDecoderOperation::DecodeAudio);
 
         ALsizei bytesPerSample = (bitsPerSample <= 16) ? sizeof(drwav_int16) : sizeof(drwav_int32);
         ALsizei pcmDataSize = static_cast<ALsizei>(totalFrameCount * channels * bytesPerSample);
@@ -125,7 +119,7 @@ namespace soundcoe
         short *pcmData;
         int totalSamples = stb_vorbis_decode_filename(filename.c_str(), &channels, &sampleRate, &pcmData);
         if (totalSamples <= 0 || !pcmData)
-            throwError(filename, AudioFormat::Ogg, AudioDecoderOperation::DecodeAudio);
+            ErrorHandler::throwOnAudioError(filename, AudioFormat::Ogg, AudioDecoderOperation::DecodeAudio);
 
         ALsizei pcmDataSize = static_cast<ALsizei>(totalSamples * sizeof(short));
 
@@ -140,7 +134,7 @@ namespace soundcoe
 
         drmp3_int16 *pcmData = drmp3_open_file_and_read_pcm_frames_s16(filename.c_str(), &config, &totalFrameCount, nullptr);
         if (!pcmData)
-            throwError(filename, AudioFormat::Mp3, AudioDecoderOperation::DecodeAudio);
+            ErrorHandler::throwOnAudioError(filename, AudioFormat::Mp3, AudioDecoderOperation::DecodeAudio);
 
         ALsizei pcmDataSize = static_cast<ALsizei>(totalFrameCount * config.channels * sizeof(drmp3_int16));
 

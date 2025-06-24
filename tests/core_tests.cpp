@@ -4,6 +4,7 @@
 #include <soundcoe/core/types.hpp>
 #include <thread>
 #include <chrono>
+#include <future>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -21,95 +22,89 @@ using namespace soundcoe;
 class AudioContextTests : public ::testing::Test
 {
 protected:
+    AudioContext m_audioContext;
+
     void SetUp() override
     {
-        try
-        {
-            AudioContext::getInstance().shutdown();
-        }
-        catch (...)
-        {
-        }
+        try { m_audioContext.initialize(); }
+        catch(...) { }
     }
 
     void TearDown() override
     {
-        try
-        {
-            AudioContext::getInstance().shutdown();
-        }
-        catch (...)
-        {
-        }
+        try { m_audioContext.shutdown(); }
+        catch(...) { }
     }
 };
 
-TEST_F(AudioContextTests, SingletonBehavior)
-{
-    AudioContext &context1 = AudioContext::getInstance();
-    AudioContext &context2 = AudioContext::getInstance();
-
-    EXPECT_EQ(&context1, &context2);
-}
-
 TEST_F(AudioContextTests, AutoInitialization)
 {
-    AudioContext &context = AudioContext::getInstance();
+    EXPECT_TRUE(m_audioContext.isInitialized());
 
-    EXPECT_TRUE(context.isInitialized());
-
-    EXPECT_NE(context.getDevice(), nullptr);
-    EXPECT_NE(context.getContext(), nullptr);
-}
-
-TEST_F(AudioContextTests, InitializedState)
-{
-    AudioContext &context = AudioContext::getInstance();
-
-    EXPECT_TRUE(context.isInitialized());
-
-    EXPECT_EQ(&context, &AudioContext::getInstance());
+    EXPECT_NE(m_audioContext.getDevice(), nullptr);
+    EXPECT_NE(m_audioContext.getContext(), nullptr);
 }
 
 TEST_F(AudioContextTests, MultipleShutdownCalls)
 {
-    AudioContext &context = AudioContext::getInstance();
+    EXPECT_NO_THROW(m_audioContext.shutdown());
+    EXPECT_NO_THROW(m_audioContext.shutdown());
+    EXPECT_NO_THROW(m_audioContext.shutdown());
 
-    EXPECT_NO_THROW(context.shutdown());
-    EXPECT_NO_THROW(context.shutdown());
-    EXPECT_NO_THROW(context.shutdown());
-
-    EXPECT_FALSE(context.isInitialized());
+    EXPECT_FALSE(m_audioContext.isInitialized());
 }
 
 TEST_F(AudioContextTests, ThreadSafety)
 {
-    std::vector<AudioContext *> contexts;
-    std::vector<std::thread> threads;
     const int numThreads = 4;
-
-    contexts.resize(numThreads);
-
+    std::vector<std::future<bool>> futures;
+    
     for (int i = 0; i < numThreads; ++i)
     {
-        threads.emplace_back([&contexts, i]()
-                             {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            contexts[i] = &AudioContext::getInstance(); });
+        futures.push_back(std::async(std::launch::async, [&]() {
+            bool allSucceeded = true;
+            
+            for (int j = 0; j < 10; ++j)
+            {
+                allSucceeded &= m_audioContext.isInitialized();
+                allSucceeded &= (m_audioContext.getDevice() != nullptr);
+                allSucceeded &= (m_audioContext.getContext() != nullptr);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            
+            return allSucceeded;
+        }));
     }
-
-    for (auto &thread : threads)
-        thread.join();
-
-    for (int i = 1; i < numThreads; ++i)
-        EXPECT_EQ(contexts[0], contexts[i]);
+    
+    for (auto& future : futures)
+    {
+        EXPECT_TRUE(future.get());
+    }
 }
 
 //==============================================================================
 //          ErrorHandlerTests - ErrorHandler functionality tests
 //==============================================================================
 
-TEST(ErrorHandlerTests, ALErrorStringConversion)
+class ErrorHandlerTests : public ::testing::Test
+{
+protected:
+    AudioContext m_audioContext;
+
+    void SetUp() override
+    {
+        try { m_audioContext.initialize(); }
+        catch(...) { }
+    }
+
+    void TearDown() override
+    {
+        try { m_audioContext.shutdown(); }
+        catch(...) { }
+    }
+};
+
+TEST_F(ErrorHandlerTests, ALErrorStringConversion)
 {
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(AL_NO_ERROR), "AL_NO_ERROR");
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(AL_INVALID_NAME), "AL_INVALID_NAME");
@@ -120,7 +115,7 @@ TEST(ErrorHandlerTests, ALErrorStringConversion)
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(static_cast<ALenum>(9999)), "UNKNOWN ERROR");
 }
 
-TEST(ErrorHandlerTests, ALCErrorStringConversion)
+TEST_F(ErrorHandlerTests, ALCErrorStringConversion)
 {
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(ALC_NO_ERROR), "ALC_NO_ERROR");
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(ALC_INVALID_DEVICE), "ALC_INVALID_DEVICE");
@@ -131,16 +126,27 @@ TEST(ErrorHandlerTests, ALCErrorStringConversion)
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(static_cast<ALCenum>(9999)), "UNKNOWN ERROR");
 }
 
-TEST(ErrorHandlerTests, CheckErrorFunctions)
+TEST_F(ErrorHandlerTests, CheckErrorFunctions)
 {
     EXPECT_NO_THROW(ErrorHandler::throwOnOpenALError("Test Operation"));
-    EXPECT_NO_THROW(ErrorHandler::throwOnALCError(nullptr, "Test Operation"));
+    EXPECT_NO_THROW(ErrorHandler::throwOnALCError(m_audioContext.getDevice(), "Test Operation"));
 }
 
-TEST(ErrorHandlerTests, ClearErrorFunctions)
+TEST_F(ErrorHandlerTests, ClearErrorFunctions)
 {
-    EXPECT_NO_THROW(ErrorHandler::clearOpenALError());
-    EXPECT_NO_THROW(ErrorHandler::clearALCError(nullptr));
+    alSourcei(999999, AL_BUFFER, 0);
+    ALenum alError = ErrorHandler::clearOpenALError();
+    EXPECT_EQ(alError, AL_INVALID_NAME);
+    
+    ALenum secondAlCall = ErrorHandler::clearOpenALError();
+    EXPECT_EQ(secondAlCall, AL_NO_ERROR);
+    
+    alcGetIntegerv(m_audioContext.getDevice(), 999999, 1, nullptr);
+    ALCenum alcError = ErrorHandler::clearALCError(m_audioContext.getDevice());
+    EXPECT_EQ(alcError, ALC_INVALID_VALUE);
+
+    ALCenum secondAlcCall = ErrorHandler::clearALCError(m_audioContext.getDevice());
+    EXPECT_EQ(secondAlcCall, ALC_NO_ERROR);
 }
 
 //==============================================================================

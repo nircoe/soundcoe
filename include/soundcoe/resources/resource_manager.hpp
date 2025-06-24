@@ -1,8 +1,10 @@
 #pragma once
 
+#include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <soundcoe/resources/sound_source.hpp>
+#include <logcoe.hpp>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -32,6 +34,7 @@ namespace soundcoe
 
     class ResourceManager
     {
+        AudioContext m_audioContext;
         bool m_initialized;
         std::filesystem::path m_audioRootDirectory;
         size_t m_maxSources;
@@ -57,8 +60,11 @@ namespace soundcoe
         bool isDirectoryLoadedImpl(const std::string &subdirectory) const;
 
     public:
-        static ResourceManager &getInstance();
-        void initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64);
+        ResourceManager();
+        ~ResourceManager();
+
+        void initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
+                        size_t maxCacheSizeMB = 64, logcoe::LogLevel logLevel = logcoe::LogLevel::INFO);
         void shutdown();
         bool isInitialized() const;
 
