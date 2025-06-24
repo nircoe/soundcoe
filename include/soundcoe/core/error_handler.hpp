@@ -19,5 +19,7 @@ namespace soundcoe
         static bool checkALCError(ALCdevice *device, const std::string &operation);
         static void throwOnALCError(ALCdevice *device, const std::string &operation);
         static ALCenum clearALCError(ALCdevice *device);
+
+        static void throwOnAudioError(const std::string &filename, AudioFormat format, AudioDecoderOperation operation);
     };
 } // namespace soundcoe

@@ -5,14 +5,14 @@ classDiagram
         -ALCdevice* m_device
         -ALCcontext* m_context
         -bool m_initialized
-        -static AudioContext* s_instance
-        +bool initialize(string deviceName)
+        -mutable mutex m_mutex
+        +AudioContext()
+        +~AudioContext()
+        +void initialize(string deviceName)
         +void shutdown()
         +bool isInitialized()
         +ALCdevice* getDevice()
         +ALCcontext* getContext()
-        +bool checkError(string operation)
-        +static AudioContext& getInstance()
     }
     
     class ErrorHandler {
@@ -72,13 +72,16 @@ classDiagram
     }
     
     class ResourceManager {
-        -const size_t MAX_BUFFERS
-        -SoundBuffer* m_buffers
-        -bool* m_bufferUsed
+        -AudioContext m_audioContext
+        -bool m_initialized
+        -filesystem::path m_audioRootDirectory
         -size_t m_maxSources
-        -SoundSource* m_sources
-        -bool* m_sourceUsed
-        -static ResourceManager* s_instance
+        -vector~SourceAllocation~ m_sourcePool
+        -deque~size_t~ m_freeSourceIndices
+        -unordered_map~string,BufferCacheEntry~ m_bufferCache
+        -size_t m_maxCacheSize
+        -size_t m_currentCacheSize
+        -mutable mutex m_mutex
         +bool initialize(size_t maxSources)
         +void shutdown()
         +SoundBuffer* getBuffer(string filename)
@@ -90,7 +93,8 @@ classDiagram
         +size_t getActiveBufferCount()
         +size_t getActiveSourceCount()
         +size_t getMaxSources()
-        +static ResourceManager& getInstance()
+        +ResourceManager()
+        +~ResourceManager()
     }
     
     %% Playback Layer

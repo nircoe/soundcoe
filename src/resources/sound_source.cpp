@@ -80,6 +80,10 @@ namespace soundcoe
     {   
         if(!m_created) create();
 
+        ALint bufferId;
+        alGetSourcei(m_sourceId, AL_BUFFER, &bufferId);
+        if (bufferId != 0) detachBuffer();
+        
         alSourcei(m_sourceId, AL_BUFFER, static_cast<ALint>(buffer.getBufferId()));
         ErrorHandler::throwOnOpenALError("Attach Buffer to Source");
     }

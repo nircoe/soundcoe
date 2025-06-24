@@ -30,11 +30,12 @@ namespace soundcoe
         ErrorHandler::throwOnOpenALError("Generate buffer");
 
         alBufferData(m_bufferId, m_format, data, m_size, m_sampleRate);
-        if (ErrorHandler::checkOpenALError("Buffer data")) // Should we keep using checkOpenALError instead of throwOnOpenALError?
+        try { ErrorHandler::throwOnOpenALError("Buffer Data"); }
+        catch(const std::runtime_error& e)
         {
             alDeleteBuffers(1, &m_bufferId);
             m_bufferId = 0;
-            throw std::runtime_error("Failed alBufferData");
+            throw std::runtime_error(e.what());
         }
     }
 
@@ -96,11 +97,11 @@ namespace soundcoe
         }
 
         AudioData audioData;
-        if (extension == "wav")
+        if (extension == ".wav")
             audioData = AudioData::loadFromWav(m_filename);
-        else if (extension == "ogg")
+        else if (extension == ".ogg")
             audioData = AudioData::loadFromOgg(m_filename);
-        else if (extension == "mp3")
+        else if (extension == ".mp3")
             audioData = AudioData::loadFromMp3(m_filename);
         else
         {

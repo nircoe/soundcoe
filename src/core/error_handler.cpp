@@ -106,4 +106,13 @@ namespace soundcoe
     {
         return alcGetError(device);
     }
+
+    void ErrorHandler::throwOnAudioError(const std::string &filename, AudioFormat format, AudioDecoderOperation operation)
+    {
+        std::ostringstream oss;
+        oss << "Audio Decoder Error: " << filename << " - " << toString(format) << " - " << toString(operation);
+        std::string message = oss.str();
+        logcoe::error(message);
+        throw std::runtime_error(message);
+    }
 } // namespace soundcoe

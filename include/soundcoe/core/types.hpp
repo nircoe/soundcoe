@@ -76,13 +76,6 @@ namespace soundcoe
         }
     }
 
-    std::string createAudioErrorMessage(const std::string &filename, AudioFormat format, AudioDecoderOperation operation)
-    {
-        std::ostringstream oss;
-        oss << "Audio Decoder Error: " << filename << " - " << toString(format) << " - " << toString(operation);
-        return oss.str();
-    }
-
     struct Vec3
     {
         float x = 0.0f;

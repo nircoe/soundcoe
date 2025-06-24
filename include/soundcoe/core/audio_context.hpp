@@ -16,24 +16,20 @@ namespace soundcoe
         bool m_initialized;
         mutable std::mutex m_mutex;
 
-        AudioContext();
-
         AudioContext(const AudioContext &) = delete;
         AudioContext &operator=(const AudioContext &) = delete;
         AudioContext(AudioContext &&) = delete;
         AudioContext &operator=(AudioContext &&) = delete;
 
-        bool initialize(const std::string &deviceName = "");
-
     public:
+        AudioContext();
         ~AudioContext();
 
+        void initialize(const std::string &deviceName = "");
         void shutdown();
 
         bool isInitialized() const;
         ALCdevice *getDevice() const;
         ALCcontext *getContext() const;
-
-        static AudioContext &getInstance(const std::string &deviceName = "");
     };
 } // namespace soundcoe
