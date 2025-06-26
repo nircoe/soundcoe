@@ -15,6 +15,7 @@ int printHelp()
     std::cout << "  AudioContextTests    - AudioContext singleton and initialization tests" << std::endl;
     std::cout << "  ErrorHandlerTests    - ErrorHandler functionality tests" << std::endl;
     std::cout << "  Vec3Tests            - Vec3 math operations tests" << std::endl;
+    std::cout << "  MathTests            - Math utility functions tests" << std::endl;
     std::cout << "  ResourceManagerTests - ResourceManager comprehensive functionality tests" << std::endl;
     std::cout << "  SoundBufferTests     - SoundBuffer loading and management tests" << std::endl;
     std::cout << "  SoundSourceTests     - SoundSource playback and properties tests" << std::endl;

@@ -1,7 +1,6 @@
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <soundcoe/utils/audio_file.hpp>
 #include <soundcoe/core/types.hpp>
 #include <logcoe.hpp>
 #include <iostream>
@@ -88,29 +87,24 @@ namespace soundcoe
         unload();
 
         m_filename = filename;
-        auto extension = std::filesystem::path(m_filename).extension();
-        if (extension.empty())
-        {
-            std::string message = "Unknown file format: " + m_filename;
-            logcoe::error(message);
-            throw std::runtime_error(message);
-        }
 
-        AudioData audioData;
-        if (extension == ".wav")
-            audioData = AudioData::loadFromWav(m_filename);
-        else if (extension == ".ogg")
-            audioData = AudioData::loadFromOgg(m_filename);
-        else if (extension == ".mp3")
-            audioData = AudioData::loadFromMp3(m_filename);
-        else
+        AudioFormat format = AudioData::detectFormat(filename);
+        switch(format)
         {
-            std::string message = "Unsupported audio format: " + extension.string();
-            logcoe::error(message);
-            throw std::runtime_error(message);
+            case AudioFormat::Wav:
+                loadFromAudioData(AudioData::loadFromWav(filename));
+                break;
+            case AudioFormat::Mp3:
+                loadFromAudioData(AudioData::loadFromMp3(filename));
+                break;
+            case AudioFormat::Ogg:
+                loadFromAudioData(AudioData::loadFromOgg(filename));
+                break;
+            default:
+                std::string message = "Unsupported audio format: " + filename;
+                logcoe::error(message);
+                throw std::runtime_error(message);
         }
-
-        loadFromAudioData(std::move(audioData));
     }
 
     void SoundBuffer::loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate)
