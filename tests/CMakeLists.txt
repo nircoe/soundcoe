@@ -14,6 +14,8 @@ ignore_external_warnings(testcoe)
 add_executable(soundcoe_tests
     main.cpp
     core_tests.cpp
+    resources_tests.cpp
+    math_tests.cpp
 )
 
 target_link_libraries(soundcoe_tests

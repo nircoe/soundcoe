@@ -4,7 +4,6 @@
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <soundcoe/resources/sound_source.hpp>
-#include <logcoe.hpp>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -52,9 +51,8 @@ namespace soundcoe
         void createSourcePool();
         bool findSourceToReplace(SoundPriority newPriority, size_t &replaceIndex);
         void freeOldestBuffer();
-        std::filesystem::path normalizePath(const std::filesystem::path &path) const;
-        bool scanDirectoryForAudioFiles(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &audioFiles);
-        bool checkIfSupportedAudioFile(const std::filesystem::path &fullPath);
+        std::filesystem::path normalizePath(const std::string &path) const;
+        bool scanDirectoryForFiles(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
         bool preloadFileImpl(const std::string &filename);
         bool unloadFileImpl(const std::string &filename);
         bool isDirectoryLoadedImpl(const std::string &subdirectory) const;
@@ -64,7 +62,7 @@ namespace soundcoe
         ~ResourceManager();
 
         void initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
-                        size_t maxCacheSizeMB = 64, logcoe::LogLevel logLevel = logcoe::LogLevel::INFO);
+                        size_t maxCacheSizeMB = 64);
         void shutdown();
         bool isInitialized() const;
 

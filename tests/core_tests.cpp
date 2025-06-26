@@ -281,8 +281,8 @@ TEST(Vec3Tests, Distance)
     Vec3 v1(0.0f, 0.0f, 0.0f);
     Vec3 v2(3.0f, 4.0f, 0.0f);
 
-    EXPECT_FLOAT_EQ(v1.distanceTo(v2), 5.0f);
-    EXPECT_FLOAT_EQ(v2.distanceTo(v1), 5.0f);
+    EXPECT_FLOAT_EQ(v1.distance(v2), 5.0f);
+    EXPECT_FLOAT_EQ(v2.distance(v1), 5.0f);
 }
 
 TEST(Vec3Tests, DotProduct)
@@ -290,19 +290,19 @@ TEST(Vec3Tests, DotProduct)
     Vec3 v1(1.0f, 2.0f, 3.0f);
     Vec3 v2(4.0f, 5.0f, 6.0f);
 
-    float dot = v1.dotProduct(v2);
+    float dot = v1.dot(v2);
     EXPECT_FLOAT_EQ(dot, 32.0f);
 
     Vec3 perpendicular1(1.0f, 0.0f, 0.0f);
     Vec3 perpendicular2(0.0f, 1.0f, 0.0f);
-    EXPECT_FLOAT_EQ(perpendicular1.dotProduct(perpendicular2), 0.0f);
+    EXPECT_FLOAT_EQ(perpendicular1.dot(perpendicular2), 0.0f);
 }
 
 TEST(Vec3Tests, CrossProduct)
 {
     Vec3 v1(1.0f, 0.0f, 0.0f);
     Vec3 v2(0.0f, 1.0f, 0.0f);
-    Vec3 cross = v1.crossProduct(v2);
+    Vec3 cross = v1.cross(v2);
 
     EXPECT_FLOAT_EQ(cross.x, 0.0f);
     EXPECT_FLOAT_EQ(cross.y, 0.0f);
@@ -310,7 +310,7 @@ TEST(Vec3Tests, CrossProduct)
 
     Vec3 parallel1(1.0f, 2.0f, 3.0f);
     Vec3 parallel2(2.0f, 4.0f, 6.0f);
-    Vec3 crossParallel = parallel1.crossProduct(parallel2);
+    Vec3 crossParallel = parallel1.cross(parallel2);
     EXPECT_FLOAT_EQ(crossParallel.length(), 0.0f);
 }
 
@@ -341,12 +341,12 @@ TEST(Vec3Tests, AngleTo)
     Vec3 v1(1.0f, 0.0f, 0.0f);
     Vec3 v2(0.0f, 1.0f, 0.0f);
 
-    float angle = v1.angleTo(v2);
+    float angle = v1.angle(v2);
     EXPECT_FLOAT_EQ(angle, M_PI / 2.0f);
 
     Vec3 same1(1.0f, 1.0f, 1.0f);
     Vec3 same2(2.0f, 2.0f, 2.0f);
-    float sameAngle = same1.angleTo(same2);
+    float sameAngle = same1.angle(same2);
     EXPECT_NEAR(sameAngle, 0.0f, 0.001f);
 }
 
@@ -355,16 +355,16 @@ TEST(Vec3Tests, StaticMethods)
     Vec3 v1(1.0f, 2.0f, 3.0f);
     Vec3 v2(4.0f, 5.0f, 6.0f);
 
-    float staticDot = Vec3::dotProduct(v1, v2);
-    float instanceDot = v1.dotProduct(v2);
+    float staticDot = Vec3::dot(v1, v2);
+    float instanceDot = v1.dot(v2);
     EXPECT_FLOAT_EQ(staticDot, instanceDot);
 
-    Vec3 staticCross = Vec3::crossProduct(v1, v2);
-    Vec3 instanceCross = v1.crossProduct(v2);
+    Vec3 staticCross = Vec3::cross(v1, v2);
+    Vec3 instanceCross = v1.cross(v2);
     EXPECT_TRUE(staticCross == instanceCross);
 
-    float staticDistance = Vec3::distanceTo(v1, v2);
-    float instanceDistance = v1.distanceTo(v2);
+    float staticDistance = Vec3::distance(v1, v2);
+    float instanceDistance = v1.distance(v2);
     EXPECT_FLOAT_EQ(staticDistance, instanceDistance);
 
     Vec3 staticLerp = Vec3::lerp(v1, v2, 0.5f);

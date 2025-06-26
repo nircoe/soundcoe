@@ -1,13 +1,19 @@
 #include <soundcoe/resources/audio_data.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <dr_libs/dr_wav.h>
-#include <dr_libs/dr_mp3.h>
-#include <stb/stb_vorbis.c>
 #include <logcoe.hpp>
 #include <exception>
 
+#define DR_WAV_IMPLEMENTATION
+#include <dr_libs/dr_wav.h>
+#define DR_MP3_IMPLEMENTATION
+#include <dr_libs/dr_mp3.h>
+#include <stb/stb_vorbis.c>
+
 namespace soundcoe
 {
+    AudioData::AudioData() : m_pcmData(nullptr), m_pcmDataSize(0), m_channels(0), m_bitsPerSample(0), m_sampleRate(0), 
+                                m_duration(0.0f), m_openALFormat(AL_NONE), m_sourceFormat(AudioFormat::Unsupported) { }
+
     AudioData::AudioData(ALvoid *pcmData, ALsizei pcmDataSize, ALsizei channels, ALsizei bitsPerSample,
                          ALsizei sampleRate, AudioFormat sourceFormat) : m_pcmData(pcmData), m_pcmDataSize(pcmDataSize), m_channels(channels), m_bitsPerSample(bitsPerSample),
                                                                          m_sampleRate(sampleRate), m_sourceFormat(sourceFormat)
@@ -159,5 +165,41 @@ namespace soundcoe
     AudioFormat AudioData::getSourceFormat() const { return m_sourceFormat; }
 
     ALboolean AudioData::isValid() const { return m_pcmData != nullptr && m_pcmDataSize > 0; }
+
+    bool AudioData::isValidWav(const std::string &filename)
+    {
+        drwav wav;
+        bool valid = drwav_init_file(&wav, filename.c_str(), nullptr);
+        if (valid) 
+            drwav_uninit(&wav);
+        return valid;
+    }
+
+    bool AudioData::isValidMp3(const std::string &filename)
+    {
+        drmp3 mp3;
+        bool valid = drmp3_init_file(&mp3, filename.c_str(), nullptr);
+        if (valid)
+            drmp3_uninit(&mp3);
+        return valid;
+    }
+
+    bool AudioData::isValidOgg(const std::string &filename)
+    {
+        stb_vorbis* vorbis = stb_vorbis_open_filename(filename.c_str(), nullptr, nullptr);
+        if (!vorbis) return false;
+        
+        stb_vorbis_info info = stb_vorbis_get_info(vorbis);
+        stb_vorbis_close(vorbis);
+        return info.channels > 0 && info.sample_rate > 0;
+    }
+
+    AudioFormat AudioData::detectFormat(const std::string &filename)
+    {
+        if (isValidWav(filename)) return AudioFormat::Wav;
+        if (isValidMp3(filename)) return AudioFormat::Mp3;
+        if (isValidOgg(filename)) return AudioFormat::Ogg;
+        return AudioFormat::Unsupported;
+    }
 
 } // namespace soundcoe

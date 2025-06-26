@@ -12,8 +12,8 @@ namespace soundcoe
 
     ResourceManager::~ResourceManager() { shutdown(); }
 
-    void ResourceManager::initialize(const std::string &audioRootDirectory, size_t maxSources, 
-                                        size_t maxCacheSizeMB, logcoe::LogLevel logLevel)
+    void ResourceManager::initialize(const std::string &audioRootDirectory, size_t maxSources,
+                                     size_t maxCacheSizeMB)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if(m_initialized)
@@ -22,7 +22,7 @@ namespace soundcoe
             return;
         }
 
-        logcoe::initialize(logLevel, "soundcoe"); // TODO: move it to SoundPlayer in the future
+        logcoe::initialize(logcoe::LogLevel::INFO, "soundcoe"); // TODO: move it to SoundPlayer in the future
 
         m_audioContext.initialize();
 
@@ -89,9 +89,9 @@ namespace soundcoe
         }
 
         std::vector<std::filesystem::path> audioFiles;
-        if(scanDirectoryForAudioFiles(subdirectory, audioFiles))
+        if(scanDirectoryForFiles(subdirectory, audioFiles))
         {
-            for (auto &file : audioFiles)
+            for(auto &file : audioFiles)
                 preloadFileImpl(file.string());
 
             m_loadedDirectories.push_back(subdirectory);
@@ -118,8 +118,8 @@ namespace soundcoe
         }
 
         std::vector<std::filesystem::path> audioFiles;
-        if(scanDirectoryForAudioFiles(subdirectory, audioFiles))
-            for (auto &file : audioFiles)
+        if(scanDirectoryForFiles(subdirectory, audioFiles))
+            for(auto &file : audioFiles)
                 unloadFileImpl(file.string());
         else
             logcoe::warning("No audio files found in directory: " + subdirectory);
@@ -198,9 +198,8 @@ namespace soundcoe
         }
 
         std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-        if(m_bufferCache.find(fullPath) == m_bufferCache.end())
-            if(!preloadFileImpl(filename))
-                return std::nullopt;
+        if((m_bufferCache.find(fullPath) == m_bufferCache.end()) && !preloadFileImpl(filename))
+            return std::nullopt;
 
         auto &entry = m_bufferCache[fullPath];
         ++entry.m_referenceCount;
@@ -223,7 +222,7 @@ namespace soundcoe
                 continue;
 
             try { m_sourcePool[i].m_source->detachBuffer(); }
-            catch(const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+            catch (const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
 
             m_sourcePool[i].m_active = false;
             m_freeSourceIndices.push_back(i);
@@ -366,7 +365,7 @@ namespace soundcoe
         m_freeSourceIndices.resize(m_maxSources);
         auto time = std::chrono::steady_clock::now();
 
-        for (size_t index = 0; index < m_maxSources; ++index)
+        for(size_t index = 0; index < m_maxSources; ++index)
         {
             m_sourcePool[index].m_source = std::make_unique<SoundSource>();
             m_sourcePool[index].m_priority = SoundPriority::Medium;
@@ -378,13 +377,13 @@ namespace soundcoe
 
     bool ResourceManager::findSourceToReplace(SoundPriority newPriority, size_t &replaceIndex)
     {
-        if (m_sourcePool.empty())
+        if(m_sourcePool.empty())
         {
             logcoe::warning("findSourceToReplace called but m_sourcePool is empty");
             return false;
         }
 
-        if (!m_freeSourceIndices.empty())
+        if(!m_freeSourceIndices.empty())
         {
             logcoe::warning("findSourceToReplace called but there are free sources available");
             return false;
@@ -395,12 +394,12 @@ namespace soundcoe
                                             {
                                                 return it.m_active && it.m_source->isStopped();
                                             });
-        if (sourceToReplace == m_sourcePool.end())
+        if(sourceToReplace == m_sourcePool.end())
         {
             sourceToReplace = std::min_element(m_sourcePool.begin(), m_sourcePool.end(),
                                                [](const auto &a, const auto &b)
                                                {
-                                                   if (a.m_priority != b.m_priority)
+                                                   if(a.m_priority != b.m_priority)
                                                        return a.m_priority < b.m_priority;
                                                    return a.m_allocatedTime < b.m_allocatedTime;
                                                });
@@ -411,7 +410,7 @@ namespace soundcoe
                 return false;
             }
 
-            if (sourceToReplace->m_active)
+            if(sourceToReplace->m_active)
                 sourceToReplace->m_source->stop();
         }
 
@@ -439,7 +438,7 @@ namespace soundcoe
                 if(allocation.m_source->getBufferId() == oldestBufferId)
                 {
                     try { allocation.m_source->detachBuffer(); }
-                    catch(const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+                    catch (const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
                 }
             }
 
@@ -448,52 +447,42 @@ namespace soundcoe
         }
     }
 
-    std::filesystem::path ResourceManager::normalizePath(const std::filesystem::path &path) const
+    std::filesystem::path ResourceManager::normalizePath(const std::string &path) const
     {
-        return std::filesystem::path(path).lexically_normal().string();
+        return std::filesystem::path(path).lexically_normal();
     }
 
-    bool ResourceManager::scanDirectoryForAudioFiles(const std::filesystem::path &subdirectory,
-                                                     std::vector<std::filesystem::path> &audioFiles)
+    bool ResourceManager::scanDirectoryForFiles(const std::filesystem::path &subdirectory,
+                                                std::vector<std::filesystem::path> &files)
     {
-        auto directoryFullPath = m_audioRootDirectory / normalizePath(subdirectory);
-        bool foundAudioFile = false;
+        auto directoryFullPath = m_audioRootDirectory / subdirectory.lexically_normal();
+        bool foundFile = false;
         try
         {
-            for(const auto &entry : std::filesystem::recursive_directory_iterator(directoryFullPath))
+            for (const auto &entry : std::filesystem::recursive_directory_iterator(directoryFullPath))
             {
-                if(checkIfSupportedAudioFile(entry.path()))
+                try
                 {
-                    audioFiles.push_back(entry.path());
-                    foundAudioFile = true;
+                    if (entry.is_regular_file())
+                    {
+                        files.push_back(entry.path());
+                        foundFile = true;
+                    }
+                }
+                catch (const std::filesystem::filesystem_error &e)
+                {
+                    logcoe::warning("std::filesystem exception for file: " + entry.path().string() + ": " + std::string(e.what()));
                 }
             }
         }
-        catch(const std::exception &e)
+        catch (const std::exception &e)
         {
             logcoe::warning("Failed to scan directory: " + std::string(e.what()));
         }
 
-        std::string findText = foundAudioFile ? "We found audio files" : "We didn't find audio files";
-        logcoe::info("scanDirectoryForAudioFiles finished, " + findText + " in Directory: " + directoryFullPath.string());
-        return foundAudioFile;
-    }
-
-    bool ResourceManager::checkIfSupportedAudioFile(const std::filesystem::path &fullPath)
-    {
-        try
-        {
-            if(!std::filesystem::is_regular_file(fullPath))
-                return false;
-
-            auto extension = fullPath.extension();
-            return extension == ".wav" || extension == ".mp3" || extension == ".ogg";
-        }
-        catch(const std::filesystem::filesystem_error &e)
-        {
-            logcoe::warning("std::filesystem exception: " + std::string(e.what()));
-            return false;
-        }
+        std::string findText = foundFile ? "We found files" : "We didn't find files";
+        logcoe::info("scanDirectoryForFiles finished, " + findText + " in Directory: " + directoryFullPath.string());
+        return foundFile;
     }
 
     bool ResourceManager::preloadFileImpl(const std::string &filename)
@@ -506,26 +495,20 @@ namespace soundcoe
 
         try
         {
-            if(!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
+            if (!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
             {
                 logcoe::error("Not a File: \"" + fullPath.string() + "\"");
                 return false;
             }
         }
-        catch(const std::filesystem::filesystem_error &e)
+        catch (const std::filesystem::filesystem_error &e)
         {
             logcoe::error("std::filesystem exception: " + std::string(e.what()));
             return false;
         }
 
-        if(!checkIfSupportedAudioFile(fullPath))
-        {
-            logcoe::error("Not a Supported Audio File (.wav, .mp3, .ogg only): \"" + fullPath.string() + "\"");
-            return false;
-        }
-
         std::string fullPathStr = fullPath.string();
-        if(m_bufferCache.find(fullPathStr) != m_bufferCache.end())
+        if (m_bufferCache.find(fullPathStr) != m_bufferCache.end())
             return true;
 
         try
@@ -539,7 +522,7 @@ namespace soundcoe
             m_currentCacheSize += entry.m_buffer->getSize();
             m_bufferCache[fullPathStr] = std::move(entry);
         }
-        catch(const std::exception &e)
+        catch (const std::exception &e)
         {
             logcoe::error("Failed to create SoundBuffer: " + std::string(e.what()));
             m_bufferCache.erase(fullPathStr);
@@ -556,41 +539,47 @@ namespace soundcoe
     bool ResourceManager::unloadFileImpl(const std::string &filename)
     {
         std::filesystem::path fullPath;
-        if(std::filesystem::path(filename).is_absolute())
+        if (std::filesystem::path(filename).is_absolute())
             fullPath = filename;
         else
             fullPath = m_audioRootDirectory / normalizePath(filename);
 
         try
         {
-            if(!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
+            if (!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
             {
                 logcoe::warning("Not a File: \"" + filename + "\"");
                 return true;
             }
         }
-        catch(const std::filesystem::filesystem_error &e)
+        catch (const std::filesystem::filesystem_error &e)
         {
             logcoe::error("std::filesystem exception: " + std::string(e.what()));
             return false; // we don't know if filename is a audio file so it may be a failure of unloadFileImpl
         }
 
-        if(m_bufferCache.find(fullPath.string()) == m_bufferCache.end())
+        if (m_bufferCache.find(fullPath.string()) == m_bufferCache.end())
         {
             logcoe::warning("File is not loaded: \"" + fullPath.string() + "\"");
             return true;
         }
 
         auto &entry = m_bufferCache[fullPath.string()];
-        if(entry.m_referenceCount > 0)
+        if (entry.m_referenceCount > 0)
         {
             auto bufferId = entry.m_buffer->getBufferId();
-            for(auto &it : m_sourcePool)
+            for (auto &it : m_sourcePool)
             {
-                if(it.m_active && it.m_source->getBufferId() == bufferId)
+                if (it.m_active && it.m_source->getBufferId() == bufferId)
                 {
-                    try { it.m_source->detachBuffer(); }
-                    catch (const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+                    try
+                    {
+                        it.m_source->detachBuffer();
+                    }
+                    catch (const std::exception &e)
+                    {
+                        logcoe::warning("Failed to detach Buffer: " + std::string(e.what()));
+                    }
                 }
             }
         }
