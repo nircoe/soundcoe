@@ -58,9 +58,10 @@ soundcoe/
 
 **AudioContext**
 - Manages OpenAL device and context initialization
-- Singleton class for global access
+- Regular class with thread-safe operations using mutex
 - Handles lifetime of OpenAL system
 - Provides error checking context
+- Owned by ResourceManager for better encapsulation
 
 **ErrorHandler**
 - Provides error checking and reporting for OpenAL operations
@@ -91,6 +92,7 @@ soundcoe/
 
 **ResourceManager**
 - Manages pools of buffers and sources
+- Contains an AudioContext instance for proper encapsulation
 - Handles resource allocation and deallocation
 - Implements priority-based source allocation
 - Ensures optimal resource usage
@@ -192,8 +194,8 @@ The library uses GoogleTest for unit testing:
 
 int main() {
     // Initialize the sound system
-    soundcoe::AudioContext::getInstance().initialize();
-    soundcoe::ResourceManager::getInstance().initialize();
+    soundcoe::ResourceManager resourceManager;
+    resourceManager.initialize("./audio", 32, 64);
     
     // Play a sound effect
     auto effect = soundcoe::SoundPlayer::getInstance().playSound("explosion.wav");
@@ -213,8 +215,7 @@ int main() {
     
     // Clean up
     soundcoe::SoundPlayer::getInstance().shutdown();
-    soundcoe::ResourceManager::getInstance().shutdown();
-    soundcoe::AudioContext::getInstance().shutdown();
+    resourceManager.shutdown();
     
     return 0;
 }
