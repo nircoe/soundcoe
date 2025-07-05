@@ -15,6 +15,7 @@ FetchContent_Declare(
 )
 
 # Basic configuration options (for all platforms)
+set(LIBTYPE "STATIC" CACHE STRING "Build static library" FORCE)
 set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
 set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
@@ -66,6 +67,11 @@ FetchContent_MakeAvailable(logcoe)
 
 add_subdirectory(include)
 add_subdirectory(src)
+
+option(SOUNDECOE_BUILD_TESTS "Build soundcoe tests" ON)
+if(SOUNDECOE_BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
 
 install(TARGETS soundcoe soundcoe_headers
     EXPORT soundcoe-targets

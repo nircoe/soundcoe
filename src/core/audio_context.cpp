@@ -5,7 +5,6 @@
 
 namespace soundcoe
 {
-    std::optional<AudioContext> AudioContext::s_instance;
 
     AudioContext::AudioContext() :
         m_device(nullptr),
@@ -22,10 +21,8 @@ namespace soundcoe
 
         logcoe::initialize(logcoe::LogLevel::INFO, "soundcoe");
 
-        logcoe::debug("Initializing ALCdevice");
-        m_device = alcOpenDevice(deviceName.empty() ? 
-                    nullptr : 
-                    deviceName.c_str());
+        logcoe::debug("Initializing ALCdevice: " + (deviceName.empty() ? "default" : deviceName));
+        m_device = alcOpenDevice(deviceName.empty() ? nullptr : deviceName.c_str());
         if (!m_device)
         {
             ErrorHandler::checkALCError(nullptr, "Open Audio Device: \"" + deviceName + "\"");
@@ -58,6 +55,7 @@ namespace soundcoe
 
         m_initialized = true;
         logcoe::info("AudioContext initialized successfully");
+        ErrorHandler::clearALCError(m_device);
         return true;
     }
 
@@ -76,12 +74,13 @@ namespace soundcoe
         {
             alcDestroyContext(m_context);
             if(ErrorHandler::checkALCError(m_device, "Destroy Context"))
-                logcoe::error("Failed to destory OpenAL context during shutdown, attempting to continue cleanup");
+                logcoe::error("Failed to destroy OpenAL context during shutdown, attempting to continue cleanup");
             m_context = nullptr;
         }
 
         if(m_device)
         {
+            ErrorHandler::clearALCError(m_device);
             if(!alcCloseDevice(m_device))
                 logcoe::error("Failed to close OpenAL device during shutdown");
             m_device = nullptr;
@@ -111,15 +110,15 @@ namespace soundcoe
         return m_context;
     }
 
-    AudioContext &AudioContext::getInstance()
+    AudioContext &AudioContext::getInstance(const std::string &deviceName)
     {
-        static std::once_flag initInstanceFlag;
+        static AudioContext instance;
 
-        std::call_once(initInstanceFlag, []() 
-        { 
-            s_instance.emplace(); 
-        });
 
-        return *s_instance;
+        if(!instance.isInitialized())
+            if(!instance.initialize(deviceName))
+                throw std::runtime_error("Failed to initialize AudioContext");
+
+        return instance;
     }
 } // namespace soundcoe

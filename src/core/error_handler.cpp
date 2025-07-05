@@ -33,9 +33,14 @@ namespace soundcoe
             return false;
 
         std::stringstream ss;
-        ss << "OpenAL Error: " << operation << getOpenALErrorAsString(error);
+        ss << "OpenAL Error: " << operation << " - " << getOpenALErrorAsString(error);
         logcoe::error(ss.str());
         return true;
+    }
+
+    ALenum ErrorHandler::clearOpenALError()
+    {
+        return alGetError();
     }
 
     std::string ErrorHandler::getALCErrorAsString(ALCenum error)
@@ -66,8 +71,13 @@ namespace soundcoe
             return false;
 
         std::stringstream ss;
-        ss << "ALC Error: " << operation << getALCErrorAsString(error);
+        ss << "ALC Error: " << operation << " - " << getALCErrorAsString(error);
         logcoe::error(ss.str());
         return true;
+    }
+
+    ALCenum ErrorHandler::clearALCError(ALCdevice *device)
+    {
+        return alcGetError(device);
     }
 } // namespace soundcoe
