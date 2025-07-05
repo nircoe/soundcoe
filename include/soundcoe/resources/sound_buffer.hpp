@@ -21,7 +21,7 @@ namespace soundcoe
         void generateBuffer(const void* data);
 
     public:
-        SoundBuffer() = default;
+        SoundBuffer();
         SoundBuffer(const std::string &filename);
         SoundBuffer(const void *data, ALenum format, ALsizei size, ALsizei sampleRate);
         ~SoundBuffer();

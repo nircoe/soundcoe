@@ -210,11 +210,13 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
 
     m_resourceManager.releaseBuffer(filename);
     m_resourceManager.releaseBuffer(filename);
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 0);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
 
     m_resourceManager.releaseBuffer(filename);
     buffer1 = m_resourceManager.getBuffer(filename);
     EXPECT_TRUE(buffer1.has_value());
+    m_resourceManager.releaseBuffer(filename);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
     size_t cleaned = m_resourceManager.cleanupUnusedBuffers();
     EXPECT_EQ(cleaned, 1);
     EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 0);
@@ -276,16 +278,18 @@ TEST_F(ResourceManagerTests, FileOperations)
 TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
 {
     const int numThreads = 3;
+    std::vector<SoundPriority> priorities = {SoundPriority::Low, SoundPriority::Medium, SoundPriority::High};
     std::vector<std::future<std::vector<std::reference_wrapper<SoundSource>>>> futures;
 
     for (int i = 0; i < numThreads; ++i)
     {
-        auto future = std::async(std::launch::async, [&]()
+        auto priority = priorities[i];
+        auto future = std::async(std::launch::async, [&, priority]()
                                  {
             std::vector<std::reference_wrapper<SoundSource>> sources;
             for (int j = 0; j < 2; ++j)
             {
-                auto sourceOpt = m_resourceManager.acquireSource(SoundPriority::Medium);
+                auto sourceOpt = m_resourceManager.acquireSource(priority);
                 if (sourceOpt.has_value())
                     sources.push_back(sourceOpt.value());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -301,8 +305,8 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
         allSources.insert(allSources.end(), sources.begin(), sources.end());
     }
 
-    EXPECT_LE(allSources.size(), 4);
-    EXPECT_EQ(m_resourceManager.getActiveSourceCount(), allSources.size());
+    EXPECT_EQ(allSources.size(), 6);
+    EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 4);
 
     for (auto &source : allSources)
         m_resourceManager.releaseSource(source);
@@ -486,11 +490,11 @@ TEST_F(SoundBufferTests, LoadAndUnload)
 TEST_F(SoundBufferTests, InvalidFileHandling)
 {
     SoundBuffer buffer;
-    EXPECT_NO_THROW(buffer.loadFromFile("nonexistent.wav"));
+    EXPECT_THROW(buffer.loadFromFile("nonexistent.wav"), std::runtime_error);
     EXPECT_FALSE(buffer.isLoaded());
     
     std::string txtFile = (TestAudioFiles::s_testSubDir1 / "readme.txt").string();
-    EXPECT_NO_THROW(buffer.loadFromFile(txtFile));
+    EXPECT_THROW(buffer.loadFromFile(txtFile), std::runtime_error);
     EXPECT_FALSE(buffer.isLoaded());
 }
 
@@ -519,8 +523,8 @@ protected:
 TEST_F(SoundSourceTests, DefaultConstruction)
 {
     SoundSource source;
-    EXPECT_TRUE(source.isCreated());
-    EXPECT_NE(source.getSourceId(), 0);
+    EXPECT_FALSE(source.isCreated());
+    EXPECT_EQ(source.getSourceId(), 0);
     EXPECT_EQ(source.getVolume(), 1.0f);
     EXPECT_EQ(source.getPitch(), 1.0f);
     EXPECT_FALSE(source.isLooping());
@@ -529,6 +533,7 @@ TEST_F(SoundSourceTests, DefaultConstruction)
 TEST_F(SoundSourceTests, PropertySettersAndGetters)
 {
     SoundSource source;
+    source.create();
     
     EXPECT_TRUE(source.setVolume(0.5f));
     EXPECT_FLOAT_EQ(source.getVolume(), 0.5f);
@@ -571,8 +576,8 @@ TEST_F(SoundSourceTests, StateManagement)
     SoundSource source;
     
     source.attachBuffer(buffer);
-    EXPECT_EQ(source.getState(), SoundState::Stopped);
-    EXPECT_TRUE(source.isStopped());
+    EXPECT_EQ(source.getState(), SoundState::Initial);
+    EXPECT_FALSE(source.isStopped());
     
     source.play();
     SoundState state = source.getState();

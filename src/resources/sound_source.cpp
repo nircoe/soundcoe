@@ -18,7 +18,13 @@ namespace soundcoe
         m_sourceId(other.m_sourceId), m_volume(other.m_volume), m_pitch(other.m_pitch), m_position(other.m_position),
         m_velocity(other.m_velocity), m_looping(other.m_looping), m_created(other.m_created)
     {
-        other = SoundSource{};
+        other.m_sourceId = 0;
+        other.m_volume = 1.0f;
+        other.m_pitch = 1.0f;
+        other.m_position = Vec3::zero();
+        other.m_velocity = Vec3::zero();
+        other.m_looping = AL_FALSE;
+        other.m_created = false;
     }
 
     SoundSource &SoundSource::operator=(SoundSource &&other) noexcept
@@ -35,7 +41,13 @@ namespace soundcoe
         m_looping = other.m_looping;
         m_created = other.m_created;
 
-        other = SoundSource{};
+        other.m_sourceId = 0;
+        other.m_volume = 1.0f;
+        other.m_pitch = 1.0f;
+        other.m_position = Vec3::zero();
+        other.m_velocity = Vec3::zero();
+        other.m_looping = AL_FALSE;
+        other.m_created = false;
         return *this;
     }
 
@@ -48,11 +60,11 @@ namespace soundcoe
         alGenSources(1, &m_sourceId);
         ErrorHandler::throwOnOpenALError("Generate Source");
 
+        m_created = true;
+        
         setVolume(1.0f);
         setPitch(1.0f);
         setLooping(false);
-
-        m_created = true;
     }
 
     void SoundSource::destroy()

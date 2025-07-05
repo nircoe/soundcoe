@@ -38,6 +38,9 @@ namespace soundcoe
         }
     }
 
+    SoundBuffer::SoundBuffer() : m_bufferId(0), m_format(AL_NONE), m_size(0), m_sampleRate(0), 
+                                    m_duration(0.0f), m_loaded(false), m_filename("") { }
+
     SoundBuffer::SoundBuffer(const std::string &filename) : SoundBuffer()
     {
         loadFromFile(filename);
@@ -61,7 +64,12 @@ namespace soundcoe
                                                              m_sampleRate(other.m_sampleRate),
                                                              m_duration(other.m_duration)
     {
-        other = SoundBuffer{};
+        other.m_bufferId = 0;
+        other.m_loaded = false;
+        other.m_format = AL_NONE;
+        other.m_size = 0;
+        other.m_sampleRate = 0;
+        other.m_duration = 0.0f;
     }
 
     SoundBuffer &SoundBuffer::operator=(SoundBuffer &&other) noexcept
@@ -78,13 +86,34 @@ namespace soundcoe
         m_sampleRate = other.m_sampleRate;
         m_duration = other.m_duration;
 
-        other = SoundBuffer{};
+        other.m_bufferId = 0;
+        other.m_loaded = false;
+        other.m_format = AL_NONE;
+        other.m_size = 0;
+        other.m_sampleRate = 0;
+        other.m_duration = 0.0f;
+
         return *this;
     }
 
     void SoundBuffer::loadFromFile(const std::string &filename)
     {
         unload();
+
+        std::filesystem::path filePath(filename);
+        if(!std::filesystem::exists(filePath))
+        {
+            std::string message = "File does not exist: \"" + filename + "\"";
+            logcoe::error(message);
+            throw std::runtime_error(message);
+        }
+        
+        if(!std::filesystem::is_regular_file(filePath))
+        {
+            std::string message = "Not a regular file: \"" + filename + "\"";
+            logcoe::error(message);
+            throw std::runtime_error(message);
+        }
 
         m_filename = filename;
 
