@@ -12,15 +12,20 @@ int printHelp()
     std::cout << "  --test=SUITE.TEST Run only the specified test" << std::endl;
     std::cout << std::endl;
     std::cout << "Available test suites:" << std::endl;
-    std::cout << "  AudioContextTests  - AudioContext singleton and initialization tests" << std::endl;
-    std::cout << "  ErrorHandlerTests  - ErrorHandler functionality tests" << std::endl;
-    std::cout << "  Vec3Tests          - Vec3 math operations tests" << std::endl;
-    std::cout << "  IntegrationTest   - End-to-end soundcoe functionality tests" << std::endl;
+    std::cout << "  AudioContextTests    - AudioContext singleton and initialization tests" << std::endl;
+    std::cout << "  ErrorHandlerTests    - ErrorHandler functionality tests" << std::endl;
+    std::cout << "  Vec3Tests            - Vec3 math operations tests" << std::endl;
+    std::cout << "  MathTests            - Math utility functions tests" << std::endl;
+    std::cout << "  ResourceManagerTests - ResourceManager comprehensive functionality tests" << std::endl;
+    std::cout << "  SoundBufferTests     - SoundBuffer loading and management tests" << std::endl;
+    std::cout << "  SoundSourceTests     - SoundSource playback and properties tests" << std::endl;
     std::cout << std::endl;
     std::cout << "Example usage:" << std::endl;
     std::cout << "  ./soundcoe_tests --suite=AudioContextTests" << std::endl;
     std::cout << "  ./soundcoe_tests --test=Vec3Tests.Addition" << std::endl;
-    std::cout << "  ./soundcoe_tests --test=ErrorHandlerTests.ALCErrorHandling" << std::endl;
+    std::cout << "  ./soundcoe_tests --test=ResourceManagerTests.SourceAcquisitionAndRelease" << std::endl;
+    std::cout << "  ./soundcoe_tests --suite=SoundBufferTests" << std::endl;
+    std::cout << "  ./soundcoe_tests --test=SoundSourceTests.PropertySettersAndGetters" << std::endl;
 
     return 0;
 }
@@ -32,8 +37,8 @@ int main(int argc, char **argv)
     std::cout << "===================================================" << std::endl;
     std::cout << std::endl;
     std::cout << "Comprehensive testing for soundcoe audio library." << std::endl;
-    std::cout << "Testing AudioContext, ErrorHandler, Types (Vec3)" << std::endl;
-    std::cout << "and core soundcoe functionality." << std::endl;
+    std::cout << "Testing Core Layer: AudioContext, ErrorHandler, Types (Vec3)" << std::endl;
+    std::cout << "Testing Resources Layer: ResourceManager with advanced features" << std::endl;
     std::cout << std::endl;
 
     testcoe::init(&argc, argv);
@@ -46,13 +51,13 @@ int main(int argc, char **argv)
     {
         std::string arg = argv[i];
 
-        if(arg == "--help")
+        if (arg == "--help")
             return printHelp();
-        else if(arg == "--all")
+        else if (arg == "--all")
             askForAll = true;
-        else if(!askForAll && arg.substr(0, 8) == "--suite=")
+        else if (!askForAll && arg.substr(0, 8) == "--suite=")
             suiteName = arg.substr(8);
-        else if(!askForAll && arg.substr(0, 7) == "--test=")
+        else if (!askForAll && arg.substr(0, 7) == "--test=")
         {
             std::string fullTest = arg.substr(7);
             size_t dotPos = fullTest.find('.');
@@ -64,19 +69,19 @@ int main(int argc, char **argv)
         }
     }
 
-    if(askForAll || (testName.empty() && suiteName.empty()))
+    if (askForAll || (testName.empty() && suiteName.empty()))
     {
         std::cout << "Running all soundcoe tests..." << std::endl;
         return testcoe::run();
     }
 
-    if(!testName.empty())
+    if (!testName.empty())
     {
         std::cout << "Running test: " << suiteName << "." << testName << std::endl;
         return testcoe::run_test(suiteName, testName);
     }
 
-    if(!suiteName.empty())
+    if (!suiteName.empty())
     {
         std::cout << "Running suite: " << suiteName << std::endl;
         return testcoe::run_suite(suiteName);

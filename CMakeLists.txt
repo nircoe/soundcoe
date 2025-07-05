@@ -54,7 +54,9 @@ elseif(UNIX)
   endif()
 endif()
 
+include(cmake/utils.cmake)
 FetchContent_MakeAvailable(openal)
+ignore_external_warnings(OpenAL)
 
 message(STATUS "[soundcoe] Fetching logcoe from source...")
 
@@ -64,12 +66,14 @@ FetchContent_Declare(
     GIT_TAG v0.1.0
 )
 FetchContent_MakeAvailable(logcoe)
+ignore_external_warnings(logcoe)
 
 add_subdirectory(include)
 add_subdirectory(src)
 
 option(SOUNDECOE_BUILD_TESTS "Build soundcoe tests" ON)
 if(SOUNDECOE_BUILD_TESTS)
+  message(STATUS "[soundcoe] Building soundcoe tests")
   add_subdirectory(tests)
 endif()
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <soundcoe/resources/audio_data.hpp>
 #include <string>
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -9,22 +10,20 @@ namespace soundcoe
     class SoundBuffer
     {
         ALuint m_bufferId;
-        std::string m_filename;
-        bool m_loaded;
-
         ALenum m_format;
         ALsizei m_size;
-        ALsizei m_samplerate;
-        float m_duration;
+        ALsizei m_sampleRate;
+        ALfloat m_duration;
+        bool m_loaded;
+        std::string m_filename;
 
-        bool loadWavFile();
-        bool loadOggFile();
-        bool loadMp3File();
+        void loadFromAudioData(AudioData &&audioData);
+        void generateBuffer(const void* data);
 
     public:
         SoundBuffer();
         SoundBuffer(const std::string &filename);
-        SoundBuffer(const void *data, ALsizei size, ALenum format, ALsizei samplerate);
+        SoundBuffer(const void *data, ALenum format, ALsizei size, ALsizei sampleRate);
         ~SoundBuffer();
 
         SoundBuffer(const SoundBuffer &) = delete;
@@ -32,17 +31,16 @@ namespace soundcoe
         SoundBuffer(SoundBuffer &&other) noexcept;
         SoundBuffer &operator=(SoundBuffer &&other) noexcept;
 
-        bool loadFromFile(const std::string &filename);
-        bool loadFromMemory(const void *data, ALsizei size, ALenum format, ALsizei samplerate);
+        void loadFromFile(const std::string &filename);
+        void loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate);
         void unload();
 
         ALuint getBufferId() const;
-        const std::string &getFileName() const;
-        bool isLoaded() const;
         ALenum getFormat() const;
         ALsizei getSize() const;
         ALsizei getSampleRate() const;
-        float getDuration() const;
-
+        ALfloat getDuration() const;
+        bool isLoaded() const;
+        const std::string &getFileName() const;
     };
 } // namespace soundcoe

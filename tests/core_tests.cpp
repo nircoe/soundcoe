@@ -4,6 +4,7 @@
 #include <soundcoe/core/types.hpp>
 #include <thread>
 #include <chrono>
+#include <future>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -21,95 +22,89 @@ using namespace soundcoe;
 class AudioContextTests : public ::testing::Test
 {
 protected:
+    AudioContext m_audioContext;
+
     void SetUp() override
     {
-        try
-        {
-            AudioContext::getInstance().shutdown();
-        }
-        catch (...)
-        {
-        }
+        try { m_audioContext.initialize(); }
+        catch(...) { }
     }
 
     void TearDown() override
     {
-        try
-        {
-            AudioContext::getInstance().shutdown();
-        }
-        catch (...)
-        {
-        }
+        try { m_audioContext.shutdown(); }
+        catch(...) { }
     }
 };
 
-TEST_F(AudioContextTests, SingletonBehavior)
-{
-    AudioContext &context1 = AudioContext::getInstance();
-    AudioContext &context2 = AudioContext::getInstance();
-
-    EXPECT_EQ(&context1, &context2);
-}
-
 TEST_F(AudioContextTests, AutoInitialization)
 {
-    AudioContext &context = AudioContext::getInstance();
+    EXPECT_TRUE(m_audioContext.isInitialized());
 
-    EXPECT_TRUE(context.isInitialized());
-
-    EXPECT_NE(context.getDevice(), nullptr);
-    EXPECT_NE(context.getContext(), nullptr);
-}
-
-TEST_F(AudioContextTests, InitializedState)
-{
-    AudioContext &context = AudioContext::getInstance();
-
-    EXPECT_TRUE(context.isInitialized());
-
-    EXPECT_EQ(&context, &AudioContext::getInstance());
+    EXPECT_NE(m_audioContext.getDevice(), nullptr);
+    EXPECT_NE(m_audioContext.getContext(), nullptr);
 }
 
 TEST_F(AudioContextTests, MultipleShutdownCalls)
 {
-    AudioContext &context = AudioContext::getInstance();
+    EXPECT_NO_THROW(m_audioContext.shutdown());
+    EXPECT_NO_THROW(m_audioContext.shutdown());
+    EXPECT_NO_THROW(m_audioContext.shutdown());
 
-    EXPECT_NO_THROW(context.shutdown());
-    EXPECT_NO_THROW(context.shutdown());
-    EXPECT_NO_THROW(context.shutdown());
-
-    EXPECT_FALSE(context.isInitialized());
+    EXPECT_FALSE(m_audioContext.isInitialized());
 }
 
 TEST_F(AudioContextTests, ThreadSafety)
 {
-    std::vector<AudioContext *> contexts;
-    std::vector<std::thread> threads;
     const int numThreads = 4;
-
-    contexts.resize(numThreads);
-
+    std::vector<std::future<bool>> futures;
+    
     for (int i = 0; i < numThreads; ++i)
     {
-        threads.emplace_back([&contexts, i]()
-                             {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            contexts[i] = &AudioContext::getInstance(); });
+        futures.push_back(std::async(std::launch::async, [&]() {
+            bool allSucceeded = true;
+            
+            for (int j = 0; j < 10; ++j)
+            {
+                allSucceeded &= m_audioContext.isInitialized();
+                allSucceeded &= (m_audioContext.getDevice() != nullptr);
+                allSucceeded &= (m_audioContext.getContext() != nullptr);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            
+            return allSucceeded;
+        }));
     }
-
-    for (auto &thread : threads)
-        thread.join();
-
-    for (int i = 1; i < numThreads; ++i)
-        EXPECT_EQ(contexts[0], contexts[i]);
+    
+    for (auto& future : futures)
+    {
+        EXPECT_TRUE(future.get());
+    }
 }
 
 //==============================================================================
 //          ErrorHandlerTests - ErrorHandler functionality tests
 //==============================================================================
 
-TEST(ErrorHandlerTests, ALErrorStringConversion)
+class ErrorHandlerTests : public ::testing::Test
+{
+protected:
+    AudioContext m_audioContext;
+
+    void SetUp() override
+    {
+        try { m_audioContext.initialize(); }
+        catch(...) { }
+    }
+
+    void TearDown() override
+    {
+        try { m_audioContext.shutdown(); }
+        catch(...) { }
+    }
+};
+
+TEST_F(ErrorHandlerTests, ALErrorStringConversion)
 {
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(AL_NO_ERROR), "AL_NO_ERROR");
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(AL_INVALID_NAME), "AL_INVALID_NAME");
@@ -120,7 +115,7 @@ TEST(ErrorHandlerTests, ALErrorStringConversion)
     EXPECT_EQ(ErrorHandler::getOpenALErrorAsString(static_cast<ALenum>(9999)), "UNKNOWN ERROR");
 }
 
-TEST(ErrorHandlerTests, ALCErrorStringConversion)
+TEST_F(ErrorHandlerTests, ALCErrorStringConversion)
 {
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(ALC_NO_ERROR), "ALC_NO_ERROR");
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(ALC_INVALID_DEVICE), "ALC_INVALID_DEVICE");
@@ -131,16 +126,27 @@ TEST(ErrorHandlerTests, ALCErrorStringConversion)
     EXPECT_EQ(ErrorHandler::getALCErrorAsString(static_cast<ALCenum>(9999)), "UNKNOWN ERROR");
 }
 
-TEST(ErrorHandlerTests, CheckErrorFunctions)
+TEST_F(ErrorHandlerTests, CheckErrorFunctions)
 {
-    EXPECT_NO_THROW(ErrorHandler::checkOpenALError("Test Operation"));
-    EXPECT_NO_THROW(ErrorHandler::checkALCError(nullptr, "Test Operation"));
+    EXPECT_NO_THROW(ErrorHandler::throwOnOpenALError("Test Operation"));
+    EXPECT_NO_THROW(ErrorHandler::throwOnALCError(m_audioContext.getDevice(), "Test Operation"));
 }
 
-TEST(ErrorHandlerTests, ClearErrorFunctions)
+TEST_F(ErrorHandlerTests, ClearErrorFunctions)
 {
-    EXPECT_NO_THROW(ErrorHandler::clearOpenALError());
-    EXPECT_NO_THROW(ErrorHandler::clearALCError(nullptr));
+    alSourcei(999999, AL_BUFFER, 0);
+    ALenum alError = ErrorHandler::clearOpenALError();
+    EXPECT_EQ(alError, AL_INVALID_NAME);
+    
+    ALenum secondAlCall = ErrorHandler::clearOpenALError();
+    EXPECT_EQ(secondAlCall, AL_NO_ERROR);
+    
+    alcGetIntegerv(m_audioContext.getDevice(), 999999, 1, nullptr);
+    ALCenum alcError = ErrorHandler::clearALCError(m_audioContext.getDevice());
+    EXPECT_EQ(alcError, ALC_INVALID_VALUE);
+
+    ALCenum secondAlcCall = ErrorHandler::clearALCError(m_audioContext.getDevice());
+    EXPECT_EQ(secondAlcCall, ALC_NO_ERROR);
 }
 
 //==============================================================================
@@ -275,8 +281,8 @@ TEST(Vec3Tests, Distance)
     Vec3 v1(0.0f, 0.0f, 0.0f);
     Vec3 v2(3.0f, 4.0f, 0.0f);
 
-    EXPECT_FLOAT_EQ(v1.distanceTo(v2), 5.0f);
-    EXPECT_FLOAT_EQ(v2.distanceTo(v1), 5.0f);
+    EXPECT_FLOAT_EQ(v1.distance(v2), 5.0f);
+    EXPECT_FLOAT_EQ(v2.distance(v1), 5.0f);
 }
 
 TEST(Vec3Tests, DotProduct)
@@ -284,19 +290,19 @@ TEST(Vec3Tests, DotProduct)
     Vec3 v1(1.0f, 2.0f, 3.0f);
     Vec3 v2(4.0f, 5.0f, 6.0f);
 
-    float dot = v1.dotProduct(v2);
+    float dot = v1.dot(v2);
     EXPECT_FLOAT_EQ(dot, 32.0f);
 
     Vec3 perpendicular1(1.0f, 0.0f, 0.0f);
     Vec3 perpendicular2(0.0f, 1.0f, 0.0f);
-    EXPECT_FLOAT_EQ(perpendicular1.dotProduct(perpendicular2), 0.0f);
+    EXPECT_FLOAT_EQ(perpendicular1.dot(perpendicular2), 0.0f);
 }
 
 TEST(Vec3Tests, CrossProduct)
 {
     Vec3 v1(1.0f, 0.0f, 0.0f);
     Vec3 v2(0.0f, 1.0f, 0.0f);
-    Vec3 cross = v1.crossProduct(v2);
+    Vec3 cross = v1.cross(v2);
 
     EXPECT_FLOAT_EQ(cross.x, 0.0f);
     EXPECT_FLOAT_EQ(cross.y, 0.0f);
@@ -304,7 +310,7 @@ TEST(Vec3Tests, CrossProduct)
 
     Vec3 parallel1(1.0f, 2.0f, 3.0f);
     Vec3 parallel2(2.0f, 4.0f, 6.0f);
-    Vec3 crossParallel = parallel1.crossProduct(parallel2);
+    Vec3 crossParallel = parallel1.cross(parallel2);
     EXPECT_FLOAT_EQ(crossParallel.length(), 0.0f);
 }
 
@@ -335,12 +341,12 @@ TEST(Vec3Tests, AngleTo)
     Vec3 v1(1.0f, 0.0f, 0.0f);
     Vec3 v2(0.0f, 1.0f, 0.0f);
 
-    float angle = v1.angleTo(v2);
+    float angle = v1.angle(v2);
     EXPECT_FLOAT_EQ(angle, M_PI / 2.0f);
 
     Vec3 same1(1.0f, 1.0f, 1.0f);
     Vec3 same2(2.0f, 2.0f, 2.0f);
-    float sameAngle = same1.angleTo(same2);
+    float sameAngle = same1.angle(same2);
     EXPECT_NEAR(sameAngle, 0.0f, 0.001f);
 }
 
@@ -349,16 +355,16 @@ TEST(Vec3Tests, StaticMethods)
     Vec3 v1(1.0f, 2.0f, 3.0f);
     Vec3 v2(4.0f, 5.0f, 6.0f);
 
-    float staticDot = Vec3::dotProduct(v1, v2);
-    float instanceDot = v1.dotProduct(v2);
+    float staticDot = Vec3::dot(v1, v2);
+    float instanceDot = v1.dot(v2);
     EXPECT_FLOAT_EQ(staticDot, instanceDot);
 
-    Vec3 staticCross = Vec3::crossProduct(v1, v2);
-    Vec3 instanceCross = v1.crossProduct(v2);
+    Vec3 staticCross = Vec3::cross(v1, v2);
+    Vec3 instanceCross = v1.cross(v2);
     EXPECT_TRUE(staticCross == instanceCross);
 
-    float staticDistance = Vec3::distanceTo(v1, v2);
-    float instanceDistance = v1.distanceTo(v2);
+    float staticDistance = Vec3::distance(v1, v2);
+    float instanceDistance = v1.distance(v2);
     EXPECT_FLOAT_EQ(staticDistance, instanceDistance);
 
     Vec3 staticLerp = Vec3::lerp(v1, v2, 0.5f);
