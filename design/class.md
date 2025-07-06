@@ -146,8 +146,8 @@ classDiagram
         +float getPosition()
     }
     
-    class SoundPlayer {
-        -static SoundPlayer* s_instance
+    class SoundManager {
+        -static SoundManager* s_instance
         -float m_masterVolume
         -float m_effectsVolume
         -float m_musicVolume
@@ -174,7 +174,7 @@ classDiagram
         +float getMusicVolume()
         +void setListenerPosition(Vec3 position)
         +Vec3 getListenerPosition()
-        +static SoundPlayer& getInstance()
+        +static SoundManager& getInstance()
     }
     
     %% Utils Layer
@@ -221,10 +221,10 @@ classDiagram
     Music -- SoundBuffer
     Music -- SoundSource
     
-    SoundPlayer -- ResourceManager
-    SoundPlayer -- SoundEffect
-    SoundPlayer -- Music
-    SoundPlayer -- Types
+    SoundManager -- ResourceManager
+    SoundManager -- SoundEffect
+    SoundManager -- Music
+    SoundManager -- Types
     
     AudioFile -- ErrorHandler
 ```

@@ -16,14 +16,14 @@ namespace soundcoe
                                      size_t maxCacheSizeMB)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(m_initialized)
+        if (m_initialized)
         {
             logcoe::info("ResourceManager is already initialized");
             return;
         }
 
-        logcoe::initialize(logcoe::LogLevel::INFO, "soundcoe"); // TODO: move it to SoundPlayer in the future
-        if(audioRootDirectory.empty())
+        logcoe::initialize(logcoe::LogLevel::INFO, "soundcoe"); // TODO: move it to SoundManager in the future
+        if (audioRootDirectory.empty())
         {
             logcoe::warning("Audio root directory cannot be empty - specify a valid directory path");
             logcoe::shutdown();
@@ -36,8 +36,11 @@ namespace soundcoe
         m_maxSources = maxSources;
         m_maxCacheSize = maxCacheSizeMB * 1024 * 1024;
 
-        try { createSourcePool(); }
-        catch(const std::exception &e)
+        try
+        {
+            createSourcePool();
+        }
+        catch (const std::exception &e)
         {
             logcoe::error("Failed to create Source Pool: " + std::string(e.what()));
             m_sourcePool.clear();
@@ -52,14 +55,15 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        if(!m_initialized) return;
+        if (!m_initialized)
+            return;
 
         m_sourcePool.clear();
         m_bufferCache.clear();
         m_loadedDirectories.clear();
         m_freeSourceIndices.clear();
         m_audioContext.shutdown();
-        logcoe::shutdown(); // TODO: move it to SoundPlayer in the future
+        logcoe::shutdown(); // TODO: move it to SoundManager in the future
 
         m_currentCacheSize = 0;
         m_initialized = false;
@@ -75,35 +79,35 @@ namespace soundcoe
     bool ResourceManager::preloadDirectory(const std::string &subdirectory)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(subdirectory.empty())
+        if (subdirectory.empty())
         {
             logcoe::warning("Cannot preload empty subdirectory - this would load the entire audio root directory");
             return false;
         }
 
         std::filesystem::path fullPath = m_audioRootDirectory / normalizePath(subdirectory);
-        if(!std::filesystem::exists(fullPath) || !std::filesystem::is_directory(fullPath))
+        if (!std::filesystem::exists(fullPath) || !std::filesystem::is_directory(fullPath))
         {
             logcoe::warning("Not a directory: \"" + subdirectory + "\"");
             return false;
         }
 
-        if(isDirectoryLoadedImpl(subdirectory))
+        if (isDirectoryLoadedImpl(subdirectory))
         {
             logcoe::warning("Directory is already loaded: \"" + subdirectory + "\"");
             return true;
         }
 
         std::vector<std::filesystem::path> audioFiles;
-        if(scanDirectoryForFiles(subdirectory, audioFiles))
+        if (scanDirectoryForFiles(subdirectory, audioFiles))
         {
-            for(auto &file : audioFiles)
+            for (auto &file : audioFiles)
                 preloadFileImpl(file.string());
 
             m_loadedDirectories.push_back(subdirectory);
@@ -117,27 +121,27 @@ namespace soundcoe
     bool ResourceManager::unloadDirectory(const std::string &subdirectory)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(subdirectory.empty())
+        if (subdirectory.empty())
         {
             logcoe::warning("Subdirectory path cannot be empty - specify a valid directory path");
             return true;
         }
 
-        if(!isDirectoryLoadedImpl(subdirectory))
+        if (!isDirectoryLoadedImpl(subdirectory))
         {
             logcoe::warning("Directory is not loaded: \"" + subdirectory + "\"");
             return true;
         }
 
         std::vector<std::filesystem::path> audioFiles;
-        if(scanDirectoryForFiles(subdirectory, audioFiles))
-            for(auto &file : audioFiles)
+        if (scanDirectoryForFiles(subdirectory, audioFiles))
+            for (auto &file : audioFiles)
                 unloadFileImpl(file.string());
         else
             logcoe::warning("No audio files found in directory: " + subdirectory);
@@ -150,13 +154,13 @@ namespace soundcoe
     bool ResourceManager::preloadFile(const std::string &filename)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(filename.empty())
+        if (filename.empty())
         {
             logcoe::error("Filename cannot be empty - specify a valid audio file path");
             return false;
@@ -168,13 +172,13 @@ namespace soundcoe
     bool ResourceManager::unloadFile(const std::string &filename)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(filename.empty())
+        if (filename.empty())
         {
             logcoe::warning("Filename cannot be empty - specify a valid audio file path");
             return true;
@@ -186,16 +190,16 @@ namespace soundcoe
     std::optional<std::reference_wrapper<SoundSource>> ResourceManager::acquireSource(SoundPriority priority)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return std::nullopt;
         }
 
         size_t index;
-        if(m_freeSourceIndices.empty())
+        if (m_freeSourceIndices.empty())
         {
-            if(!findSourceToReplace(priority, index))
+            if (!findSourceToReplace(priority, index))
             {
                 logcoe::error("Could not find a Source to replace");
                 return std::nullopt;
@@ -212,7 +216,7 @@ namespace soundcoe
         entry.m_allocatedTime = std::chrono::steady_clock::now();
         entry.m_active = true;
 
-        if(entry.m_source.get() == nullptr)
+        if (entry.m_source.get() == nullptr)
             return std::nullopt;
 
         return std::ref(*(entry.m_source));
@@ -221,20 +225,20 @@ namespace soundcoe
     std::optional<std::reference_wrapper<SoundBuffer>> ResourceManager::getBuffer(const std::string &filename)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return std::nullopt;
         }
 
-        if(filename.empty())
+        if (filename.empty())
         {
             logcoe::error("Filename cannot be empty - specify a valid audio file path");
             return std::nullopt;
         }
 
         std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-        if((m_bufferCache.find(fullPath) == m_bufferCache.end()) && !preloadFileImpl(filename))
+        if ((m_bufferCache.find(fullPath) == m_bufferCache.end()) && !preloadFileImpl(filename))
             return std::nullopt;
 
         auto &entry = m_bufferCache[fullPath];
@@ -246,20 +250,26 @@ namespace soundcoe
     bool ResourceManager::releaseSource(std::reference_wrapper<SoundSource> source)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        for(size_t i = 0; i < m_sourcePool.size(); ++i)
+        for (size_t i = 0; i < m_sourcePool.size(); ++i)
         {
             auto &allocation = m_sourcePool[i];
-            if(!allocation.m_active || allocation.m_source->getSourceId() != source.get().getSourceId())
+            if (!allocation.m_active || allocation.m_source->getSourceId() != source.get().getSourceId())
                 continue;
 
-            try { allocation.m_source->detachBuffer(); }
-            catch(const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+            try
+            {
+                allocation.m_source->detachBuffer();
+            }
+            catch (const std::exception &e)
+            {
+                logcoe::warning("Failed to detach Buffer: " + std::string(e.what()));
+            }
 
             allocation.m_active = false;
             m_freeSourceIndices.push_back(i);
@@ -274,20 +284,20 @@ namespace soundcoe
     bool ResourceManager::releaseBuffer(const std::string &filename)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(filename.empty())
+        if (filename.empty())
         {
             logcoe::warning("Filename cannot be empty - specify a valid audio file path");
             return true;
         }
 
         std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-        if(m_bufferCache.find(fullPath) == m_bufferCache.end())
+        if (m_bufferCache.find(fullPath) == m_bufferCache.end())
         {
             logcoe::warning("File is not loaded: \"" + fullPath + "\"");
             return true;
@@ -295,7 +305,7 @@ namespace soundcoe
 
         auto &entry = m_bufferCache[fullPath];
 
-        if(entry.m_referenceCount == 0)
+        if (entry.m_referenceCount == 0)
         {
             logcoe::warning("Not a single Source is using this Buffer at the moment");
             return true;
@@ -308,7 +318,7 @@ namespace soundcoe
     size_t ResourceManager::getActiveSourceCount() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return 0;
@@ -320,7 +330,7 @@ namespace soundcoe
     size_t ResourceManager::getTotalSourceCount() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return 0;
@@ -332,7 +342,7 @@ namespace soundcoe
     size_t ResourceManager::getCachedBufferCount() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return 0;
@@ -344,7 +354,7 @@ namespace soundcoe
     size_t ResourceManager::getCacheSizeBytes() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return 0;
@@ -356,7 +366,7 @@ namespace soundcoe
     std::vector<std::filesystem::path> ResourceManager::getLoadedDirectories() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return {};
@@ -368,13 +378,13 @@ namespace soundcoe
     bool ResourceManager::isDirectoryLoaded(const std::string &subdirectory) const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return false;
         }
 
-        if(subdirectory.empty())
+        if (subdirectory.empty())
         {
             logcoe::warning("Subdirectory cannot be empty - specify a valid directory path");
             return false;
@@ -386,16 +396,16 @@ namespace soundcoe
     size_t ResourceManager::cleanupUnusedBuffers()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(!m_initialized)
+        if (!m_initialized)
         {
             logcoe::error("ResourceManager is not initialized");
             return 0;
         }
 
         size_t removed = 0;
-        for(auto it = m_bufferCache.begin(); it != m_bufferCache.end();)
+        for (auto it = m_bufferCache.begin(); it != m_bufferCache.end();)
         {
-            if(it->second.m_referenceCount == 0)
+            if (it->second.m_referenceCount == 0)
             {
                 m_currentCacheSize -= it->second.m_buffer->getSize();
                 it = m_bufferCache.erase(it);
@@ -414,7 +424,7 @@ namespace soundcoe
         m_freeSourceIndices.clear();
         auto time = std::chrono::steady_clock::now();
 
-        for(size_t index = 0; index < m_maxSources; ++index)
+        for (size_t index = 0; index < m_maxSources; ++index)
         {
             m_sourcePool[index].m_source = std::make_unique<SoundSource>();
             m_sourcePool[index].m_priority = SoundPriority::Medium;
@@ -426,13 +436,13 @@ namespace soundcoe
 
     bool ResourceManager::findSourceToReplace(SoundPriority newPriority, size_t &replaceIndex)
     {
-        if(m_sourcePool.empty())
+        if (m_sourcePool.empty())
         {
             logcoe::warning("findSourceToReplace called but m_sourcePool is empty");
             return false;
         }
 
-        if(!m_freeSourceIndices.empty())
+        if (!m_freeSourceIndices.empty())
         {
             logcoe::warning("findSourceToReplace called but there are free sources available");
             return false;
@@ -443,12 +453,12 @@ namespace soundcoe
                                             {
                                                 return it.m_active && it.m_source->isStopped();
                                             });
-        if(sourceToReplace == m_sourcePool.end())
+        if (sourceToReplace == m_sourcePool.end())
         {
             sourceToReplace = std::min_element(m_sourcePool.begin(), m_sourcePool.end(),
                                                [](const auto &a, const auto &b)
                                                {
-                                                   if(a.m_priority != b.m_priority)
+                                                   if (a.m_priority != b.m_priority)
                                                        return a.m_priority < b.m_priority;
                                                    return a.m_allocatedTime < b.m_allocatedTime;
                                                });
@@ -459,7 +469,7 @@ namespace soundcoe
                 return false;
             }
 
-            if(sourceToReplace->m_active)
+            if (sourceToReplace->m_active)
             {
                 sourceToReplace->m_source->stop();
                 sourceToReplace->m_active = false;
@@ -473,7 +483,7 @@ namespace soundcoe
 
     void ResourceManager::freeOldestBuffer()
     {
-        while(m_currentCacheSize > m_maxCacheSize && !m_bufferCache.empty())
+        while (m_currentCacheSize > m_maxCacheSize && !m_bufferCache.empty())
         {
             auto oldest = std::min_element(m_bufferCache.begin(), m_bufferCache.end(),
                                            [](const auto &a, const auto &b)
@@ -482,14 +492,20 @@ namespace soundcoe
                                            });
 
             auto oldestBufferId = oldest->second.m_buffer->getBufferId();
-            for(size_t i = 0; i < m_sourcePool.size(); ++i)
+            for (size_t i = 0; i < m_sourcePool.size(); ++i)
             {
                 auto &allocation = m_sourcePool[i];
-                if(!allocation.m_active || allocation.m_source->getBufferId() != oldestBufferId)
+                if (!allocation.m_active || allocation.m_source->getBufferId() != oldestBufferId)
                     continue;
-            
-                try { allocation.m_source->detachBuffer(); }
-                catch(const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+
+                try
+                {
+                    allocation.m_source->detachBuffer();
+                }
+                catch (const std::exception &e)
+                {
+                    logcoe::warning("Failed to detach Buffer: " + std::string(e.what()));
+                }
 
                 allocation.m_active = false;
                 m_freeSourceIndices.push_back(i);
@@ -624,11 +640,17 @@ namespace soundcoe
             for (size_t i = 0; i < m_sourcePool.size(); ++i)
             {
                 auto &allocation = m_sourcePool[i];
-                if(!allocation.m_active || allocation.m_source->getBufferId() != bufferId)
+                if (!allocation.m_active || allocation.m_source->getBufferId() != bufferId)
                     continue;
 
-                try { allocation.m_source->detachBuffer(); }
-                catch(const std::exception &e) { logcoe::warning("Failed to detach Buffer: " + std::string(e.what())); }
+                try
+                {
+                    allocation.m_source->detachBuffer();
+                }
+                catch (const std::exception &e)
+                {
+                    logcoe::warning("Failed to detach Buffer: " + std::string(e.what()));
+                }
 
                 allocation.m_active = false;
                 m_freeSourceIndices.push_back(i);

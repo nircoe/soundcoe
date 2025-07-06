@@ -5,8 +5,6 @@ set(SOURCES
     resources/sound_buffer.cpp
     resources/sound_source.cpp
     resources/resource_manager.cpp
-    playback/sound_effect.cpp
-    playback/music.cpp
     playback/sound_player.cpp
     utils/math.cpp
 )
