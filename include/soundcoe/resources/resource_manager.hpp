@@ -34,17 +34,17 @@ namespace soundcoe
     class ResourceManager
     {
         AudioContext m_audioContext;
-        bool m_initialized;
+        bool m_initialized = false;
         std::filesystem::path m_audioRootDirectory;
-        size_t m_maxSources;
+        size_t m_maxSources                         = 32;
         mutable std::mutex m_mutex;
 
         std::vector<SourceAllocation> m_sourcePool;
         std::deque<size_t> m_freeSourceIndices;
 
         std::unordered_map<std::string, BufferCacheEntry> m_bufferCache;
-        size_t m_maxCacheSize;
-        size_t m_currentCacheSize;
+        size_t m_maxCacheSize                       = 64 * 1024 * 1024; // 64MB
+        size_t m_currentCacheSize                   = 0;
 
         std::vector<std::filesystem::path> m_loadedDirectories;
 

@@ -6,9 +6,8 @@
 
 namespace soundcoe
 {
-    ResourceManager::ResourceManager() : m_audioContext(), m_initialized(false), m_maxSources(0), m_sourcePool(),
-                                         m_freeSourceIndices(), m_bufferCache(), m_maxCacheSize(0),
-                                         m_currentCacheSize(0), m_loadedDirectories() {}
+    ResourceManager::ResourceManager() : m_audioContext(), m_audioRootDirectory(), m_sourcePool(),
+                                         m_freeSourceIndices(), m_bufferCache(), m_loadedDirectories() {}
 
     ResourceManager::~ResourceManager() { shutdown(); }
 

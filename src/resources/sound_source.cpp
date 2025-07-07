@@ -5,8 +5,7 @@
 
 namespace soundcoe
 {
-    SoundSource::SoundSource() : m_sourceId(0), m_volume(1.0f), m_pitch(1.0f), m_position(Vec3::zero()),
-                                 m_velocity(Vec3::zero()), m_looping(AL_FALSE), m_created(false) { }
+    SoundSource::SoundSource() : m_position(Vec3::zero()), m_velocity(Vec3::zero()) { }
 
     SoundSource::SoundSource(const SoundBuffer &buffer)
     {

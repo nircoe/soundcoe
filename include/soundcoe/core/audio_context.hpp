@@ -11,9 +11,9 @@ namespace soundcoe
 {
     class AudioContext
     {
-        ALCdevice *m_device;
-        ALCcontext *m_context;
-        bool m_initialized;
+        ALCdevice *m_device     = nullptr;
+        ALCcontext *m_context   = nullptr;
+        bool m_initialized      = false;
         mutable std::mutex m_mutex;
 
         AudioContext(const AudioContext &) = delete;
