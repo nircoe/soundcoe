@@ -21,11 +21,9 @@ namespace soundcoe
             return;
         }
 
-        logcoe::initialize(logcoe::LogLevel::INFO, "soundcoe"); // TODO: move it to SoundManager in the future
         if (audioRootDirectory.empty())
         {
             logcoe::warning("Audio root directory cannot be empty - specify a valid directory path");
-            logcoe::shutdown();
             return;
         }
 
@@ -62,7 +60,6 @@ namespace soundcoe
         m_loadedDirectories.clear();
         m_freeSourceIndices.clear();
         m_audioContext.shutdown();
-        logcoe::shutdown(); // TODO: move it to SoundManager in the future
 
         m_currentCacheSize = 0;
         m_initialized = false;
@@ -186,7 +183,7 @@ namespace soundcoe
         return unloadFileImpl(filename);
     }
 
-    std::optional<std::reference_wrapper<SoundSource>> ResourceManager::acquireSource(SoundPriority priority)
+    std::optional<std::reference_wrapper<SoundSource>> ResourceManager::acquireSource(size_t &poolIndex, SoundPriority priority)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (!m_initialized)
@@ -218,6 +215,7 @@ namespace soundcoe
         if (entry.m_source.get() == nullptr)
             return std::nullopt;
 
+        poolIndex = index;
         return std::ref(*(entry.m_source));
     }
 
@@ -280,7 +278,7 @@ namespace soundcoe
         return true;
     }
 
-    bool ResourceManager::releaseBuffer(const std::string &filename)
+    bool ResourceManager::releaseBuffer(std::reference_wrapper<SoundBuffer> buffer)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (!m_initialized)
@@ -289,21 +287,14 @@ namespace soundcoe
             return false;
         }
 
-        if (filename.empty())
+        std::string filename = buffer.get().getFileName();
+        if(m_bufferCache.find(filename) == m_bufferCache.end())
         {
-            logcoe::warning("Filename cannot be empty - specify a valid audio file path");
+            logcoe::warning("Buffer not found in cache: " + filename);
             return true;
         }
 
-        std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-        if (m_bufferCache.find(fullPath) == m_bufferCache.end())
-        {
-            logcoe::warning("File is not loaded: \"" + fullPath + "\"");
-            return true;
-        }
-
-        auto &entry = m_bufferCache[fullPath];
-
+        auto &entry = m_bufferCache[filename];
         if (entry.m_referenceCount == 0)
         {
             logcoe::warning("Not a single Source is using this Buffer at the moment");
@@ -666,5 +657,13 @@ namespace soundcoe
         auto it = std::find(m_loadedDirectories.begin(), m_loadedDirectories.end(), subdirectory);
 
         return it != m_loadedDirectories.end();
+    }
+
+    std::optional<SourceAllocation&> ResourceManager::getSourceAllocation(size_t index)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(0 <= index && index <= m_sourcePool.size() - 1)
+            return m_sourcePool[index];
+        return std::nullopt;
     }
 } // namespace soundcoe

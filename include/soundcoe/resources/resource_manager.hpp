@@ -71,10 +71,10 @@ namespace soundcoe
         bool preloadFile(const std::string &filename);
         bool unloadFile(const std::string &filename);
 
-        std::optional<std::reference_wrapper<SoundSource>> acquireSource(SoundPriority priority = SoundPriority::Medium);
+        std::optional<std::reference_wrapper<SoundSource>> acquireSource(size_t &poolIndex, SoundPriority priority = SoundPriority::Medium);
         std::optional<std::reference_wrapper<SoundBuffer>> getBuffer(const std::string &filename);
         bool releaseSource(std::reference_wrapper<SoundSource> source);
-        bool releaseBuffer(const std::string &filename);
+        bool releaseBuffer(std::reference_wrapper<SoundBuffer> buffer);
 
         size_t getActiveSourceCount() const;
         size_t getTotalSourceCount() const;
@@ -83,5 +83,7 @@ namespace soundcoe
         std::vector<std::filesystem::path> getLoadedDirectories() const;
         bool isDirectoryLoaded(const std::string &subdirectory) const;
         size_t cleanupUnusedBuffers();
+
+        std::optional<SourceAllocation&> getSourceAllocation(size_t index);
     };
 } // namespace soundcoe

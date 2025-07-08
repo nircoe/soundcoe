@@ -15,7 +15,8 @@ namespace soundcoe
         ALsizei m_sampleRate    = 0;
         ALfloat m_duration      = 0.0f;
         bool m_loaded           = false;
-        std::string m_filename  = "";
+        bool m_stream           = false;
+        std::string m_filename = "";
 
         void loadFromAudioData(AudioData &&audioData);
         void generateBuffer(const void* data);
@@ -41,6 +42,7 @@ namespace soundcoe
         ALsizei getSampleRate() const;
         ALfloat getDuration() const;
         bool isLoaded() const;
+        bool isStreaming() const;
         const std::string &getFileName() const;
     };
 } // namespace soundcoe
