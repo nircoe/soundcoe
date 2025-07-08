@@ -83,5 +83,7 @@ namespace soundcoe
         std::vector<std::filesystem::path> getLoadedDirectories() const;
         bool isDirectoryLoaded(const std::string &subdirectory) const;
         size_t cleanupUnusedBuffers();
+
+        std::optional<SourceAllocation&> getSourceAllocation(size_t index);
     };
 } // namespace soundcoe

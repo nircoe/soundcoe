@@ -1,16 +1,111 @@
 #include <soundcoe/playback/sound_manager.hpp>
+#include <soundcoe/core/error_handler.hpp>
+#include <AL/al.h>
+#include <logcoe.hpp>
+#include <functional>
 
 namespace soundcoe
 {
-    SoundManager::SoundManager() { }
+    void SoundManager::updateAllSoundsVolume()
+    {
+        updateAllAudioProperty(m_activeSounds,
+                               [](std::unique_ptr<SoundSource> &audio, float value) { audio->setVolume(value); },
+                               [](const ActiveAudio &audio) { return audio.m_baseVolume; },
+                               m_masterVolume, m_masterSoundsVolume);
+    }
 
-    SoundManager::SoundManager(const std::string &audioRootDirectory) { }
+    void SoundManager::updateAllMusicVolume()
+    {
+        updateAllAudioProperty(m_activeMusic,
+                               [](std::unique_ptr<SoundSource> &audio, float value) { audio->setVolume(value); },
+                               [](const ActiveAudio &audio) { return audio.m_baseVolume; },
+                               m_masterVolume, m_masterMusicVolume);
+    }
 
-    SoundManager::~SoundManager() { }
+    void SoundManager::updateAllVolume()
+    {
+        updateAllSoundsVolume();
+        updateAllMusicVolume();
+    }
 
-    void SoundManager::initialize(const std::string &audioRootDirectory) { }
+    void SoundManager::updateAllSoundsPitch()
+    {
+        updateAllAudioProperty(m_activeSounds,
+                               [](std::unique_ptr<SoundSource> &audio, float value) { audio->setPitch(value); },
+                               [](const ActiveAudio &audio) { return audio.m_basePitch; },
+                               m_masterPitch, m_masterSoundsPitch);
+    }
 
-    void SoundManager::shutdown() { }
+    void SoundManager::updateAllMusicPitch()
+    {
+        updateAllAudioProperty(m_activeMusic,
+                               [](std::unique_ptr<SoundSource> &audio, float value) { audio->setPitch(value); },
+                               [](const ActiveAudio &audio) { return audio.m_basePitch; },
+                               m_masterPitch, m_masterMusicPitch);
+    }
+
+    void SoundManager::updateAllPitch()
+    {
+        updateAllSoundsPitch();
+        updateAllMusicPitch();
+    }
+
+    bool SoundManager::setListenerPositionImpl(const Vec3 &position)
+    {
+        ALfloat pos[3] = {position.x, position.y, position.z};
+        alListenerfv(AL_POSITION, pos);
+        if (ErrorHandler::checkOpenALError("Set Listener Position"))
+            return false;
+        m_listenerPosition = position;
+        return true;
+    }
+
+    bool SoundManager::setListenerVelocityImpl(const Vec3 &velocity)
+    {
+        ALfloat vel[3] = {velocity.x, velocity.y, velocity.z};
+        alListenerfv(AL_VELOCITY, vel);
+        if (ErrorHandler::checkOpenALError("Set Listener Velocity"))
+            return false;
+        m_listenerVelocity = velocity;
+        return true;
+    }
+
+    bool SoundManager::setListenerOrientationImpl(const Vec3 &forward, const Vec3 &up)
+    {
+        ALfloat orientation[6] = {forward.x, forward.y, forward.z,
+                                  up.x, up.y, up.z};
+        alListenerfv(AL_ORIENTATION, orientation);
+        if (ErrorHandler::checkOpenALError("Set Listener Forward and Up Vectors"))
+            return false;
+        m_listenerForward = forward;
+        m_listenerUp = up;
+        return true;
+    }
+
+    SoundManager::SoundManager() {}
+
+    SoundManager::SoundManager(const std::string &audioRootDirectory)
+    {
+        alListenerf(AL_GAIN, 1.0f);
+
+        // to be continued
+    }
+
+    SoundManager::~SoundManager() {}
+
+    void SoundManager::initialize(const std::string &audioRootDirectory)
+    {
+        if (m_initialized)
+        {
+            logcoe::warning("Need to shutdown SoundManager before initialize it again");
+            return;
+        }
+        alListenerf(AL_GAIN, 1.0f);
+
+        // to be continued
+    }
+
+    void SoundManager::shutdown() {}
 
     bool SoundManager::isInitialized() const { return false; }
 
@@ -20,7 +115,7 @@ namespace soundcoe
 
     bool SoundManager::isSceneLoaded(const std::string &sceneName) { return false; }
 
-    void SoundManager::update() { }
+    void SoundManager::update() {}
 
     SoundHandle SoundManager::playSound(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority) { return INVALID_SOUND_HANDLE; }
 
@@ -100,75 +195,222 @@ namespace soundcoe
 
     bool SoundManager::fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration) { return false; }
 
-    bool SoundManager::setMasterVolume(float volume) { return false; }
+    bool SoundManager::setMasterVolume(float volume)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::setMasterSoundVolume(float volume) { return false; }
+        m_masterVolume = volume;
+        updateAllVolume();
+    }
 
-    bool SoundManager::setMasterMusicVolume(float volume) { return false; }
+    bool SoundManager::setMasterSoundsVolume(float volume)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::muteAllSounds() { return false; }
+        m_masterSoundsVolume = volume;
+        updateAllSoundsVolume();
+    }
 
-    bool SoundManager::muteAllMusic() { return false; }
+    bool SoundManager::setMasterMusicVolume(float volume)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::muteAll() { return false; }
+        m_masterMusicVolume = volume;
+        updateAllMusicVolume();
+    }
 
-    bool SoundManager::isMuted() const { return false; }
+    bool SoundManager::setMasterPitch(float pitch)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::isSoundsMuted() const { return false; }
+        m_masterPitch = pitch;
+        updateAllPitch();
+    }
 
-    bool SoundManager::isMusicMuted() const { return false; }
+    bool SoundManager::setMasterSoundsPitch(float pitch)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::setMasterPitch(float pitch) { return false; }
+        m_masterSoundsPitch = pitch;
+        updateAllSoundsPitch();
+    }
 
-    bool SoundManager::setMasterSoundPitch(float pitch) { return false; }
+    bool SoundManager::setMasterMusicPitch(float pitch)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::setMasterMusicPitch(float pitch) { return false; }
+        m_masterMusicPitch = pitch;
+        updateAllMusicPitch();
+    }
 
-    float SoundManager::getMasterVolume() const { return 0.0f; }
+    float SoundManager::getMasterVolume() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    float SoundManager::getMasterSoundVolume() const { return 0.0f; }
+        return m_masterVolume;
+    }
 
-    float SoundManager::getMasterMusicVolume() const { return 0.0f; }
+    float SoundManager::getMasterSoundsVolume() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    float SoundManager::getMasterPitch() const { return 0.0f; }
+        return m_masterSoundsVolume;
+    }
 
-    float SoundManager::getMasterSoundPitch() const { return 0.0f; }
+    float SoundManager::getMasterMusicVolume() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    float SoundManager::getMasterMusicPitch() const { return 0.0f; }
+        return m_masterMusicVolume;
+    }
 
-    bool SoundManager::updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up) { return false; }
+    float SoundManager::getMasterPitch() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::setListenerPosition(const Vec3 &position) { return false; }
+        return m_masterPitch;
+    }
 
-    bool SoundManager::setListenerVelocity(const Vec3 &velocity) { return false; }
+    float SoundManager::getMasterSoundsPitch() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::setListenerForward(const Vec3 &forward) { return false; }
+        return m_masterSoundsPitch;
+    }
 
-    bool SoundManager::setListenerUp(const Vec3 &up) { return false; }
+    float SoundManager::getMasterMusicPitch() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    const Vec3 SoundManager::getListenerPosition() const { return Vec3::zero(); }
+        return m_masterMusicPitch;
+    }
 
-    const Vec3 SoundManager::getListenerVelocity() const { return Vec3::zero(); }
+    bool SoundManager::muteAllSounds()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    const Vec3 SoundManager::getListenerForward() const { return Vec3::zero(); }
+        m_soundsMute = true;
+        return true;
+    }
 
-    const Vec3 SoundManager::getListenerUp() const { return Vec3::zero(); }
+    bool SoundManager::muteAllMusic()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    Vec3 SoundManager::getListenerPosition() { return Vec3::zero(); }
+        m_musicMute = true;
+        return true;
+    }
 
-    Vec3 SoundManager::getListenerVelocity() { return Vec3::zero(); }
+    bool SoundManager::muteAll()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    Vec3 SoundManager::getListenerForward() { return Vec3::zero(); }
+        m_mute = true;
+        return true;
+    }
 
-    Vec3 SoundManager::getListenerUp() { return Vec3::zero(); }
+    bool SoundManager::isMuted() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    bool SoundManager::isHandleValid(SoundHandle handle) const { return false; }
+        return m_mute;
+    }
 
-    bool SoundManager::isHandleValid(MusicHandle handle) const { return false; }
+    bool SoundManager::isSoundsMuted() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    const std::string SoundManager::getError() { return ""; }
+        return m_soundsMute;
+    }
 
-    void SoundManager::clearError() { }
+    bool SoundManager::isMusicMuted() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    
+        return m_musicMute;
+    }
+
+    bool SoundManager::updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return setListenerPositionImpl(position) &&
+               setListenerVelocityImpl(velocity) &&
+               setListenerOrientationImpl(forward, up);
+    }
+
+    bool SoundManager::setListenerPosition(const Vec3 &position)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return setListenerPositionImpl(position);
+    }
+
+    bool SoundManager::setListenerVelocity(const Vec3 &velocity)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return setListenerVelocityImpl(velocity);
+    }
+
+    bool SoundManager::setListenerForward(const Vec3 &forward)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return setListenerOrientationImpl(forward, m_listenerUp);
+    }
+
+    bool SoundManager::setListenerUp(const Vec3 &up)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return setListenerOrientationImpl(m_listenerForward, up);
+    }
+
+    Vec3 SoundManager::getListenerPosition()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return m_listenerPosition;
+    }
+
+    Vec3 SoundManager::getListenerVelocity()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return m_listenerVelocity;
+    }
+
+    Vec3 SoundManager::getListenerForward()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return m_listenerForward;
+    }
+
+    Vec3 SoundManager::getListenerUp()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        return m_listenerUp;
+    }
+
+    const std::string SoundManager::getError()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        std::string error(m_lastError);
+        m_lastError = "";
+        return error;
+    }
+
+    void SoundManager::clearError()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_lastError = "";
+    }
+
+    bool SoundManager::isHandleValid(SoundHandle handle) { return handle != INVALID_SOUND_HANDLE; }
+
+    bool SoundManager::isHandleValid(MusicHandle handle) { return handle != INVALID_MUSIC_HANDLE; }
+
 } // namespace soundcoe

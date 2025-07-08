@@ -667,4 +667,12 @@ namespace soundcoe
 
         return it != m_loadedDirectories.end();
     }
+
+    std::optional<SourceAllocation&> ResourceManager::getSourceAllocation(size_t index)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(0 <= index && index <= m_sourcePool.size() - 1)
+            return m_sourcePool[index];
+        return std::nullopt;
+    }
 } // namespace soundcoe
