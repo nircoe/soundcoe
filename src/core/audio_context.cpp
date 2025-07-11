@@ -6,10 +6,7 @@
 namespace soundcoe
 {
 
-    AudioContext::AudioContext() :
-        m_device(nullptr),
-        m_context(nullptr),
-        m_initialized(false) { }
+    AudioContext::AudioContext() { }
 
     AudioContext::~AudioContext() { shutdown(); }
 

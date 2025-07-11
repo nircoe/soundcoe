@@ -38,8 +38,7 @@ namespace soundcoe
         }
     }
 
-    SoundBuffer::SoundBuffer() : m_bufferId(0), m_format(AL_NONE), m_size(0), m_sampleRate(0), 
-                                    m_duration(0.0f), m_loaded(false), m_filename("") { }
+    SoundBuffer::SoundBuffer() { }
 
     SoundBuffer::SoundBuffer(const std::string &filename) : SoundBuffer()
     {

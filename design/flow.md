@@ -19,7 +19,7 @@ flowchart TD
     %% Playback Layer Nodes
     SoundEffect["SoundEffect"]:::playback
     Music["Music"]:::playback
-    SoundPlayer["SoundPlayer\n[Singleton]"]:::playback
+    SoundManager["SoundManager\n[Singleton]"]:::playback
     
     %% Utils Layer Nodes
     AudioFile["AudioFile"]:::utils
@@ -45,10 +45,10 @@ flowchart TD
     SoundEffect --> Types
     Music --> SoundBuffer
     Music --> SoundSource
-    SoundPlayer --> ResourceManager
-    SoundPlayer --> SoundEffect
-    SoundPlayer --> Music
-    SoundPlayer --> Types
+    SoundManager --> ResourceManager
+    SoundManager --> SoundEffect
+    SoundManager --> Music
+    SoundManager --> Types
     
     %% Utils Layer Relationships
     AudioFile --> ErrorHandler
@@ -75,7 +75,7 @@ flowchart TD
     %% subgraph Playback
     %%     SoundEffect
     %%     Music
-    %%     SoundPlayer
+    %%     SoundManager
     %% end
     
     %% subgraph Utils

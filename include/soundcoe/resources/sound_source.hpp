@@ -9,13 +9,13 @@ namespace soundcoe
 {
     class SoundSource
     {
-        ALuint m_sourceId;
-        ALfloat m_volume;
-        ALfloat m_pitch;
+        ALuint m_sourceId       = 0;
+        ALfloat m_volume        = 1.0f;
+        ALfloat m_pitch         = 1.0f;
         Vec3 m_position;
         Vec3 m_velocity;
-        ALboolean m_looping;
-        bool m_created;
+        ALboolean m_looping     = AL_FALSE;
+        bool m_created          = false;
 
     public:
         SoundSource();
