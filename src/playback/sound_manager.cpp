@@ -4,6 +4,7 @@
 #include <logcoe.hpp>
 #include <functional>
 #include <filesystem>
+#include <algorithm>
 
 namespace soundcoe
 {
@@ -106,13 +107,13 @@ namespace soundcoe
         ActiveAudio &audio = it->second;
 
         auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
         {
             activeAudio.erase(it);
             return setError(method + ": Audio source is no longer active");
         }
 
-        auto &source = sourceAllocation.value().m_source;
+        auto &source = sourceAllocation.value().get().m_source;
         if (!(source->isPlaying()))
             return setError(method + ": Cannot fadeToVolume audio that is not playing.");
 
@@ -137,13 +138,13 @@ namespace soundcoe
         ActiveAudio &audio = it->second;
 
         auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
         {
             activeAudio.erase(it);
             return setError(method + ": Audio source is no longer active");
         }
 
-        auto &source = sourceAllocation.value().m_source;
+        auto &source = sourceAllocation.value().get().m_source;
         if (!fadeIn && !(source->isPlaying()))
             return setError(method + ": Cannot fade out audio that is not playing.");
 
@@ -167,18 +168,51 @@ namespace soundcoe
 
         ActiveAudio &audio = it->second;
         auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
         {
             activeAudio.erase(it);
             return setError(method + ": Audio source is no longer active");
         }
 
-        auto &source = sourceAllocation.value().m_source;
+        auto &source = sourceAllocation.value().get().m_source;
         if(state == SoundState::Playing) return source->isPlaying();
         if(state == SoundState::Paused)  return source->isPaused();
         if(state == SoundState::Stopped) return source->isStopped();
         
         return setError(method + ": Internal error - Invalid operation type");
+    }
+
+    bool SoundManager::setAudioProperty(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
+                                        PropertyType type, const std::string &method, 
+                                        float value, float y, float z)
+    {
+        auto it = activeAudio.find(handle);
+        if (it == activeAudio.end())
+            return setError(method + ": Invalid handle");
+
+        ActiveAudio &audio = it->second;
+        auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
+        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
+        {
+            activeAudio.erase(it);
+            return setError(method + ": Audio source is no longer active");
+        }
+
+        auto &source = sourceAllocation.value().get().m_source;
+        Vec3 vec;
+        if (type == PropertyType::Position || type == PropertyType::Velocity)
+            vec = {value, y, z};
+
+        if (type == PropertyType::Volume)
+            return source->setVolume(value);
+        if (type == PropertyType::Pitch)
+            return source->setPitch(value);
+        if (type == PropertyType::Position)
+            return source->setPosition(vec);
+        if (type == PropertyType::Velocity)
+            return source->setVelocity(vec);
+
+        return setError(method + ": Internal error - Invalid PropertyType");
     }
 
     bool SoundManager::audioOperation(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
@@ -190,16 +224,26 @@ namespace soundcoe
 
         ActiveAudio &audio = it->second;
         auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+        if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
         {
             activeAudio.erase(it);
             return setError(method + ": Audio source is no longer active");
         }
 
-        auto &source = sourceAllocation.value().m_source;
+        auto &source = sourceAllocation.value().get().m_source;
         if(operation == SoundState::Playing) return source->play();
         if(operation == SoundState::Paused)  return source->pause();
-        if(operation == SoundState::Stopped) return source->stop();
+        if(operation == SoundState::Stopped) 
+        {
+            bool succeed = source->stop();
+            if(succeed)
+            {
+                m_resourceManager.releaseSource(*source);
+                m_resourceManager.releaseBuffer(audio.m_filename);
+                activeAudio.erase(it);
+            }
+            return succeed;
+        }
 
         return setError(method + ": Internal error - Invalid operation type");
     }
@@ -211,18 +255,34 @@ namespace soundcoe
         {
             ActiveAudio &audio = it->second;
             auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-            if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+            if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 logcoe::warning(method + ": handle " + std::to_string(it->first) + " is no longer active");
                 it = activeAudio.erase(it);
                 continue;
             }
 
-            auto &source = sourceAllocation.value().m_source;
+            auto &source = sourceAllocation.value().get().m_source;
             bool success = false;
-            if(operation == SoundState::Playing)      success = source->play();
+            if(operation == SoundState::Playing)
+            {
+                if(source->isPaused())
+                    success = source->play();
+                else
+                    logcoe::warning(method + ": handle " + std::to_string(it->first) + " is not paused");
+            }
             else if(operation == SoundState::Paused)  success = source->pause();
-            else if(operation == SoundState::Stopped) success = source->stop();
+            else if(operation == SoundState::Stopped)
+            {
+                success = source->stop();
+                if(success)
+                {
+                    m_resourceManager.releaseSource(*source);
+                    m_resourceManager.releaseBuffer(audio.m_filename);
+                    it = activeAudio.erase(it);
+                    continue;
+                }
+            } 
             else
                 return setError(method + ": Internal error - Invalid operation type");
 
@@ -235,9 +295,10 @@ namespace soundcoe
         return true;
     }
 
-    size_t SoundManager::play(std::unordered_map<size_t, ActiveAudio> &activeAudio, const std::string &filename, 
-                              float volume, float pitch, bool loop, SoundPriority priority, 
+    size_t SoundManager::play(std::unordered_map<size_t, ActiveAudio> &activeAudio, const std::string &filename,
+                              float volume, float pitch, bool loop, SoundPriority priority,
                               std::atomic<size_t> &nextHandle, const std::string &method,
+                              float masterCategoryVolume, float masterCategoryPitch,
                               bool is3D, const Vec3 &position, const Vec3 &velocity)
     {
         auto buffer = m_resourceManager.getBuffer(filename);
@@ -268,9 +329,9 @@ namespace soundcoe
             return INVALID_SOUND_HANDLE;
         }
 
-        if (!(source->get().setVolume(volume)))
+        if (!(source->get().setVolume(volume * m_masterVolume * masterCategoryVolume)))
             logcoe::warning(method + ": Failed to set volume for " + filename);
-        if (!(source->get().setPitch(pitch)))
+        if (!(source->get().setPitch(pitch * m_masterPitch * masterCategoryPitch)))
             logcoe::warning(method + ": Failed to set pitch for " + filename);
         if (!(source->get().setLooping(loop)))
             logcoe::warning(method + ": Failed to set looping for " + filename);
@@ -302,6 +363,95 @@ namespace soundcoe
         return nextHandle++;
     }
 
+    void SoundManager::handleStreamingAudio()
+    {
+        // In the roadmap, not yet implemented
+    }
+
+    void SoundManager::handleFadeEffects(std::unordered_map<size_t, ActiveAudio> &activeAudio, 
+                                         float categoryMultiplier, float deltaTime)
+    {
+        for (auto it = activeAudio.begin(); it != activeAudio.end();)
+        {
+            auto &audio = it->second;
+            if(!audio.m_isFading) 
+            {
+                ++it;
+                continue;
+            }
+
+            audio.m_fadeElapsed += deltaTime;
+            bool finished = false;
+            float currentVolume;
+            float diff = audio.m_fadeTargetVolume - audio.m_fadeStartVolume;
+            if (audio.m_fadeElapsed >= audio.m_fadeDuration)
+            {
+                currentVolume = audio.m_fadeTargetVolume;
+                finished = true;
+            }
+            else
+                currentVolume = audio.m_fadeStartVolume + ((audio.m_fadeElapsed / audio.m_fadeDuration) * diff);
+
+            float minVolume = std::min(audio.m_fadeStartVolume, audio.m_fadeTargetVolume);
+            float maxVolume = std::max(audio.m_fadeStartVolume, audio.m_fadeTargetVolume);
+            currentVolume = std::clamp(currentVolume, minVolume, maxVolume);
+
+            float finalVolume = currentVolume * m_masterVolume * categoryMultiplier;
+
+            auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
+            if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
+            {
+                logcoe::warning("handleFadeEffects: handle " + std::to_string(it->first) + " is no longer active");
+                it = activeAudio.erase(it);
+                continue;
+            }
+            auto &source = sourceAllocation.value().get().m_source;
+            if(!(source->setVolume(finalVolume)))
+                logcoe::warning("handleFadeEffects: Failed to update the volume of handle " + std::to_string(it->first));
+
+            if(finished)
+            {
+                if(currentVolume == 0.0f)
+                {
+                    if (source->stop())
+                    {
+                        m_resourceManager.releaseSource(*source);
+                        m_resourceManager.releaseBuffer(audio.m_filename);
+                    }
+                    else
+                        logcoe::warning("handleFadeEffects: Failed to stop handle " + std::to_string(it->first) + " when finished to fade out");
+
+                    it = activeAudio.erase(it);
+                    continue;
+                }
+
+                audio.m_isFading = false;
+                audio.m_baseVolume = audio.m_fadeTargetVolume;
+                audio.m_fadeDuration = 0.0f;
+                audio.m_fadeElapsed = 0.0f;
+                audio.m_fadeStartVolume = 0.0f;
+                audio.m_fadeTargetVolume = 0.0f;
+            }
+
+            ++it;
+        }
+    }
+
+    void SoundManager::handleInactiveAudio(std::unordered_map<size_t, ActiveAudio> &activeAudio)
+    {
+        for (auto it = activeAudio.begin(); it != activeAudio.end();)
+        {
+            auto sourceAllocation = m_resourceManager.getSourceAllocation(it->second.m_sourceIndex);
+            if(!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
+            {
+                logcoe::debug("update: Cleaning up inactive audio handle: " + std::to_string(it->first));
+                it = activeAudio.erase(it);
+            }
+            else
+                ++it;
+        }
+    }
+
     SoundManager::SoundManager() : m_resourceManager(), m_nextSoundHandle(1), m_nextMusicHandle(1),
                                    m_activeSounds(), m_activeMusic(), m_listenerPosition(),
                                    m_listenerVelocity(), m_listenerForward(), m_listenerUp(),
@@ -321,6 +471,20 @@ namespace soundcoe
 
         logcoe::initialize(level, "soundcoe");
 
+        if (audioRootDirectory.empty())
+        {
+            logcoe::error("Audio root directory cannot be empty");
+            logcoe::shutdown();
+            return false;
+        }
+
+        if (!std::filesystem::exists(audioRootDirectory) || !std::filesystem::is_directory(audioRootDirectory))
+        {
+            logcoe::error("Audio root directory does not exist or is not a directory: " + audioRootDirectory);
+            logcoe::shutdown();
+            return false;
+        }
+
         try { m_resourceManager.initialize(audioRootDirectory, maxSources, maxCacheSizeMB); }
         catch(const std::exception &e)
         {
@@ -335,7 +499,7 @@ namespace soundcoe
         std::filesystem::path generalAudioDirectory(rootDirectory / "general");
         if(std::filesystem::exists(generalAudioDirectory) && std::filesystem::is_directory(generalAudioDirectory))
         {
-            if(!preloadScene("general"))
+            if(!m_resourceManager.preloadDirectory("general"))
             {
                 logcoe::error("Failed to load general audio subdirectory");
                 m_resourceManager.shutdown();
@@ -415,13 +579,35 @@ namespace soundcoe
         return m_resourceManager.isDirectoryLoaded(sceneName);
     }
 
-    void SoundManager::update() {}
+    void SoundManager::update() 
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        auto now = std::chrono::steady_clock::now();
+        if(m_firstUpdate)
+        {
+            m_lastUpdate = now;
+            m_firstUpdate = false;
+            return;
+        }
+
+        float deltaTime = std::chrono::duration<float>(now - m_lastUpdate).count();
+
+        handleStreamingAudio();
+        handleFadeEffects(m_activeSounds, m_masterSoundsVolume, deltaTime);
+        handleFadeEffects(m_activeMusic, m_masterMusicVolume, deltaTime);
+        handleInactiveAudio(m_activeSounds);
+        handleInactiveAudio(m_activeMusic);
+
+        m_lastUpdate = now;
+    }
 
     SoundHandle SoundManager::playSound(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority) 
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return play(m_activeSounds, filename, volume, pitch, loop, priority, m_nextSoundHandle, "playSound");
+        return play(m_activeSounds, filename, volume, pitch, loop, priority, m_nextSoundHandle, "playSound",
+                    m_masterSoundsVolume, m_masterSoundsPitch);
     }
 
     SoundHandle SoundManager::playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity, 
@@ -430,14 +616,15 @@ namespace soundcoe
         std::lock_guard<std::mutex> lock(m_mutex);
 
         return play(m_activeSounds, filename, volume, pitch, loop, priority, m_nextSoundHandle, "playSound3D",
-                    true, position, velocity);
+                    m_masterSoundsVolume, m_masterSoundsPitch, true, position, velocity);
     }
 
     MusicHandle SoundManager::playMusic(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return play(m_activeMusic, filename, volume, pitch, loop, priority, m_nextMusicHandle, "playMusic");
+        return play(m_activeMusic, filename, volume, pitch, loop, priority, m_nextMusicHandle, "playMusic",
+                    m_masterMusicVolume, m_masterMusicPitch);
     }
 
     bool SoundManager::pauseSound(SoundHandle handle)
@@ -480,12 +667,18 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
+        if(!checkAudioState(m_activeSounds, handle, SoundState::Paused, "resumeSound"))
+            return setError("resumeSound: Sound is not paused");
+
         return audioOperation(m_activeSounds, handle, SoundState::Playing, "resumeSound");
     }
 
     bool SoundManager::resumeMusic(MusicHandle handle)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        if(!checkAudioState(m_activeMusic, handle, SoundState::Paused, "resumeMusic"))
+            return setError("resumeMusic: Music is not paused");
 
         return audioOperation(m_activeMusic, handle, SoundState::Playing, "resumeMusic");
     }
@@ -552,42 +745,44 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeSounds, handle, volume, PropertyType::Volume, "setSoundVolume");
+        return setAudioProperty(m_activeSounds, handle, PropertyType::Volume, "setSoundVolume", volume);
     }
 
     bool SoundManager::setMusicVolume(MusicHandle handle, float volume)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeMusic, handle, volume, PropertyType::Volume, "setMusicVolume");
+        return setAudioProperty(m_activeMusic, handle, PropertyType::Volume, "setMusicVolume", volume);
     }
 
     bool SoundManager::setSoundPitch(SoundHandle handle, float pitch)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeSounds, handle, pitch, PropertyType::Pitch, "setSoundPitch");
+        return setAudioProperty(m_activeSounds, handle, PropertyType::Pitch, "setSoundPitch", pitch);
     }
 
     bool SoundManager::setMusicPitch(MusicHandle handle, float pitch)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeMusic, handle, pitch, PropertyType::Pitch, "setMusicPitch");
+        return setAudioProperty(m_activeMusic, handle, PropertyType::Pitch, "setMusicPitch", pitch);
     }
 
     bool SoundManager::setSoundPosition(SoundHandle handle, const Vec3 &position)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeSounds, handle, position, PropertyType::Position, "setSoundPosition");
+        return setAudioProperty(m_activeSounds, handle, PropertyType::Position, "setSoundPosition",
+                                position.x, position.y, position.z);
     }
 
     bool SoundManager::setSoundVelocity(SoundHandle handle, const Vec3 &velocity)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        return setAudioProperty(m_activeSounds, handle, velocity, PropertyType::Velocity, "setSoundVelocity");
+        return setAudioProperty(m_activeSounds, handle, PropertyType::Velocity, "setSoundVelocity",
+                                velocity.x, velocity.y, velocity.z);
     }
 
     bool SoundManager::isSoundPlaying(SoundHandle handle)
@@ -649,7 +844,8 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        SoundHandle handle = play(m_activeSounds, filename, 0.0f, pitch, loop, priority, m_nextSoundHandle, "fadeInSound");
+        SoundHandle handle = play(m_activeSounds, filename, 0.0f, pitch, loop, priority, m_nextSoundHandle, "fadeInSound", 
+                                  m_masterSoundsVolume, m_masterSoundsPitch);
 
         if (!isHandleValid(handle))
             return INVALID_SOUND_HANDLE;
@@ -669,7 +865,8 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        MusicHandle handle = playMusic(filename, 0.0f, pitch, loop, priority);
+        MusicHandle handle = play(m_activeMusic, filename, 0.0f, pitch, loop, priority, m_nextMusicHandle, "fadeInMusic",
+                                  m_masterMusicVolume, m_masterMusicPitch);
         if (!isHandleValid(handle))
             return INVALID_MUSIC_HANDLE;
 
@@ -867,7 +1064,8 @@ namespace soundcoe
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        m_mute = false;
+        m_mute = m_soundsMute = m_musicMute = false;
+
         updateAllVolume();
 
         return true;
@@ -975,8 +1173,6 @@ namespace soundcoe
         m_hasError = false;
     }
 
-    bool SoundManager::isHandleValid(SoundHandle handle) { return handle != INVALID_SOUND_HANDLE; }
-
-    bool SoundManager::isHandleValid(MusicHandle handle) { return handle != INVALID_MUSIC_HANDLE; }
+    bool SoundManager::isHandleValid(size_t handle) { return handle != INVALID_SOUND_HANDLE; }
 
 } // namespace soundcoe

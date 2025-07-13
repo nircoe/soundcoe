@@ -78,14 +78,14 @@ namespace soundcoe
             for (auto it = activeAudio.begin(); it != activeAudio.end();)
             {
                 auto sourceAllocation = m_resourceManager.getSourceAllocation(it->second.m_sourceIndex);
-                if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
+                if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
                 {
                     it = activeAudio.erase(it);
                     continue;
                 }
 
                 float finalValue = getBaseProperty(it->second) * masterMultiplier * categoryMultiplier;
-                setProperty(sourceAllocation.value().m_source, finalValue);
+                setProperty(sourceAllocation.value().get().m_source, finalValue);
                 ++it;
             }
         }
@@ -111,47 +111,25 @@ namespace soundcoe
         bool checkAudioState(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
                              SoundState state, const std::string &method);
 
-        template<typename Type>
         bool setAudioProperty(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                              Type property, PropertyType type, const std::string &method)
-        {
-            auto it = activeAudio.find(handle);
-            if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
-
-            ActiveAudio &audio = it->second;
-            auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
-            if(!(sourceAllocation.has_value()) || !(sourceAllocation.value().m_active))
-            {
-                activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
-            }
-
-            auto &source = sourceAllocation.value().m_source;
-            switch(type)
-            {
-                case PropertyType::Volume:
-                    return source->setVolume(property);
-                case PropertyType::Pitch:
-                    return source->setPitch(property);
-                case PropertyType::Position:
-                    return source->setPosition(property);
-                case PropertyType::Velocity:
-                    return source->setVelocity(property);
-                default:
-                    return setError(method + ": Internal error - Invalid PropertyType");
-            }
-        }
+                              PropertyType type, const std::string &method,
+                              float value, float y = 0.0f, float z = 0.0f);
 
         bool audioOperation(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
                             SoundState operation, const std::string &method);
         bool audioOperationAll(std::unordered_map<size_t, ActiveAudio> &activeAudio, SoundState operation,
                                const std::string &method);
 
-        size_t play(std::unordered_map<size_t, ActiveAudio> &activeAudio, const std::string &filename, 
-                    float volume,float pitch, bool loop, SoundPriority priority, 
+        size_t play(std::unordered_map<size_t, ActiveAudio> &activeAudio, const std::string &filename,
+                    float volume, float pitch, bool loop, SoundPriority priority,
                     std::atomic<size_t> &nextHandle, const std::string &method,
+                    float masterCategoryVolume, float masterCategoryPitch,
                     bool is3D = false, const Vec3 &position = Vec3::zero(), const Vec3 &velocity = Vec3::zero());
+
+        void handleStreamingAudio();
+        void handleFadeEffects(std::unordered_map<size_t, ActiveAudio> &activeAudio, 
+                               float categoryMultiplier, float deltaTime);
+        void handleInactiveAudio(std::unordered_map<size_t, ActiveAudio> &activeAudio);
 
     public:
         SoundManager();
@@ -256,8 +234,7 @@ namespace soundcoe
         const std::string getError();
         void clearError();
 
-        static bool isHandleValid(SoundHandle handle);
-        static bool isHandleValid(MusicHandle handle);
+        static bool isHandleValid(size_t handle);
 
         // more function to come?
     };

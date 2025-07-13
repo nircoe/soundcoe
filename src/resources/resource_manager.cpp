@@ -281,28 +281,13 @@ namespace soundcoe
     bool ResourceManager::releaseBuffer(std::reference_wrapper<SoundBuffer> buffer)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (!m_initialized)
-        {
-            logcoe::error("ResourceManager is not initialized");
-            return false;
-        }
+        return releaseBufferImpl(buffer.get().getFileName());
+    }
 
-        std::string filename = buffer.get().getFileName();
-        if(m_bufferCache.find(filename) == m_bufferCache.end())
-        {
-            logcoe::warning("Buffer not found in cache: " + filename);
-            return true;
-        }
-
-        auto &entry = m_bufferCache[filename];
-        if (entry.m_referenceCount == 0)
-        {
-            logcoe::warning("Not a single Source is using this Buffer at the moment");
-            return true;
-        }
-
-        --entry.m_referenceCount;
-        return true;
+    bool ResourceManager::releaseBuffer(const std::string &filename)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return releaseBufferImpl(filename);
     }
 
     size_t ResourceManager::getActiveSourceCount() const
@@ -471,17 +456,27 @@ namespace soundcoe
         return true;
     }
 
-    void ResourceManager::freeOldestBuffer()
+    void ResourceManager::freeBuffers()
     {
         while (m_currentCacheSize > m_maxCacheSize && !m_bufferCache.empty())
         {
-            auto oldest = std::min_element(m_bufferCache.begin(), m_bufferCache.end(),
-                                           [](const auto &a, const auto &b)
+            auto toFree = std::min_element(m_bufferCache.begin(), m_bufferCache.end(),
+                                           [this](const auto &a, const auto &b)
                                            {
+                                               if (a.second.m_referenceCount == 0 && b.second.m_referenceCount > 0)
+                                                   return true;
+                                               if (a.second.m_referenceCount > 0 && b.second.m_referenceCount == 0)
+                                                   return false;
+
+                                               auto aPriority = getHighestPriorityForBuffer(a.second.m_buffer->getBufferId());
+                                               auto bPriority = getHighestPriorityForBuffer(b.second.m_buffer->getBufferId());
+                                               if (aPriority != bPriority)
+                                                   return aPriority < bPriority;
+
                                                return a.second.m_lastAccessed < b.second.m_lastAccessed;
                                            });
 
-            auto oldestBufferId = oldest->second.m_buffer->getBufferId();
+            auto oldestBufferId = toFree->second.m_buffer->getBufferId();
             for (size_t i = 0; i < m_sourcePool.size(); ++i)
             {
                 auto &allocation = m_sourcePool[i];
@@ -501,8 +496,8 @@ namespace soundcoe
                 m_freeSourceIndices.push_back(i);
             }
 
-            m_currentCacheSize -= oldest->second.m_buffer->getSize();
-            m_bufferCache.erase(oldest);
+            m_currentCacheSize -= toFree->second.m_buffer->getSize();
+            m_bufferCache.erase(toFree);
         }
     }
 
@@ -589,7 +584,7 @@ namespace soundcoe
         }
 
         if (m_currentCacheSize > m_maxCacheSize)
-            freeOldestBuffer();
+            freeBuffers();
 
         logcoe::info("preloadFile Successfully: \"" + fullPathStr + "\"");
         return true;
@@ -659,11 +654,53 @@ namespace soundcoe
         return it != m_loadedDirectories.end();
     }
 
-    std::optional<SourceAllocation&> ResourceManager::getSourceAllocation(size_t index)
+    SoundPriority ResourceManager::getHighestPriorityForBuffer(ALuint bufferId) const
+    {
+        SoundPriority highest = SoundPriority::Low;
+        for (const auto &allocation : m_sourcePool)
+        {
+            if (allocation.m_active && allocation.m_source->getBufferId() == bufferId &&
+                allocation.m_priority > highest)
+            {
+                highest = allocation.m_priority;
+            }
+        }
+
+        return highest;
+    }
+
+    bool ResourceManager::releaseBufferImpl(const std::string &filename)
+    {
+        if (!m_initialized)
+        {
+            logcoe::error("ResourceManager is not initialized");
+            return false;
+        }
+
+        std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
+        
+        if (m_bufferCache.find(fullPath) == m_bufferCache.end())
+        {
+            logcoe::warning("Buffer is not loaded in cache: " + fullPath);
+            return true;
+        }
+
+        auto &entry = m_bufferCache[fullPath];
+        if (entry.m_referenceCount == 0)
+        {
+            logcoe::warning("Not a single Source is using this Buffer at the moment");
+            return true;
+        }
+
+        --entry.m_referenceCount;
+        return true;
+    }
+
+    std::optional<std::reference_wrapper<SourceAllocation>> ResourceManager::getSourceAllocation(size_t index)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if(0 <= index && index <= m_sourcePool.size() - 1)
-            return m_sourcePool[index];
+        if (index < m_sourcePool.size())
+            return std::ref(m_sourcePool[index]);
         return std::nullopt;
     }
 } // namespace soundcoe

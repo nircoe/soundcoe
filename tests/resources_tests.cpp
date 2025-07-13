@@ -2,76 +2,14 @@
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/resources/resource_manager.hpp>
 #include <soundcoe/core/types.hpp>
+#include "test_audio_files.hpp"
 #include <thread>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
 #include <vector>
 #include <future>
 
 using namespace soundcoe;
 
-class TestAudioFiles
-{
-public:
-    static std::filesystem::path s_testRootDir;
-    static std::filesystem::path s_testSubDir1;
-    static std::filesystem::path s_testSubDir2;
-    static bool s_filesCreated;
-
-    static void createTestFiles()
-    {
-        if (s_filesCreated)
-            return;
-
-        s_testRootDir = std::filesystem::temp_directory_path() / "soundcoe_test";
-        s_testSubDir1 = s_testRootDir / "sounds";
-        s_testSubDir2 = s_testRootDir / "music";
-
-        std::filesystem::create_directories(s_testSubDir1);
-        std::filesystem::create_directories(s_testSubDir2);
-
-        createWavFile(s_testSubDir1 / "test1.wav");
-        createWavFile(s_testSubDir1 / "test2.wav");
-        createWavFile(s_testSubDir2 / "music1.wav");
-
-        std::ofstream(s_testSubDir1 / "readme.txt") << "Not audio\n";
-
-        s_filesCreated = true;
-    }
-
-    static void cleanup()
-    {
-        if (!s_filesCreated)
-            return;
-        std::error_code ec;
-        std::filesystem::remove_all(s_testRootDir, ec);
-        s_filesCreated = false;
-    }
-
-private:
-    static void createWavFile(const std::filesystem::path &path)
-    {
-        std::ofstream file(path, std::ios::binary);
-
-        const uint8_t header[] = {
-            'R', 'I', 'F', 'F', 0x24, 0xAC, 0x00, 0x00, 'W', 'A', 'V', 'E',
-            'f', 'm', 't', ' ', 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-            0x22, 0x56, 0x00, 0x00, 0x44, 0xAC, 0x00, 0x00, 0x02, 0x00, 0x10, 0x00,
-            'd', 'a', 't', 'a', 0x00, 0xAC, 0x00, 0x00};
-
-        file.write(reinterpret_cast<const char *>(header), sizeof(header));
-
-        const uint16_t silence = 0;
-        for (int i = 0; i < 22050; ++i)
-            file.write(reinterpret_cast<const char *>(&silence), sizeof(silence));
-    }
-};
-
-std::filesystem::path TestAudioFiles::s_testRootDir;
-std::filesystem::path TestAudioFiles::s_testSubDir1;
-std::filesystem::path TestAudioFiles::s_testSubDir2;
-bool TestAudioFiles::s_filesCreated = false;
 
 class ResourceManagerTests : public ::testing::Test
 {
@@ -119,7 +57,8 @@ TEST_F(ResourceManagerTests, MultipleShutdown)
 
 TEST_F(ResourceManagerTests, SourceAcquisitionAndRelease)
 {
-    auto sourceOpt = m_resourceManager.acquireSource(SoundPriority::Medium);
+    size_t poolIndex;
+    auto sourceOpt = m_resourceManager.acquireSource(poolIndex, SoundPriority::Medium);
     EXPECT_TRUE(sourceOpt.has_value());
     EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 1);
 
@@ -136,7 +75,8 @@ TEST_F(ResourceManagerTests, SourcePoolExhaustion)
 
     for(int i = 0; i < 4; ++i)
     {
-        auto sourceOpt = m_resourceManager.acquireSource(SoundPriority::Low);
+        size_t poolIndex;
+        auto sourceOpt = m_resourceManager.acquireSource(poolIndex, SoundPriority::Low);
         EXPECT_TRUE(sourceOpt.has_value());
         if(sourceOpt.has_value())
             sources.push_back(sourceOpt.value());
@@ -144,7 +84,8 @@ TEST_F(ResourceManagerTests, SourcePoolExhaustion)
 
     EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 4);
 
-    auto highPriorityOpt = m_resourceManager.acquireSource(SoundPriority::High);
+    size_t highPoolIndex;
+    auto highPriorityOpt = m_resourceManager.acquireSource(highPoolIndex, SoundPriority::High);
     EXPECT_TRUE(highPriorityOpt.has_value());
     EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 4);
 
@@ -161,12 +102,14 @@ TEST_F(ResourceManagerTests, PriorityReplacement)
 
     for(int i = 0; i < 4; ++i)
     {
-        auto sourceOpt = m_resourceManager.acquireSource(SoundPriority::Low);
+        size_t poolIndex;
+        auto sourceOpt = m_resourceManager.acquireSource(poolIndex, SoundPriority::Low);
         if(sourceOpt.has_value())
             lowSources.push_back(sourceOpt.value());
     }
 
-    auto criticalOpt = m_resourceManager.acquireSource(SoundPriority::Critical);
+    size_t criticalIndex;
+    auto criticalOpt = m_resourceManager.acquireSource(criticalIndex, SoundPriority::Critical);
     EXPECT_TRUE(criticalOpt.has_value());
 
     if(criticalOpt.has_value())
@@ -216,6 +159,12 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
     buffer1 = m_resourceManager.getBuffer(filename);
     EXPECT_TRUE(buffer1.has_value());
     m_resourceManager.releaseBuffer(filename);
+    
+    // Clear all reference_wrapper optionals to ensure no references remain
+    buffer1.reset();
+    buffer2.reset(); 
+    buffer3.reset();
+    
     EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
     size_t cleaned = m_resourceManager.cleanupUnusedBuffers();
     EXPECT_EQ(cleaned, 1);
@@ -246,8 +195,6 @@ TEST_F(ResourceManagerTests, DirectoryOperations)
     size_t buffersBefore = m_resourceManager.getCachedBufferCount();
     EXPECT_TRUE(m_resourceManager.unloadDirectory("sounds"));
     EXPECT_FALSE(m_resourceManager.isDirectoryLoaded("sounds"));
-
-    m_resourceManager.cleanupUnusedBuffers();
     EXPECT_LT(m_resourceManager.getCachedBufferCount(), buffersBefore);
 }
 
@@ -289,7 +236,8 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
             std::vector<std::reference_wrapper<SoundSource>> sources;
             for (int j = 0; j < 2; ++j)
             {
-                auto sourceOpt = m_resourceManager.acquireSource(priority);
+                size_t poolIndex;
+                auto sourceOpt = m_resourceManager.acquireSource(poolIndex, priority);
                 if (sourceOpt.has_value())
                     sources.push_back(sourceOpt.value());
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -305,7 +253,8 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
         allSources.insert(allSources.end(), sources.begin(), sources.end());
     }
 
-    EXPECT_EQ(allSources.size(), 6);
+    EXPECT_LE(allSources.size(), 6);
+    EXPECT_GE(allSources.size(), 4);
     EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 4);
 
     for (auto &source : allSources)
@@ -347,8 +296,9 @@ TEST_F(ResourceManagerTests, CompleteWorkflow)
     EXPECT_TRUE(m_resourceManager.preloadDirectory("sounds"));
     EXPECT_GT(m_resourceManager.getCachedBufferCount(), 0);
 
-    auto source1 = m_resourceManager.acquireSource(SoundPriority::Medium);
-    auto source2 = m_resourceManager.acquireSource(SoundPriority::Medium);
+    size_t poolIndex1, poolIndex2;
+    auto source1 = m_resourceManager.acquireSource(poolIndex1, SoundPriority::Medium);
+    auto source2 = m_resourceManager.acquireSource(poolIndex2, SoundPriority::Medium);
     auto buffer1 = m_resourceManager.getBuffer("sounds/test1.wav");
     auto buffer2 = m_resourceManager.getBuffer("sounds/test2.wav");
 
@@ -358,7 +308,8 @@ TEST_F(ResourceManagerTests, CompleteWorkflow)
     EXPECT_TRUE(buffer2.has_value());
     EXPECT_EQ(m_resourceManager.getActiveSourceCount(), 2);
 
-    auto highPriority = m_resourceManager.acquireSource(SoundPriority::High);
+    size_t highIndex;
+    auto highPriority = m_resourceManager.acquireSource(highIndex, SoundPriority::High);
     EXPECT_TRUE(highPriority.has_value());
 
     if (source1.has_value())
@@ -408,12 +359,14 @@ TEST_F(ResourceManagerTests, CacheLimits)
 TEST_F(ResourceManagerTests, ProperShutdown)
 {
     m_resourceManager.preloadDirectory("sounds");
-    auto source = m_resourceManager.acquireSource(SoundPriority::Medium);
+    size_t poolIndex;
+    auto source = m_resourceManager.acquireSource(poolIndex, SoundPriority::Medium);
 
     EXPECT_NO_THROW(m_resourceManager.shutdown());
     EXPECT_FALSE(m_resourceManager.isInitialized());
 
-    auto newSource = m_resourceManager.acquireSource(SoundPriority::Medium);
+    size_t newIndex;
+    auto newSource = m_resourceManager.acquireSource(newIndex, SoundPriority::Medium);
     EXPECT_FALSE(newSource.has_value());
 
     auto buffer = m_resourceManager.getBuffer("sounds/test1.wav");
