@@ -1,11 +1,14 @@
 #pragma once
 
+#include <logcoe.hpp>
 #include <cmath>
 #include <string_view>
 #include <sstream>
 
 namespace soundcoe
 {
+    using LogLevel = logcoe::LogLevel;
+
     enum class SoundState
     {
         Initial,
@@ -28,6 +31,14 @@ namespace soundcoe
         Ogg,
         Mp3,
         Unsupported
+    };
+
+    enum class PropertyType
+    {
+        Volume,
+        Pitch,
+        Position,
+        Velocity
     };
 
     constexpr std::string_view toString(AudioFormat format)

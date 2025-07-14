@@ -34,12 +34,11 @@ namespace soundcoe
         {
             alDeleteBuffers(1, &m_bufferId);
             m_bufferId = 0;
-            throw std::runtime_error(e.what());
+            throw;
         }
     }
 
-    SoundBuffer::SoundBuffer() : m_bufferId(0), m_format(AL_NONE), m_size(0), m_sampleRate(0), 
-                                    m_duration(0.0f), m_loaded(false), m_filename("") { }
+    SoundBuffer::SoundBuffer() { }
 
     SoundBuffer::SoundBuffer(const std::string &filename) : SoundBuffer()
     {
@@ -121,13 +120,13 @@ namespace soundcoe
         switch(format)
         {
             case AudioFormat::Wav:
-                loadFromAudioData(AudioData::loadFromWav(filename));
+                loadFromAudioData(std::move(AudioData::loadFromWav(filename)));
                 break;
             case AudioFormat::Mp3:
-                loadFromAudioData(AudioData::loadFromMp3(filename));
+                loadFromAudioData(std::move(AudioData::loadFromMp3(filename)));
                 break;
             case AudioFormat::Ogg:
-                loadFromAudioData(AudioData::loadFromOgg(filename));
+                loadFromAudioData(std::move(AudioData::loadFromOgg(filename)));
                 break;
             default:
                 std::string message = "Unsupported audio format: " + filename;
@@ -192,6 +191,8 @@ namespace soundcoe
     ALfloat SoundBuffer::getDuration() const { return m_duration; }
 
     bool SoundBuffer::isLoaded() const { return m_loaded; }
+
+    bool SoundBuffer::isStreaming() const { return m_stream; }
 
     const std::string &SoundBuffer::getFileName() const { return m_filename; }
 

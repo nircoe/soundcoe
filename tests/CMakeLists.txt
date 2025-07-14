@@ -16,6 +16,7 @@ add_executable(soundcoe_tests
     core_tests.cpp
     resources_tests.cpp
     math_tests.cpp
+    playback_tests.cpp
 )
 
 target_link_libraries(soundcoe_tests

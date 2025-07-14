@@ -113,7 +113,7 @@ soundcoe/
 - Provides additional controls like fading
 - Handles looping and playback position
 
-**SoundPlayer**
+**SoundManager**
 - Main interface for playing sounds
 - Manages global audio settings
 - Controls listener properties for 3D audio
@@ -198,23 +198,23 @@ int main() {
     resourceManager.initialize("./audio", 32, 64);
     
     // Play a sound effect
-    auto effect = soundcoe::SoundPlayer::getInstance().playSound("explosion.wav");
+    auto effect = soundcoe::SoundManager::getInstance().playSound("explosion.wav");
     
     // Play background music
-    auto music = soundcoe::SoundPlayer::getInstance().playMusic("background.ogg", 0.8f, true);
+    auto music = soundcoe::SoundManager::getInstance().playMusic("background.ogg", 0.8f, true);
     
     // Set 3D listener position
-    soundcoe::SoundPlayer::getInstance().setListenerPosition({0.0f, 0.0f, 0.0f});
+    soundcoe::SoundManager::getInstance().setListenerPosition({0.0f, 0.0f, 0.0f});
     
     // Play a 3D positioned sound
-    auto effect3d = soundcoe::SoundPlayer::getInstance().playSound("footstep.wav", 
+    auto effect3d = soundcoe::SoundManager::getInstance().playSound("footstep.wav", 
                                                               1.0f, 1.0f, false, 
                                                               {10.0f, 0.0f, 5.0f});
     
     // ... game loop ...
     
     // Clean up
-    soundcoe::SoundPlayer::getInstance().shutdown();
+    soundcoe::SoundManager::getInstance().shutdown();
     resourceManager.shutdown();
     
     return 0;

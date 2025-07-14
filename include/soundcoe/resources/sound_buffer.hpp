@@ -9,13 +9,14 @@ namespace soundcoe
 {
     class SoundBuffer
     {
-        ALuint m_bufferId;
-        ALenum m_format;
-        ALsizei m_size;
-        ALsizei m_sampleRate;
-        ALfloat m_duration;
-        bool m_loaded;
-        std::string m_filename;
+        ALuint m_bufferId       = 0;
+        ALenum m_format         = 0;
+        ALsizei m_size          = 0;
+        ALsizei m_sampleRate    = 0;
+        ALfloat m_duration      = 0.0f;
+        bool m_loaded           = false;
+        bool m_stream           = false;
+        std::string m_filename = "";
 
         void loadFromAudioData(AudioData &&audioData);
         void generateBuffer(const void* data);
@@ -41,6 +42,7 @@ namespace soundcoe
         ALsizei getSampleRate() const;
         ALfloat getDuration() const;
         bool isLoaded() const;
+        bool isStreaming() const;
         const std::string &getFileName() const;
     };
 } // namespace soundcoe

@@ -5,10 +5,9 @@ set(SOURCES
     resources/sound_buffer.cpp
     resources/sound_source.cpp
     resources/resource_manager.cpp
-    playback/sound_effect.cpp
-    playback/music.cpp
-    playback/sound_player.cpp
+    playback/sound_manager.cpp
     utils/math.cpp
+    soundcoe.cpp
 )
 
 add_library(soundcoe ${SOURCES})

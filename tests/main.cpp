@@ -19,6 +19,7 @@ int printHelp()
     std::cout << "  ResourceManagerTests - ResourceManager comprehensive functionality tests" << std::endl;
     std::cout << "  SoundBufferTests     - SoundBuffer loading and management tests" << std::endl;
     std::cout << "  SoundSourceTests     - SoundSource playback and properties tests" << std::endl;
+    std::cout << "  SoundManagerTests    - SoundManager high-level audio management tests" << std::endl;
     std::cout << std::endl;
     std::cout << "Example usage:" << std::endl;
     std::cout << "  ./soundcoe_tests --suite=AudioContextTests" << std::endl;
@@ -26,6 +27,8 @@ int printHelp()
     std::cout << "  ./soundcoe_tests --test=ResourceManagerTests.SourceAcquisitionAndRelease" << std::endl;
     std::cout << "  ./soundcoe_tests --suite=SoundBufferTests" << std::endl;
     std::cout << "  ./soundcoe_tests --test=SoundSourceTests.PropertySettersAndGetters" << std::endl;
+    std::cout << "  ./soundcoe_tests --suite=SoundManagerTests" << std::endl;
+    std::cout << "  ./soundcoe_tests --test=SoundManagerTests.FadeInSound" << std::endl;
 
     return 0;
 }
@@ -39,6 +42,7 @@ int main(int argc, char **argv)
     std::cout << "Comprehensive testing for soundcoe audio library." << std::endl;
     std::cout << "Testing Core Layer: AudioContext, ErrorHandler, Types (Vec3)" << std::endl;
     std::cout << "Testing Resources Layer: ResourceManager with advanced features" << std::endl;
+    std::cout << "Testing Playback Layer: SoundManager with fade effects and audio control" << std::endl;
     std::cout << std::endl;
 
     testcoe::init(&argc, argv);

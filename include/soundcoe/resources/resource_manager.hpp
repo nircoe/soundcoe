@@ -34,28 +34,30 @@ namespace soundcoe
     class ResourceManager
     {
         AudioContext m_audioContext;
-        bool m_initialized;
+        bool m_initialized = false;
         std::filesystem::path m_audioRootDirectory;
-        size_t m_maxSources;
+        size_t m_maxSources = 32;
         mutable std::mutex m_mutex;
 
         std::vector<SourceAllocation> m_sourcePool;
         std::deque<size_t> m_freeSourceIndices;
 
         std::unordered_map<std::string, BufferCacheEntry> m_bufferCache;
-        size_t m_maxCacheSize;
-        size_t m_currentCacheSize;
+        size_t m_maxCacheSize = 64 * 1024 * 1024; // 64MB
+        size_t m_currentCacheSize = 0;
 
         std::vector<std::filesystem::path> m_loadedDirectories;
 
         void createSourcePool();
         bool findSourceToReplace(SoundPriority newPriority, size_t &replaceIndex);
-        void freeOldestBuffer();
+        void freeBuffers();
         std::filesystem::path normalizePath(const std::string &path) const;
         bool scanDirectoryForFiles(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
         bool preloadFileImpl(const std::string &filename);
         bool unloadFileImpl(const std::string &filename);
         bool isDirectoryLoadedImpl(const std::string &subdirectory) const;
+        SoundPriority getHighestPriorityForBuffer(ALuint bufferId) const;
+        bool releaseBufferImpl(const std::string &filename);
 
     public:
         ResourceManager();
@@ -71,9 +73,10 @@ namespace soundcoe
         bool preloadFile(const std::string &filename);
         bool unloadFile(const std::string &filename);
 
-        std::optional<std::reference_wrapper<SoundSource>> acquireSource(SoundPriority priority = SoundPriority::Medium);
+        std::optional<std::reference_wrapper<SoundSource>> acquireSource(size_t &poolIndex, SoundPriority priority = SoundPriority::Medium);
         std::optional<std::reference_wrapper<SoundBuffer>> getBuffer(const std::string &filename);
         bool releaseSource(std::reference_wrapper<SoundSource> source);
+        bool releaseBuffer(std::reference_wrapper<SoundBuffer> buffer);
         bool releaseBuffer(const std::string &filename);
 
         size_t getActiveSourceCount() const;
@@ -83,5 +86,7 @@ namespace soundcoe
         std::vector<std::filesystem::path> getLoadedDirectories() const;
         bool isDirectoryLoaded(const std::string &subdirectory) const;
         size_t cleanupUnusedBuffers();
+
+        std::optional<std::reference_wrapper<SourceAllocation>> getSourceAllocation(size_t index);
     };
 } // namespace soundcoe

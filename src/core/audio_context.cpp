@@ -6,37 +6,56 @@
 namespace soundcoe
 {
 
-    AudioContext::AudioContext() :
-        m_device(nullptr),
-        m_context(nullptr),
-        m_initialized(false) { }
+    AudioContext::AudioContext() { }
 
     AudioContext::~AudioContext() { shutdown(); }
 
     void AudioContext::initialize(const std::string &deviceName)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        bool deviceOpened = false, contextCreated = false;
         if(m_initialized)
         {
-            logcoe::info("AudioContext is already initialized");
-            return;
+            ALCcontext *current = alcGetCurrentContext();
+            if (m_device && m_context)
+            {
+                if(m_context == current)
+                {
+                    logcoe::info("AudioContext is already initialized");
+                    return;
+                }
+                deviceOpened = true;
+                contextCreated = true;
+            }
+            else if(m_device && !m_context)
+            {
+                deviceOpened = true;
+                contextCreated = false;
+            }
         }
 
-        logcoe::debug("Initializing ALCdevice: " + (deviceName.empty() ? "default" : deviceName));
-        m_device = alcOpenDevice(deviceName.empty() ? nullptr : deviceName.c_str());
-        if (!m_device)
-            ErrorHandler::throwOnALCError(nullptr, "Open Audio Device: \"" + (deviceName.empty() ? "default" : deviceName) + "\"");
-
-        logcoe::info("Initializing AudioContext");
-        m_context = alcCreateContext(m_device, nullptr);
-        if(!m_context)
+        if(!deviceOpened)
         {
-            try { ErrorHandler::throwOnALCError(m_device, "Create Audio Context"); }
-            catch(const std::runtime_error &e)
+            logcoe::debug("Initializing ALCdevice: " + (deviceName.empty() ? "default" : deviceName));
+            m_device = alcOpenDevice(deviceName.empty() ? nullptr : deviceName.c_str());
+            if (!m_device)
+                ErrorHandler::throwOnALCError(nullptr, "Open Audio Device: \"" + (deviceName.empty() ? "default" : deviceName) + "\"");
+        }
+
+        if(!contextCreated)
+        {
+            logcoe::info("Initializing AudioContext");
+            m_context = alcCreateContext(m_device, nullptr);
+            if(!m_context)
             {
-                alcCloseDevice(m_device);
-                m_device = nullptr;
-                throw;
+                try { ErrorHandler::throwOnALCError(m_device, "Create Audio Context"); }
+                catch(const std::runtime_error &e)
+                {
+                    alcCloseDevice(m_device);
+                    m_device = nullptr;
+                    throw;
+                }
             }
         }
 
@@ -50,7 +69,7 @@ namespace soundcoe
                 alcCloseDevice(m_device);
                 m_device = nullptr;
                 m_context = nullptr;
-                return;
+                throw;
             }
         }
 
