@@ -235,7 +235,5 @@ namespace soundcoe
         void clearError();
 
         static bool isHandleValid(size_t handle);
-
-        // more function to come?
     };
 } // namespace soundcoe

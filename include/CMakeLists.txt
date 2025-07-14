@@ -11,7 +11,11 @@ target_link_libraries(soundcoe_headers
         logcoe
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/soundcoe
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/soundcoe.hpp
     DESTINATION include
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/soundcoe
+    DESTINATION include/soundcoe
     FILES_MATCHING PATTERN "*.hpp"
 )

@@ -59,7 +59,9 @@ namespace soundcoe
         m_bufferCache.clear();
         m_loadedDirectories.clear();
         m_freeSourceIndices.clear();
-        m_audioContext.shutdown();
+
+        try { m_audioContext.shutdown(); }
+        catch(const std::runtime_error &e) { logcoe::warning("ResourceManager::shutdown: Failed to shutdown the AudioContext"); }
 
         m_currentCacheSize = 0;
         m_initialized = false;

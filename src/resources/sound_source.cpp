@@ -54,7 +54,12 @@ namespace soundcoe
 
     void SoundSource::create()
     {
-        if(m_created) return;
+        bool isSource = false;
+        if(m_created) 
+        {
+                logcoe::info("SoundSource is already created");
+                return;
+        }
 
         alGenSources(1, &m_sourceId);
         ErrorHandler::throwOnOpenALError("Generate Source");
