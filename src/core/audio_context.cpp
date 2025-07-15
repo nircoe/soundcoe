@@ -50,7 +50,7 @@ namespace soundcoe
             if(!m_context)
             {
                 try { ErrorHandler::throwOnALCError(m_device, "Create Audio Context"); }
-                catch(const std::runtime_error &e)
+                catch(const std::runtime_error &)
                 {
                     alcCloseDevice(m_device);
                     m_device = nullptr;
@@ -63,7 +63,7 @@ namespace soundcoe
         if(!alcMakeContextCurrent(m_context))
         {
             try { ErrorHandler::throwOnALCError(m_device, "Make Context Current"); }
-            catch(const std::runtime_error &e)
+            catch(const std::runtime_error &)
             {
                 alcDestroyContext(m_context);
                 alcCloseDevice(m_device);

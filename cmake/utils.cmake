@@ -11,9 +11,9 @@ function(ignore_external_warnings target_name)
             )
         endif()
         
-        # Only apply compile options to compilable targets, and be conservative
+        # Only apply compile options to compilable targets, use conservative approach
         if(TARGET_TYPE STREQUAL "STATIC_LIBRARY" OR TARGET_TYPE STREQUAL "SHARED_LIBRARY" OR TARGET_TYPE STREQUAL "EXECUTABLE")
-            # Use a more conservative approach - just add -w to suppress warnings
+            # Just add warning suppression without removing existing flags to avoid breaking generator expressions
             if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
                 target_compile_options(${target_name} PRIVATE -w)  # Suppress all warnings
             elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -29,13 +29,15 @@ endfunction()
 
 # Function to recursively ignore warnings for all targets in a directory
 function(ignore_external_warnings_recursive dir_name)
-    get_property(subdirs DIRECTORY ${dir_name} PROPERTY SUBDIRECTORIES)
-    foreach(subdir ${subdirs})
-        ignore_external_warnings_recursive(${subdir})
-    endforeach()
-    
+    # Get all targets in this directory
     get_property(targets DIRECTORY ${dir_name} PROPERTY BUILDSYSTEM_TARGETS)
     foreach(target ${targets})
         ignore_external_warnings(${target})
+    endforeach()
+    
+    # Get all subdirectories and recurse
+    get_property(subdirs DIRECTORY ${dir_name} PROPERTY SUBDIRECTORIES)
+    foreach(subdir ${subdirs})
+        ignore_external_warnings_recursive(${subdir})
     endforeach()
 endfunction()

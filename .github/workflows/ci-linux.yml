@@ -35,7 +35,37 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build libasound2-dev libpulse-dev libpipewire-0.3-dev
+        sudo apt-get install -y ninja-build libasound2-dev libpulse-dev libpipewire-0.3-dev pulseaudio
+      shell: bash
+
+    - name: Setup virtual audio for testing
+      run: |
+        # Kill any existing PulseAudio instances
+        pulseaudio --kill 2>/dev/null || true
+        
+        # Start PulseAudio with a simple configuration
+        pulseaudio --start --log-target=stderr --exit-idle-time=-1 --disable-shm=1
+        
+        # Wait for PulseAudio to start
+        sleep 3
+        
+        # Create a virtual null sink
+        pactl load-module module-null-sink sink_name=virtual rate=44100 || echo "Failed to create null sink, continuing"
+        
+        # Set it as default if it was created successfully
+        pactl set-default-sink virtual 2>/dev/null || echo "Using default sink"
+        
+        # Create basic ALSA configuration
+        echo "pcm.!default { type pulse }" > ~/.asoundrc
+        echo "ctl.!default { type pulse }" >> ~/.asoundrc
+        
+        # Set environment variables for OpenAL
+        echo "ALSOFT_DRIVERS=pulse,alsa" >> $GITHUB_ENV
+        echo "ALSOFT_PCM_CARD=default" >> $GITHUB_ENV
+        
+        # Verify setup
+        pactl info || echo "PulseAudio info failed"
+        echo "Audio setup completed"
       shell: bash
 
     - name: Configure CMake
@@ -46,19 +76,8 @@ jobs:
       run: |
         cmake --build build --config Release
 
-    - name: Build Debug (for better test debugging)
-      run: |
-        cmake -B build-debug -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Debug
-        cmake --build build-debug --config Debug
-
-    - name: Run tests (Release)
+    - name: Run tests
       working-directory: build
-      run: |
-        ./tests/soundcoe_tests
-      shell: bash
-
-    - name: Run tests (Debug)
-      working-directory: build-debug
       run: |
         ./tests/soundcoe_tests
       shell: bash

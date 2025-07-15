@@ -9,7 +9,12 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(testcoe)
-ignore_external_warnings(testcoe)
+
+ignore_external_warnings(gtest)
+ignore_external_warnings(gtest_main)
+ignore_external_warnings(gmock)
+ignore_external_warnings(gmock_main)
+ignore_external_warnings(backward)
 
 add_executable(soundcoe_tests
     main.cpp

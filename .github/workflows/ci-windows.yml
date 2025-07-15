@@ -42,6 +42,7 @@ jobs:
         fi
       shell: bash
 
+
     - name: Configure CMake
       run: |
         cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
@@ -50,7 +51,7 @@ jobs:
       run: |
         cmake --build build --config Release
 
-    - name: Run tests
+    - name: Run tests (math only - no audio hardware in CI)
       working-directory: build
       run: |
         if [ "${{ matrix.compiler }}" == "gcc" ]; then
@@ -61,11 +62,13 @@ jobs:
             cp "$GCC_DIR"/libgcc*.dll tests/ 2>/dev/null || echo "No libgcc DLLs found"
             cp "$GCC_DIR"/libstdc*.dll tests/ 2>/dev/null || echo "No libstdc DLLs found"
             cp "$GCC_DIR"/libwinpthread*.dll tests/ 2>/dev/null || echo "No libwinpthread DLLs found"
-            echo "Running tests"
+            echo "Running math tests (no audio hardware available in CI)"
             cd tests
-            ./soundcoe_tests.exe
+            ./soundcoe_tests.exe --suite=Vec3Tests
+            ./soundcoe_tests.exe --suite=MathTests
         else # MSVC
-            echo "Running tests"
-            ./tests/Release/soundcoe_tests.exe
+            echo "Running math tests (no audio hardware available in CI)"
+            ./tests/Release/soundcoe_tests.exe --suite=Vec3Tests
+            ./tests/Release/soundcoe_tests.exe --suite=MathTests
         fi
       shell: bash

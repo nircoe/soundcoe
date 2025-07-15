@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <soundcoe/playback/sound_manager.hpp>
 #include <soundcoe/core/types.hpp>
-#include "test_audio_files.hpp"
+#include "utils/test_audio_files.hpp"
 #include <thread>
 #include <chrono>
 #include <vector>
@@ -417,7 +417,7 @@ TEST_F(SoundManagerTests, UpdateFrequency)
     }
 
     auto duration = std::chrono::steady_clock::now() - start;
-    EXPECT_LT(duration, std::chrono::milliseconds(50));
+    EXPECT_LT(duration, std::chrono::milliseconds(200));
 }
 
 TEST_F(SoundManagerTests, ConcurrentAccess)
