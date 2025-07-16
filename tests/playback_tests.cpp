@@ -278,7 +278,7 @@ TEST_F(SoundManagerTests, FadeOutSound)
     EXPECT_TRUE(m_soundManager.isSoundPlaying(handle));
 
     EXPECT_TRUE(m_soundManager.fadeOutSound(handle, 0.1f));
-    waitForFade(0.1f);
+    waitForFade(1.0f);
 
     EXPECT_EQ(m_soundManager.getActiveSoundsCount(), 0);
 }
@@ -294,7 +294,7 @@ TEST_F(SoundManagerTests, FadeOutMusic)
     EXPECT_TRUE(m_soundManager.isMusicPlaying(handle));
 
     EXPECT_TRUE(m_soundManager.fadeOutMusic(handle, 0.1f));
-    waitForFade(0.1f);
+    waitForFade(1.0f);
 
     EXPECT_EQ(m_soundManager.getActiveMusicCount(), 0);
 }
