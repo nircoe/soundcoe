@@ -187,7 +187,7 @@ namespace soundcoe
         size_t getActiveMusicCount() const;
 
         SoundHandle fadeInSound(const std::string &filename, float duration,
-                                float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+                                float volume = 1.0f, float pitch = 1.0f, bool loop = false,
                                 SoundPriority priority = SoundPriority::Medium);
         MusicHandle fadeInMusic(const std::string &filename, float duration,
                                 float volume = 1.0f, float pitch = 1.0f, bool loop = true,
