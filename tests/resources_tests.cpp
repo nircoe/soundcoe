@@ -2,7 +2,7 @@
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/resources/resource_manager.hpp>
 #include <soundcoe/core/types.hpp>
-#include "test_audio_files.hpp"
+#include "utils/test_audio_files.hpp"
 #include <thread>
 #include <chrono>
 #include <vector>
@@ -10,11 +10,11 @@
 
 using namespace soundcoe;
 
-
 class ResourceManagerTests : public ::testing::Test
 {
 protected:
     ResourceManager m_resourceManager;
+    
     void SetUp() override
     {
         TestAudioFiles::createTestFiles();
@@ -26,6 +26,7 @@ protected:
     {
         try { m_resourceManager.shutdown(); }
         catch (...) { }
+        TestAudioFiles::cleanup();
     }
 
     static void SetUpTestSuite()

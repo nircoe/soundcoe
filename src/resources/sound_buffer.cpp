@@ -30,7 +30,7 @@ namespace soundcoe
 
         alBufferData(m_bufferId, m_format, data, m_size, m_sampleRate);
         try { ErrorHandler::throwOnOpenALError("Buffer Data"); }
-        catch(const std::runtime_error& e)
+        catch(const std::runtime_error&)
         {
             alDeleteBuffers(1, &m_bufferId);
             m_bufferId = 0;
