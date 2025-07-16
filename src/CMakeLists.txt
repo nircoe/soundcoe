@@ -20,7 +20,6 @@ target_include_directories(soundcoe
 target_link_libraries(soundcoe 
     PUBLIC
         soundcoe_headers
-    PRIVATE 
         OpenAL
         logcoe
 )
