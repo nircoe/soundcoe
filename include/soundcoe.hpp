@@ -1,6 +1,7 @@
 #pragma once
 
 #include <soundcoe/playback/sound_manager.hpp>
+#include <soundcoe/utils/math.hpp>
 
 namespace
 {
