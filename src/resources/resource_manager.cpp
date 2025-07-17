@@ -107,8 +107,8 @@ namespace soundcoe
             std::vector<std::filesystem::path> audioFiles;
             if (scanDirectoryForFiles(subdirectory, audioFiles))
             {
-                for (auto &file : audioFiles)
-                    preloadFileImpl(file.string());
+                for (const auto &file : audioFiles)
+                    preloadFileImpl(file);
 
                 m_loadedDirectories.push_back(subdirectory);
                 return true;
@@ -141,50 +141,14 @@ namespace soundcoe
 
             std::vector<std::filesystem::path> audioFiles;
             if (scanDirectoryForFiles(subdirectory, audioFiles))
-                for (auto &file : audioFiles)
-                    unloadFileImpl(file.string());
+                for (const auto &file : audioFiles)
+                    unloadFileImpl(file);
             else
                 logcoe::warning("No audio files found in directory: " + subdirectory);
 
             m_loadedDirectories.erase(std::remove(m_loadedDirectories.begin(), m_loadedDirectories.end(), subdirectory),
                                     m_loadedDirectories.end());
             return true;
-        }
-
-        bool ResourceManager::preloadFile(const std::string &filename)
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (!m_initialized)
-            {
-                logcoe::error("ResourceManager is not initialized");
-                return false;
-            }
-
-            if (filename.empty())
-            {
-                logcoe::error("Filename cannot be empty - specify a valid audio file path");
-                return false;
-            }
-
-            return preloadFileImpl(filename);
-        }
-
-        bool ResourceManager::unloadFile(const std::string &filename)
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (!m_initialized)
-            {
-                logcoe::error("ResourceManager is not initialized");
-                return false;
-            }
-
-            if (filename.empty())
-            {
-                logcoe::warning("Filename cannot be empty - specify a valid audio file path");
-                return true;
-            }
-
-            return unloadFileImpl(filename);
         }
 
         std::optional<std::reference_wrapper<SoundSource>> ResourceManager::acquireSource(size_t &poolIndex, SoundPriority priority)
@@ -237,12 +201,18 @@ namespace soundcoe
                 logcoe::error("Filename cannot be empty - specify a valid audio file path");
                 return std::nullopt;
             }
+            std::filesystem::path foundPath = findFileInLoadedDirectories(filename);
+            if(foundPath.empty())
+            {
+                logcoe::error("No such file in the loaded directories: " + filename);
+                return std::nullopt;
+            }
 
-            std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-            if ((m_bufferCache.find(fullPath) == m_bufferCache.end()) && !preloadFileImpl(filename))
+            std::string cacheKey = foundPath.lexically_normal().string();
+            if ((m_bufferCache.find(cacheKey) == m_bufferCache.end()) && !preloadFileImpl(foundPath))
                 return std::nullopt;
 
-            auto &entry = m_bufferCache[fullPath];
+            auto &entry = m_bufferCache[cacheKey];
             ++entry.m_referenceCount;
             entry.m_lastAccessed = std::chrono::steady_clock::now();
             return std::ref(*(entry.m_buffer));
@@ -543,19 +513,19 @@ namespace soundcoe
             return foundFile;
         }
 
-        bool ResourceManager::preloadFileImpl(const std::string &filename)
+        bool ResourceManager::preloadFileImpl(const std::filesystem::path &filePath)
         {
-            std::filesystem::path fullPath;
-            if (std::filesystem::path(filename).is_absolute())
-                fullPath = filename;
-            else
-                fullPath = m_audioRootDirectory / normalizePath(filename);
+            if (!filePath.is_absolute())
+            {
+                logcoe::error("File path is not absolute: " + filePath.string());
+                return false;
+            }
 
             try
             {
-                if (!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
+                if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
                 {
-                    logcoe::error("Not a File: \"" + fullPath.string() + "\"");
+                    logcoe::error("Not a File: \"" + filePath.string() + "\"");
                     return false;
                 }
             }
@@ -565,64 +535,59 @@ namespace soundcoe
                 return false;
             }
 
-            std::string fullPathStr = fullPath.string();
-            if (m_bufferCache.find(fullPathStr) != m_bufferCache.end())
+            std::string cacheKey = filePath.string();
+            if (m_bufferCache.find(cacheKey) != m_bufferCache.end())
                 return true;
 
             try
             {
                 BufferCacheEntry entry;
 
-                entry.m_buffer = std::make_unique<SoundBuffer>(fullPathStr);
+                entry.m_buffer = std::make_unique<SoundBuffer>(cacheKey);
                 entry.m_referenceCount = 0;
                 entry.m_lastAccessed = std::chrono::steady_clock::now();
 
                 m_currentCacheSize += entry.m_buffer->getSize();
-                m_bufferCache[fullPathStr] = std::move(entry);
+                m_bufferCache[cacheKey] = std::move(entry);
             }
             catch (const std::exception &e)
             {
                 logcoe::error("Failed to create SoundBuffer: " + std::string(e.what()));
-                m_bufferCache.erase(fullPathStr);
+                m_bufferCache.erase(cacheKey);
                 return false;
             }
 
             if (m_currentCacheSize > m_maxCacheSize)
                 freeBuffers();
 
-            logcoe::info("preloadFile Successfully: \"" + fullPathStr + "\"");
+            logcoe::info("preloadFile Successfully: \"" + cacheKey + "\"");
             return true;
         }
 
-        bool ResourceManager::unloadFileImpl(const std::string &filename)
+        bool ResourceManager::unloadFileImpl(const std::filesystem::path &filePath)
         {
-            std::filesystem::path fullPath;
-            if (std::filesystem::path(filename).is_absolute())
-                fullPath = filename;
-            else
-                fullPath = m_audioRootDirectory / normalizePath(filename);
-
             try
             {
-                if (!std::filesystem::exists(fullPath) || !std::filesystem::is_regular_file(fullPath))
+                if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath))
                 {
-                    logcoe::warning("Not a File: \"" + filename + "\"");
+                    logcoe::warning("Not a File: \"" + filePath.string() + "\"");
                     return true;
                 }
             }
             catch (const std::filesystem::filesystem_error &e)
             {
                 logcoe::error("std::filesystem exception: " + std::string(e.what()));
-                return false; // we don't know if filename is a audio file so it may be a failure of unloadFileImpl
+                return false;
             }
 
-            if (m_bufferCache.find(fullPath.string()) == m_bufferCache.end())
+            std::string cacheKey = filePath.string();
+            if (m_bufferCache.find(cacheKey) == m_bufferCache.end())
             {
-                logcoe::warning("File is not loaded: \"" + fullPath.string() + "\"");
+                logcoe::warning("File is not loaded: \"" + cacheKey + "\"");
                 return true;
             }
 
-            auto &entry = m_bufferCache[fullPath.string()];
+            auto &entry = m_bufferCache[cacheKey];
             if (entry.m_referenceCount > 0)
             {
                 auto bufferId = entry.m_buffer->getBufferId();
@@ -647,7 +612,7 @@ namespace soundcoe
             }
 
             m_currentCacheSize -= entry.m_buffer->getSize();
-            m_bufferCache.erase(fullPath.string());
+            m_bufferCache.erase(cacheKey);
             return true;
         }
 
@@ -681,15 +646,21 @@ namespace soundcoe
                 return false;
             }
 
-            std::string fullPath = (m_audioRootDirectory / normalizePath(filename)).string();
-            
-            if (m_bufferCache.find(fullPath) == m_bufferCache.end())
+            std::filesystem::path foundPath = findFileInLoadedDirectories(filename);
+            if(foundPath.empty())
             {
-                logcoe::warning("Buffer is not loaded in cache: " + fullPath);
+                logcoe::warning("No such file found for release: " + filename);
                 return true;
             }
 
-            auto &entry = m_bufferCache[fullPath];
+            std::string cacheKey = foundPath.lexically_normal().string();
+            if (m_bufferCache.find(cacheKey) == m_bufferCache.end())
+            {
+                logcoe::warning("Buffer is not loaded in cache: " + cacheKey);
+                return true;
+            }
+
+            auto &entry = m_bufferCache[cacheKey];
             if (entry.m_referenceCount == 0)
             {
                 logcoe::warning("Not a single Source is using this Buffer at the moment");
@@ -698,6 +669,20 @@ namespace soundcoe
 
             --entry.m_referenceCount;
             return true;
+        }
+
+        std::filesystem::path ResourceManager::findFileInLoadedDirectories(const std::string &filename) const
+        {
+            auto loadedDirs = m_loadedDirectories;
+            for(const auto &dir : loadedDirs)
+            {
+                std::filesystem::path candidatePath = (m_audioRootDirectory / dir / filename).lexically_normal();
+                if (std::filesystem::exists(candidatePath) && std::filesystem::is_regular_file(candidatePath))
+                {
+                    return candidatePath;
+                }
+            }
+            return std::filesystem::path();
         }
 
         std::optional<std::reference_wrapper<SourceAllocation>> ResourceManager::getSourceAllocation(size_t index)

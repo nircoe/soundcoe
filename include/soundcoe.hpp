@@ -10,10 +10,12 @@ namespace
 
 namespace soundcoe
 {
-    static bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64,
-                           LogLevel level = LogLevel::INFO)
+    static bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
+                           size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
+                           const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO)
     {
-        return s_soundManager.initialize(audioRootDirectory, maxSources, maxCacheSizeMB, level);
+        return s_soundManager.initialize(audioRootDirectory, maxSources, maxCacheSizeMB,
+                                         soundSubdir, musicSubdir, level);
     }
 
     static void shutdown()

@@ -42,6 +42,8 @@ namespace soundcoe
         bool m_initialized = false;
 
         ResourceManager m_resourceManager;
+        std::string m_soundSubdir;
+        std::string m_musicSubdir;
 
         std::atomic<size_t> m_nextSoundHandle;
         std::atomic<size_t> m_nextMusicHandle;
@@ -137,8 +139,9 @@ namespace soundcoe
         SoundManager();
         ~SoundManager();
 
-        bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64,
-                        LogLevel level = LogLevel::INFO);
+        bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
+                        size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
+                        const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO);
         void shutdown();
         bool isInitialized() const;
 

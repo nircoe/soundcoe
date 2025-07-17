@@ -55,11 +55,12 @@ namespace soundcoe
             void freeBuffers();
             std::filesystem::path normalizePath(const std::string &path) const;
             bool scanDirectoryForFiles(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
-            bool preloadFileImpl(const std::string &filename);
-            bool unloadFileImpl(const std::string &filename);
+            bool preloadFileImpl(const std::filesystem::path &filePath);
+            bool unloadFileImpl(const std::filesystem::path &filePath);
             bool isDirectoryLoadedImpl(const std::string &subdirectory) const;
             SoundPriority getHighestPriorityForBuffer(ALuint bufferId) const;
             bool releaseBufferImpl(const std::string &filename);
+            std::filesystem::path findFileInLoadedDirectories(const std::string &filename) const;
 
         public:
             ResourceManager();
@@ -72,8 +73,6 @@ namespace soundcoe
 
             bool preloadDirectory(const std::string &subdirectory);
             bool unloadDirectory(const std::string &subdirectory);
-            bool preloadFile(const std::string &filename);
-            bool unloadFile(const std::string &filename);
 
             std::optional<std::reference_wrapper<SoundSource>> acquireSource(size_t &poolIndex, SoundPriority priority = SoundPriority::Medium);
             std::optional<std::reference_wrapper<SoundBuffer>> getBuffer(const std::string &filename);

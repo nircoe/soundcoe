@@ -33,11 +33,16 @@ public:
         // For playback_tests.cpp compatibility  
         s_generalDir = s_testRootDir / "general" / "sfx";
         s_scene1Dir = s_testRootDir / "scene1" / "sfx";
+        
+        std::filesystem::path generalMusicDir = s_testRootDir / "general" / "music";
+        std::filesystem::path scene1MusicDir = s_testRootDir / "scene1" / "music";
 
         std::filesystem::create_directories(s_testSubDir1);
         std::filesystem::create_directories(s_testSubDir2);
         std::filesystem::create_directories(s_generalDir);
         std::filesystem::create_directories(s_scene1Dir);
+        std::filesystem::create_directories(generalMusicDir);
+        std::filesystem::create_directories(scene1MusicDir);
 
         // Files for resources_tests.cpp
         createWavFile(s_testSubDir1 / "test1.wav");
@@ -49,6 +54,8 @@ public:
         createWavFile(s_generalDir / "beep.wav");
         createWavFile(s_generalDir / "click.wav");
         createWavFile(s_scene1Dir / "explosion.wav");
+        createWavFile(generalMusicDir / "background.wav");
+        createWavFile(scene1MusicDir / "battle.wav");
 
         s_filesCreated = true;
     }
