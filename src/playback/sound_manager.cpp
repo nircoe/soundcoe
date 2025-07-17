@@ -523,6 +523,7 @@ namespace soundcoe
                 logcoe::warning("There is no general audio subdirectory");
 
             m_initialized = true;
+            logcoe::info("SoundManager initialized successfully");
             return true;
         }
 

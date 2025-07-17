@@ -48,6 +48,7 @@ namespace soundcoe
             }
 
             m_initialized = true;
+            logcoe::info("ResourceManager initialized successfully");
         }
 
         void ResourceManager::shutdown()

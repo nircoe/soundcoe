@@ -135,6 +135,7 @@ namespace soundcoe
                     logcoe::error(message);
                     throw std::runtime_error(message);
             }
+            logcoe::info("SoundBuffer loaded successfully");
         }
 
         void SoundBuffer::loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate)
@@ -170,6 +171,7 @@ namespace soundcoe
             generateBuffer(data);
 
             m_loaded = true;
+            logcoe::info("SoundBuffer loaded successfully");
         }
 
         void SoundBuffer::unload()

@@ -71,6 +71,8 @@ namespace soundcoe
             setVolume(1.0f);
             setPitch(1.0f);
             setLooping(false);
+
+            logcoe::info("SoundSource created successfully");
         }
 
         void SoundSource::destroy()
