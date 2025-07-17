@@ -24,10 +24,28 @@ set(ALSOFT_EMBED_HRTF_DATA ON CACHE BOOL "" FORCE)
 
 # Platform-specific backend requirements
 if(WIN32)
-  # Windows
-  set(ALSOFT_REQUIRE_WINMM ON CACHE BOOL "" FORCE)
-  set(ALSOFT_REQUIRE_DSOUND ON CACHE BOOL "" FORCE)
-  set(ALSOFT_REQUIRE_WASAPI ON CACHE BOOL "" FORCE)
+  # Windows - Make backends optional to support different Windows versions
+  option(SOUNDCOE_ENABLE_WASAPI "Enable WASAPI backend (Vista+)" ON)
+  option(SOUNDCOE_ENABLE_DSOUND "Enable DirectSound backend" ON)
+  option(SOUNDCOE_ENABLE_WINMM "Enable WinMM backend" ON)
+  
+  if(SOUNDCOE_ENABLE_WASAPI)
+    set(ALSOFT_REQUIRE_WASAPI ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_WASAPI OFF CACHE BOOL "" FORCE)
+  endif()
+  
+  if(SOUNDCOE_ENABLE_DSOUND)
+    set(ALSOFT_REQUIRE_DSOUND ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_DSOUND OFF CACHE BOOL "" FORCE)
+  endif()
+  
+  if(SOUNDCOE_ENABLE_WINMM)
+    set(ALSOFT_REQUIRE_WINMM ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_WINMM OFF CACHE BOOL "" FORCE)
+  endif()
   
   # Disable non-Windows backends to prevent build issues
   set(ALSOFT_BACKEND_PIPEWIRE OFF CACHE BOOL "" FORCE)
@@ -47,6 +65,20 @@ elseif(APPLE)
     set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
     set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
+    
+    # Disable non-iOS backends to prevent build issues
+    set(ALSOFT_BACKEND_WASAPI OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_DSOUND OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_WINMM OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_PIPEWIRE OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_PULSEAUDIO OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_ALSA OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_OSS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_JACK OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_OPENSL OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_OBOE OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_SOLARIS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_BACKEND_SNDIO OFF CACHE BOOL "" FORCE)
   else()
     # macOS
     set(ALSOFT_REQUIRE_COREAUDIO ON CACHE BOOL "" FORCE)
@@ -68,19 +100,48 @@ elseif(APPLE)
 elseif(ANDROID)
   # Android
   set(ALSOFT_REQUIRE_OPENSL ON CACHE BOOL "" FORCE)
-elseif(UNIX)
-  # Linux
-  set(ALSOFT_REQUIRE_ALSA ON CACHE BOOL "" FORCE)
-  set(ALSOFT_REQUIRE_PULSEAUDIO ON CACHE BOOL "" FORCE)
   
-  # Explicitly disable OSS since it's not commonly used on modern Linux
-  set(ALSOFT_REQUIRE_OSS OFF CACHE BOOL "" FORCE)
+  # Disable non-Android backends to prevent build issues
+  set(ALSOFT_BACKEND_WASAPI OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_DSOUND OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_WINMM OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_COREAUDIO OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_PIPEWIRE OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_PULSEAUDIO OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_ALSA OFF CACHE BOOL "" FORCE)
   set(ALSOFT_BACKEND_OSS OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_JACK OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_SOLARIS OFF CACHE BOOL "" FORCE)
+  set(ALSOFT_BACKEND_SNDIO OFF CACHE BOOL "" FORCE)
+elseif(UNIX)
+  # Linux - Make backends optional to support different distributions
+  option(SOUNDCOE_ENABLE_ALSA "Enable ALSA backend" ON)
+  option(SOUNDCOE_ENABLE_PULSEAUDIO "Enable PulseAudio backend" ON)
+  option(SOUNDCOE_ENABLE_PIPEWIRE "Enable PipeWire backend" ON)
+  option(SOUNDCOE_ENABLE_OSS "Enable OSS backend" OFF)
   
-  # PipeWire is becoming the standard on modern Linux distros
-  option(SOUNDCOE_ENABLE_PIPEWIRE "Enable PipeWire backend if available" ON)
+  if(SOUNDCOE_ENABLE_ALSA)
+    set(ALSOFT_REQUIRE_ALSA ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_ALSA OFF CACHE BOOL "" FORCE)
+  endif()
+  
+  if(SOUNDCOE_ENABLE_PULSEAUDIO)
+    set(ALSOFT_REQUIRE_PULSEAUDIO ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_PULSEAUDIO OFF CACHE BOOL "" FORCE)
+  endif()
+  
   if(SOUNDCOE_ENABLE_PIPEWIRE)
     set(ALSOFT_REQUIRE_PIPEWIRE ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_PIPEWIRE OFF CACHE BOOL "" FORCE)
+  endif()
+  
+  if(SOUNDCOE_ENABLE_OSS)
+    set(ALSOFT_REQUIRE_OSS ON CACHE BOOL "" FORCE)
+  else()
+    set(ALSOFT_BACKEND_OSS OFF CACHE BOOL "" FORCE)
   endif()
   
   # Disable non-Linux backends to prevent build issues
