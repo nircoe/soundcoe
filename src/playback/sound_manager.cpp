@@ -460,15 +460,24 @@ namespace soundcoe
         SoundManager::SoundManager() : m_resourceManager(), m_nextSoundHandle(1), m_nextMusicHandle(1),
                                        m_activeSounds(), m_activeMusic(), m_listenerPosition(),
                                        m_listenerVelocity(), m_listenerForward(), m_listenerUp(),
-                                       m_lastUpdate() {}
+                                       m_lastUpdate() 
+        {
+            logcoe::info("SoundManager constructor called, m_initialized=" + std::to_string(m_initialized));
+        }
 
-        SoundManager::~SoundManager() { shutdown(); }
+        SoundManager::~SoundManager() 
+        { 
+            logcoe::info("SoundManager destructor called, m_initialized=" + std::to_string(m_initialized));
+            shutdown(); 
+        }
 
         bool SoundManager::initialize(const std::string &audioRootDirectory, size_t maxSources,
                                       size_t maxCacheSizeMB, const std::string &soundSubdir,
                                       const std::string &musicSubdir, LogLevel level)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+            logcoe::info("SoundManager::initialize() called with m_initialized=" + std::to_string(m_initialized));
+            
             if (m_initialized)
             {
                 logcoe::warning("Need to shutdown SoundManager before initialize it again");
@@ -523,13 +532,14 @@ namespace soundcoe
                 logcoe::warning("There is no general audio subdirectory");
 
             m_initialized = true;
-            logcoe::info("SoundManager initialized successfully");
+            logcoe::info("SoundManager initialized successfully, m_initialized=" + std::to_string(m_initialized));
             return true;
         }
 
         void SoundManager::shutdown()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+            logcoe::info("SoundManager::shutdown() called with m_initialized=" + std::to_string(m_initialized));
 
             m_nextSoundHandle = 1;
             m_nextMusicHandle = 1;
@@ -562,12 +572,13 @@ namespace soundcoe
             m_resourceManager.shutdown();
             logcoe::shutdown();
             m_initialized = false;
+            logcoe::info("SoundManager::shutdown() completed, m_initialized=" + std::to_string(m_initialized));
         }
 
         bool SoundManager::isInitialized() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-
+            logcoe::info("SoundManager::isInitialized() called, returning m_initialized=" + std::to_string(m_initialized));
             return m_initialized;
         }
 
@@ -618,6 +629,12 @@ namespace soundcoe
         SoundHandle SoundManager::playSound(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+            logcoe::info("SoundManager::playSound() called for file: " + filename + ", m_initialized=" + std::to_string(m_initialized));
+
+            if (!m_initialized) {
+                logcoe::error("SoundManager::playSound() called but SoundManager is not initialized!");
+                return INVALID_SOUND_HANDLE;
+            }
 
             return play(m_activeSounds, m_soundSubdir + filename, volume, pitch, loop, priority, m_nextSoundHandle, "playSound",
                         m_masterSoundsVolume, m_masterSoundsPitch);
