@@ -9,6 +9,7 @@
 #include <future>
 
 using namespace soundcoe;
+using namespace soundcoe::detail;
 
 class ResourceManagerTests : public ::testing::Test
 {

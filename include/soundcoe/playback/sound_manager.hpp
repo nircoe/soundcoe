@@ -15,27 +15,29 @@ namespace soundcoe
     constexpr SoundHandle INVALID_SOUND_HANDLE = 0;
     constexpr MusicHandle INVALID_MUSIC_HANDLE = 0;
 
-    struct ActiveAudio
+    namespace detail
     {
-        size_t m_sourceIndex;
-        std::string m_filename;
-        float m_baseVolume;
-        float m_basePitch;
-        bool m_loop;
+        struct ActiveAudio
+        {
+            size_t m_sourceIndex;
+            std::string m_filename;
+            float m_baseVolume;
+            float m_basePitch;
+            bool m_loop;
 
-        bool m_stream = false;
-        size_t m_streamBufferSize = 0;
-        float m_streamPosition = 0.0f;
-        bool m_streamNeedsRefill = false;
+            bool m_stream = false;
+            size_t m_streamBufferSize = 0;
+            float m_streamPosition = 0.0f;
+            bool m_streamNeedsRefill = false;
 
-        bool m_isFading = false;
-        float m_fadeDuration = 0.0f;
-        float m_fadeElapsed = 0.0f;
-        float m_fadeStartVolume = 0.0f;
-        float m_fadeTargetVolume = 0.0f;
-    };
+            bool m_isFading = false;
+            float m_fadeDuration = 0.0f;
+            float m_fadeElapsed = 0.0f;
+            float m_fadeStartVolume = 0.0f;
+            float m_fadeTargetVolume = 0.0f;
+        };
 
-    class SoundManager
+        class SoundManager
     {
         bool m_initialized = false;
 
@@ -236,4 +238,5 @@ namespace soundcoe
 
         static bool isHandleValid(size_t handle);
     };
+    } // namespace detail
 } // namespace soundcoe

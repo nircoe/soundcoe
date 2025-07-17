@@ -4,7 +4,7 @@
 
 namespace soundcoe
 {
-    static SoundManager s_soundManager;
+    static detail::SoundManager s_soundManager;
 
     static bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64,
                            LogLevel level = LogLevel::INFO)
