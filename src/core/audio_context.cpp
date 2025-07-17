@@ -23,7 +23,7 @@ namespace soundcoe
                 {
                     if(m_context == current)
                     {
-                        logcoe::info("AudioContext is already initialized");
+                        logcoe::info("AudioContext::initialize: AudioContext is already initialized");
                         return;
                     }
                     deviceOpened = true;
@@ -38,7 +38,7 @@ namespace soundcoe
 
             if(!deviceOpened)
             {
-                logcoe::debug("Initializing ALCdevice: " + (deviceName.empty() ? "default" : deviceName));
+                logcoe::debug("AudioContext::initialize: Initializing ALCdevice: " + (deviceName.empty() ? "default" : deviceName));
                 m_device = alcOpenDevice(deviceName.empty() ? nullptr : deviceName.c_str());
                 if (!m_device)
                     ErrorHandler::throwOnALCError(nullptr, "Open Audio Device: \"" + (deviceName.empty() ? "default" : deviceName) + "\"");
@@ -46,7 +46,7 @@ namespace soundcoe
 
             if(!contextCreated)
             {
-                logcoe::info("Initializing AudioContext");
+                logcoe::info("AudioContext::initialize: Initializing AudioContext");
                 m_context = alcCreateContext(m_device, nullptr);
                 if(!m_context)
                 {
@@ -60,7 +60,7 @@ namespace soundcoe
                 }
             }
 
-            logcoe::debug("Make AudioContext current");
+            logcoe::debug("AudioContext::initialize: Make AudioContext current");
             if(!alcMakeContextCurrent(m_context))
             {
                 try { ErrorHandler::throwOnALCError(m_device, "Make Context Current"); }
@@ -75,7 +75,7 @@ namespace soundcoe
             }
 
             m_initialized = true;
-            logcoe::info("AudioContext initialized successfully");
+            logcoe::info("AudioContext::initialize: AudioContext initialized successfully");
             ErrorHandler::clearALCError(m_device);
         }
 
@@ -85,26 +85,26 @@ namespace soundcoe
             if(!m_initialized)
                 return;
 
-            logcoe::info("Shutting down AudioContext");
+            logcoe::info("AudioContext::shutdown: Shutting down AudioContext");
 
             if(!alcMakeContextCurrent(nullptr))
                 ErrorHandler::throwOnALCError(m_device, "Make Context Current NULL");
-            logcoe::debug("Make Context Current NULL succeed");
+            logcoe::debug("AudioContext::shutdown: Make Context Current NULL succeed");
 
             if(m_context)
             {
                 alcDestroyContext(m_context);
                 ErrorHandler::throwOnALCError(m_device, "Destroy Context");
             }
-            logcoe::debug("Destroy Context succeed");
+            logcoe::debug("AudioContext::shutdown: Destroy Context succeed");
             m_context = nullptr;
 
             if(m_device && !alcCloseDevice(m_device))
                 ErrorHandler::throwOnALCError(m_device, "Close Device");
-            logcoe::debug("Close Device succeed");
+            logcoe::debug("AudioContext::shutdown: Close Device succeed");
             m_device = nullptr;
             m_initialized = false;
-            logcoe::info("AudioContext shutdown complete successfully");
+            logcoe::info("AudioContext::shutdown: AudioContext shutdown complete successfully");
         }
 
         bool AudioContext::isInitialized() const

@@ -59,8 +59,8 @@ namespace soundcoe
             bool isSource = false;
             if(m_created) 
             {
-                    logcoe::info("SoundSource is already created");
-                    return;
+                logcoe::info("SoundSource::create: SoundSource is already created");
+                return;
             }
 
             alGenSources(1, &m_sourceId);
@@ -72,7 +72,7 @@ namespace soundcoe
             setPitch(1.0f);
             setLooping(false);
 
-            logcoe::info("SoundSource created successfully");
+            logcoe::info("SoundSource::create: SoundSource created successfully");
         }
 
         void SoundSource::destroy()
@@ -122,13 +122,13 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::play: SoundSource not created");
                 return false;
             }
 
             if(isPlaying())
             {
-                logcoe::debug("SoundSource is already playing");
+                logcoe::debug("SoundSource::play: SoundSource is already playing");
                 return true;
             }
 
@@ -143,13 +143,13 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::pause: SoundSource not created");
                 return false;
             }
 
             if(isPaused())
             {
-                logcoe::debug("SoundSource is already paused");
+                logcoe::debug("SoundSource::pause: SoundSource is already paused");
                 return true;
             }
 
@@ -164,13 +164,13 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::stop: SoundSource not created");
                 return false;
             }
 
             if(!(isPlaying() || isPaused()))
             {
-                logcoe::debug("SoundSource is already stopped or in initial state");
+                logcoe::debug("SoundSource::stop: SoundSource is already stopped or in initial state");
                 return true;
             }
 
@@ -185,7 +185,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::setVolume: SoundSource not created");
                 return false;
             }
             ALfloat ALvolume = static_cast<ALfloat>(volume);
@@ -201,7 +201,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::setPitch: SoundSource not created");
                 return false;
             }
             ALfloat ALpitch = static_cast<ALfloat>(pitch);
@@ -217,7 +217,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::setPosition: SoundSource not created");
                 return false;
             }
             alSource3f(m_sourceId, AL_POSITION,
@@ -233,7 +233,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::setVelocity: SoundSource not created");
                 return false;
             }
             alSource3f(m_sourceId, AL_VELOCITY,
@@ -249,7 +249,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::setLooping: SoundSource not created");
                 return false;
             }
             ALboolean ALlooping = looping ? AL_TRUE : AL_FALSE;
@@ -275,7 +275,7 @@ namespace soundcoe
         { 
             if(!m_created) 
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::getState: SoundSource not created");
                 return SoundState::Initial;
             }
 
@@ -307,7 +307,7 @@ namespace soundcoe
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource not created");
+                logcoe::warning("SoundSource::getBufferId: SoundSource not created");
                 return 0;
             }
 

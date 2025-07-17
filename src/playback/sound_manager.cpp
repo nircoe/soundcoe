@@ -95,13 +95,13 @@ namespace soundcoe
         {
             auto it = activeAudio.find(handle);
             if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
+                return setError("SoundManager::" + method + ": Invalid handle");
 
             if (duration <= 0.0f)
-                return setError(method + ": Fade duration must be positive");
+                return setError("SoundManager::" + method + ": Fade duration must be positive");
 
             if (targetVolume < 0.0f)
-                return setError(method + ": Fade target volume must be non-negative");
+                return setError("SoundManager::" + method + ": Fade target volume must be non-negative");
 
             ActiveAudio &audio = it->second;
 
@@ -109,12 +109,12 @@ namespace soundcoe
             if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
+                return setError("SoundManager::" + method + ": Audio source is no longer active");
             }
 
             auto &source = sourceAllocation.value().get().m_source;
             if (!(source->isPlaying()))
-                return setError(method + ": Cannot fadeToVolume audio that is not playing.");
+                return setError("SoundManager::" + method + ": Cannot fadeToVolume audio that is not playing.");
 
             audio.m_isFading = true;
             audio.m_fadeStartVolume = audio.m_baseVolume;
@@ -129,10 +129,10 @@ namespace soundcoe
         {
             auto it = activeAudio.find(handle);
             if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
+                return setError("SoundManager::" + method + ": Invalid handle");
 
             if (duration <= 0.0f)
-                return setError(method + ": Fade duration must be positive");
+                return setError("SoundManager::" + method + ": Fade duration must be positive");
 
             ActiveAudio &audio = it->second;
 
@@ -140,12 +140,12 @@ namespace soundcoe
             if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
+                return setError("SoundManager::" + method + ": Audio source is no longer active");
             }
 
             auto &source = sourceAllocation.value().get().m_source;
             if (!fadeIn && !(source->isPlaying()))
-                return setError(method + ": Cannot fade out audio that is not playing.");
+                return setError("SoundManager::" + method + ": Cannot fade out audio that is not playing.");
 
             audio.m_isFading = true;
             audio.m_fadeStartVolume = fadeIn ? 0.0f : audio.m_baseVolume;
@@ -163,14 +163,14 @@ namespace soundcoe
 
             auto it = activeAudio.find(handle);
             if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
+                return setError("SoundManager::" + method + ": Invalid handle");
 
             ActiveAudio &audio = it->second;
             auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
             if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
+                return setError("SoundManager::" + method + ": Audio source is no longer active");
             }
 
             auto &source = sourceAllocation.value().get().m_source;
@@ -181,7 +181,7 @@ namespace soundcoe
             if (state == SoundState::Stopped)
                 return source->isStopped();
 
-            return setError(method + ": Internal error - Invalid operation type");
+            return setError("SoundManager::" + method + ": Internal error - Invalid operation type");
         }
 
         bool SoundManager::setAudioProperty(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
@@ -190,14 +190,14 @@ namespace soundcoe
         {
             auto it = activeAudio.find(handle);
             if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
+                return setError("SoundManager::" + method + ": Invalid handle");
 
             ActiveAudio &audio = it->second;
             auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
             if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
+                return setError("SoundManager::" + method + ": Audio source is no longer active");
             }
 
             auto &source = sourceAllocation.value().get().m_source;
@@ -214,7 +214,7 @@ namespace soundcoe
             if (type == PropertyType::Velocity)
                 return source->setVelocity(vec);
 
-            return setError(method + ": Internal error - Invalid PropertyType");
+            return setError("SoundManager::" + method + ": Internal error - Invalid PropertyType");
         }
 
         bool SoundManager::audioOperation(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
@@ -222,14 +222,14 @@ namespace soundcoe
         {
             auto it = activeAudio.find(handle);
             if (it == activeAudio.end())
-                return setError(method + ": Invalid handle");
+                return setError("SoundManager::" + method + ": Invalid handle");
 
             ActiveAudio &audio = it->second;
             auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
             if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
             {
                 activeAudio.erase(it);
-                return setError(method + ": Audio source is no longer active");
+                return setError("SoundManager::" + method + ": Audio source is no longer active");
             }
 
             auto &source = sourceAllocation.value().get().m_source;
@@ -249,7 +249,7 @@ namespace soundcoe
                 return succeed;
             }
 
-            return setError(method + ": Internal error - Invalid operation type");
+            return setError("SoundManager::" + method + ": Internal error - Invalid operation type");
         }
 
         bool SoundManager::audioOperationAll(std::unordered_map<size_t, ActiveAudio> &activeAudio, SoundState operation,
@@ -261,7 +261,7 @@ namespace soundcoe
                 auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
                 if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
                 {
-                    logcoe::warning(method + ": handle " + std::to_string(it->first) + " is no longer active");
+                    logcoe::warning("SoundManager::" + method + ": handle " + std::to_string(it->first) + " is no longer active");
                     it = activeAudio.erase(it);
                     continue;
                 }
@@ -273,7 +273,7 @@ namespace soundcoe
                     if (source->isPaused())
                         success = source->play();
                     else
-                        logcoe::warning(method + ": handle " + std::to_string(it->first) + " is not paused");
+                        logcoe::warning("SoundManager::" + method + ": handle " + std::to_string(it->first) + " is not paused");
                 }
                 else if (operation == SoundState::Paused)
                     success = source->pause();
@@ -289,10 +289,10 @@ namespace soundcoe
                     }
                 }
                 else
-                    return setError(method + ": Internal error - Invalid operation type");
+                    return setError("SoundManager::" + method + ": Internal error - Invalid operation type");
 
                 if (!success)
-                    logcoe::warning(method + ": Failed to operate on handle - " + std::to_string(it->first));
+                    logcoe::warning("SoundManager::" + method + ": Failed to operate on handle - " + std::to_string(it->first));
 
                 ++it;
             }
@@ -309,7 +309,7 @@ namespace soundcoe
             auto buffer = m_resourceManager.getBuffer(filename);
             if (!(buffer.has_value()))
             {
-                logcoe::error(method + ": Failed to load the sound file");
+                logcoe::error("SoundManager::" + method + ": Failed to load the sound file");
                 return INVALID_SOUND_HANDLE;
             }
 
@@ -317,7 +317,7 @@ namespace soundcoe
             auto source = m_resourceManager.acquireSource(poolIndex, priority);
             if (!(source.has_value()))
             {
-                logcoe::error(method + ": Failed to acquire source");
+                logcoe::error("SoundManager::" + method + ": Failed to acquire source");
                 m_resourceManager.releaseBuffer(buffer.value());
                 return INVALID_SOUND_HANDLE;
             }
@@ -328,28 +328,28 @@ namespace soundcoe
             }
             catch (const std::exception &e)
             {
-                logcoe::error(method + ": Failed to attach buffer: " + std::string(e.what()));
+                logcoe::error("SoundManager::" + method + ": Failed to attach buffer: " + std::string(e.what()));
                 m_resourceManager.releaseSource(source.value());
                 m_resourceManager.releaseBuffer(buffer.value());
                 return INVALID_SOUND_HANDLE;
             }
 
             if (!(source->get().setVolume(volume * m_masterVolume * masterCategoryVolume)))
-                logcoe::warning(method + ": Failed to set volume for " + filename);
+                logcoe::warning("SoundManager::" + method + ": Failed to set volume for " + filename);
             if (!(source->get().setPitch(pitch * m_masterPitch * masterCategoryPitch)))
-                logcoe::warning(method + ": Failed to set pitch for " + filename);
+                logcoe::warning("SoundManager::" + method + ": Failed to set pitch for " + filename);
             if (!(source->get().setLooping(loop)))
-                logcoe::warning(method + ": Failed to set looping for " + filename);
+                logcoe::warning("SoundManager::" + method + ": Failed to set looping for " + filename);
             if (is3D)
             {
                 if (!(source->get().setPosition(position)))
-                    logcoe::warning(method + ": Failed to set position for " + filename);
+                    logcoe::warning("SoundManager::" + method + ": Failed to set position for " + filename);
                 if (!(source->get().setVelocity(velocity)))
-                    logcoe::warning(method + ": Failed to set velocity for " + filename);
+                    logcoe::warning("SoundManager::" + method + ": Failed to set velocity for " + filename);
             }
             if (!(source->get().play()))
             {
-                logcoe::error(method + ": Failed to play the sound " + filename);
+                logcoe::error("SoundManager::" + method + ": Failed to play the sound " + filename);
                 m_resourceManager.releaseSource(source.value());
                 m_resourceManager.releaseBuffer(buffer.value());
                 return INVALID_SOUND_HANDLE;
@@ -406,13 +406,13 @@ namespace soundcoe
                 auto sourceAllocation = m_resourceManager.getSourceAllocation(audio.m_sourceIndex);
                 if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
                 {
-                    logcoe::warning("handleFadeEffects: handle " + std::to_string(it->first) + " is no longer active");
+                    logcoe::warning("SoundManager::handleFadeEffects: handle " + std::to_string(it->first) + " is no longer active");
                     it = activeAudio.erase(it);
                     continue;
                 }
                 auto &source = sourceAllocation.value().get().m_source;
                 if (!(source->setVolume(finalVolume)))
-                    logcoe::warning("handleFadeEffects: Failed to update the volume of handle " + std::to_string(it->first));
+                    logcoe::warning("SoundManager::handleFadeEffects: Failed to update the volume of handle " + std::to_string(it->first));
 
                 if (finished)
                 {
@@ -424,7 +424,7 @@ namespace soundcoe
                             m_resourceManager.releaseBuffer(audio.m_filename);
                         }
                         else
-                            logcoe::warning("handleFadeEffects: Failed to stop handle " + std::to_string(it->first) + " when finished to fade out");
+                            logcoe::warning("SoundManager::handleFadeEffects: Failed to stop handle " + std::to_string(it->first) + " when finished to fade out");
 
                         it = activeAudio.erase(it);
                         continue;
@@ -449,7 +449,7 @@ namespace soundcoe
                 auto sourceAllocation = m_resourceManager.getSourceAllocation(it->second.m_sourceIndex);
                 if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
                 {
-                    logcoe::debug("update: Cleaning up inactive audio handle: " + std::to_string(it->first));
+                    logcoe::debug("SoundManager::update: Cleaning up inactive audio handle: " + std::to_string(it->first));
                     it = activeAudio.erase(it);
                 }
                 else
@@ -460,14 +460,10 @@ namespace soundcoe
         SoundManager::SoundManager() : m_resourceManager(), m_nextSoundHandle(1), m_nextMusicHandle(1),
                                        m_activeSounds(), m_activeMusic(), m_listenerPosition(),
                                        m_listenerVelocity(), m_listenerForward(), m_listenerUp(),
-                                       m_lastUpdate() 
-        {
-            logcoe::info("SoundManager constructor called, m_initialized=" + std::to_string(m_initialized));
-        }
+                                       m_lastUpdate() { }
 
         SoundManager::~SoundManager() 
-        { 
-            logcoe::info("SoundManager destructor called, m_initialized=" + std::to_string(m_initialized));
+        {
             shutdown(); 
         }
 
@@ -476,11 +472,10 @@ namespace soundcoe
                                       const std::string &musicSubdir, LogLevel level)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            logcoe::info("SoundManager::initialize() called with m_initialized=" + std::to_string(m_initialized));
             
             if (m_initialized)
             {
-                logcoe::warning("Need to shutdown SoundManager before initialize it again");
+                logcoe::warning("SoundManager::initialize: Need to shutdown SoundManager before initialize it again");
                 return false;
             }
 
@@ -488,14 +483,14 @@ namespace soundcoe
 
             if (audioRootDirectory.empty())
             {
-                logcoe::error("Audio root directory cannot be empty");
+                logcoe::error("SoundManager::initialize: Audio root directory cannot be empty");
                 logcoe::shutdown();
                 return false;
             }
 
             if (!std::filesystem::exists(audioRootDirectory) || !std::filesystem::is_directory(audioRootDirectory))
             {
-                logcoe::error("Audio root directory does not exist or is not a directory: " + audioRootDirectory);
+                logcoe::error("SoundManager::initialize: Audio root directory does not exist or is not a directory: " + audioRootDirectory);
                 logcoe::shutdown();
                 return false;
             }
@@ -506,7 +501,7 @@ namespace soundcoe
             }
             catch (const std::exception &e)
             {
-                logcoe::error("Failed to create Resource Manager: " + std::string(e.what()));
+                logcoe::error("SoundManager::initialize: Failed to create Resource Manager: " + std::string(e.what()));
                 logcoe::shutdown();
                 return false;
             }
@@ -522,24 +517,24 @@ namespace soundcoe
             {
                 if (!m_resourceManager.preloadDirectory("general"))
                 {
-                    logcoe::error("Failed to load general audio subdirectory");
+                    logcoe::error("SoundManager::initialize: Failed to load general audio subdirectory");
                     m_resourceManager.shutdown();
                     logcoe::shutdown();
                     return false;
                 }
             }
             else
-                logcoe::warning("There is no general audio subdirectory");
+                logcoe::warning("SoundManager::initialize: There is no general audio subdirectory");
 
             m_initialized = true;
-            logcoe::info("SoundManager initialized successfully, m_initialized=" + std::to_string(m_initialized));
+            logcoe::info("SoundManager::initialize: SoundManager initialized successfully");
             return true;
         }
 
         void SoundManager::shutdown()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            logcoe::info("SoundManager::shutdown() called with m_initialized=" + std::to_string(m_initialized));
+            logcoe::info("SoundManager::shutdown() called");
 
             m_nextSoundHandle = 1;
             m_nextMusicHandle = 1;
@@ -570,15 +565,15 @@ namespace soundcoe
             m_hasError = false;
 
             m_resourceManager.shutdown();
+            logcoe::info("SoundManager::shutdown() completed");
             logcoe::shutdown();
             m_initialized = false;
-            logcoe::info("SoundManager::shutdown() completed, m_initialized=" + std::to_string(m_initialized));
         }
 
         bool SoundManager::isInitialized() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            logcoe::info("SoundManager::isInitialized() called, returning m_initialized=" + std::to_string(m_initialized));
+            
             return m_initialized;
         }
 
@@ -629,12 +624,6 @@ namespace soundcoe
         SoundHandle SoundManager::playSound(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            logcoe::info("SoundManager::playSound() called for file: " + filename + ", m_initialized=" + std::to_string(m_initialized));
-
-            if (!m_initialized) {
-                logcoe::error("SoundManager::playSound() called but SoundManager is not initialized!");
-                return INVALID_SOUND_HANDLE;
-            }
 
             return play(m_activeSounds, m_soundSubdir + filename, volume, pitch, loop, priority, m_nextSoundHandle, "playSound",
                         m_masterSoundsVolume, m_masterSoundsPitch);
@@ -698,7 +687,7 @@ namespace soundcoe
             std::lock_guard<std::mutex> lock(m_mutex);
 
             if (!checkAudioState(m_activeSounds, handle, SoundState::Paused, "resumeSound"))
-                return setError("resumeSound: Sound is not paused");
+                return setError("SoundManager::resumeSound: Sound is not paused");
 
             return audioOperation(m_activeSounds, handle, SoundState::Playing, "resumeSound");
         }
@@ -708,7 +697,7 @@ namespace soundcoe
             std::lock_guard<std::mutex> lock(m_mutex);
 
             if (!checkAudioState(m_activeMusic, handle, SoundState::Paused, "resumeMusic"))
-                return setError("resumeMusic: Music is not paused");
+                return setError("SoundManager::resumeMusic: Music is not paused");
 
             return audioOperation(m_activeMusic, handle, SoundState::Playing, "resumeMusic");
         }

@@ -8,7 +8,7 @@ namespace soundcoe
 {
     namespace detail
     {
-        SoundManager& getSoundManagerInstance(); // Declared here, defined in soundcoe.cpp
+        SoundManager& getSoundManagerInstance();
     }
 }
 
@@ -18,12 +18,8 @@ namespace soundcoe
                            size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
                            const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO)
     {
-        logcoe::info("soundcoe::initialize() wrapper called");
-        auto& manager = detail::getSoundManagerInstance();
-        bool result = manager.initialize(audioRootDirectory, maxSources, maxCacheSizeMB,
-                                        soundSubdir, musicSubdir, level);
-        logcoe::info("soundcoe::initialize() wrapper returning " + std::to_string(result));
-        return result;
+        return detail::getSoundManagerInstance().initialize(audioRootDirectory, maxSources, maxCacheSizeMB,
+                                                                   soundSubdir, musicSubdir, level);
     }
 
     static void shutdown()
@@ -33,10 +29,7 @@ namespace soundcoe
 
     static bool isInitialized()
     {
-        auto& manager = detail::getSoundManagerInstance();
-        bool result = manager.isInitialized();
-        logcoe::info("soundcoe::isInitialized() wrapper called, returning " + std::to_string(result));
-        return result;
+        return detail::getSoundManagerInstance().isInitialized();
     }
 
     static bool preloadScene(const std::string &sceneName)
@@ -64,15 +57,7 @@ namespace soundcoe
     static SoundHandle playSound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
                                  SoundPriority priority = SoundPriority::Medium)
     {
-        logcoe::info("soundcoe::playSound() wrapper called for file: " + filename);
-        auto& manager = detail::getSoundManagerInstance();
-        logcoe::info("soundcoe::playSound() got manager reference, checking initialization status");
-        if (!manager.isInitialized()) {
-            logcoe::error("soundcoe::playSound() called but SoundManager is not initialized!");
-            return INVALID_SOUND_HANDLE;
-        }
-        logcoe::info("soundcoe::playSound() manager is initialized, proceeding with playSound");
-        return manager.playSound(filename, volume, pitch, loop, priority);
+        return detail::getSoundManagerInstance().playSound(filename, volume, pitch, loop, priority);
     }
 
     static SoundHandle playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity = Vec3::zero(),

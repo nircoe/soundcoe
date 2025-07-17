@@ -104,14 +104,14 @@ namespace soundcoe
             std::filesystem::path filePath(filename);
             if(!std::filesystem::exists(filePath))
             {
-                std::string message = "File does not exist: \"" + filename + "\"";
+                std::string message = "SoundBuffer::loadFromFile: File does not exist: \"" + filename + "\"";
                 logcoe::error(message);
                 throw std::runtime_error(message);
             }
             
             if(!std::filesystem::is_regular_file(filePath))
             {
-                std::string message = "Not a regular file: \"" + filename + "\"";
+                std::string message = "SoundBuffer::loadFromFile: Not a regular file: \"" + filename + "\"";
                 logcoe::error(message);
                 throw std::runtime_error(message);
             }
@@ -131,11 +131,11 @@ namespace soundcoe
                     loadFromAudioData(std::move(AudioData::loadFromOgg(filename)));
                     break;
                 default:
-                    std::string message = "Unsupported audio format: " + filename;
+                    std::string message = "SoundBuffer::loadFromFile: Unsupported audio format: " + filename;
                     logcoe::error(message);
                     throw std::runtime_error(message);
             }
-            logcoe::info("SoundBuffer loaded successfully");
+            logcoe::info("SoundBuffer::loadFromFile: SoundBuffer loaded successfully");
         }
 
         void SoundBuffer::loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate)
@@ -171,7 +171,7 @@ namespace soundcoe
             generateBuffer(data);
 
             m_loaded = true;
-            logcoe::info("SoundBuffer loaded successfully");
+            logcoe::info("SoundBuffer::loadFromMemory: SoundBuffer loaded successfully");
         }
 
         void SoundBuffer::unload()
