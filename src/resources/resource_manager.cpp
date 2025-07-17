@@ -31,7 +31,7 @@ namespace soundcoe
 
             m_audioContext.initialize();
 
-            m_audioRootDirectory = normalizePath(audioRootDirectory);
+            m_audioRootDirectory = std::filesystem::absolute(audioRootDirectory).lexically_normal();
             m_maxSources = maxSources;
             m_maxCacheSize = maxCacheSizeMB * 1024 * 1024;
 
