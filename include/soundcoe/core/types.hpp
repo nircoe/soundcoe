@@ -25,84 +25,6 @@ namespace soundcoe
         Critical
     };
 
-    enum class AudioFormat
-    {
-        Wav,
-        Ogg,
-        Mp3,
-        Unsupported
-    };
-
-    enum class PropertyType
-    {
-        Volume,
-        Pitch,
-        Position,
-        Velocity
-    };
-
-    constexpr std::string_view toString(AudioFormat format)
-    {
-        switch (format)
-        {
-        case AudioFormat::Wav:
-            return "WAV";
-        case AudioFormat::Ogg:
-            return "OGG";
-        case AudioFormat::Mp3:
-            return "MP3";
-        default:
-            return "";
-        }
-    }
-
-    enum class AudioDecoderOperation
-    {
-        // File operations
-        OpenFile,
-        ReadFileData,
-        // Format validation
-        ParseHeader,
-        ValidateFormat,
-        // Decoding process
-        InitializeDecoder,
-        AllocateBuffer,
-        DecodeAudio,
-        // Data validation
-        ValidateSampleRate,
-        ValidateChannels,
-        ValidateBitDepth
-    };
-
-    constexpr std::string_view toString(AudioDecoderOperation operation)
-    {
-        switch (operation)
-        {
-        case AudioDecoderOperation::OpenFile:
-            return "Open File";
-        case AudioDecoderOperation::ReadFileData:
-            return "Read File Data";
-        case AudioDecoderOperation::ParseHeader:
-            return "Parse Header";
-        case AudioDecoderOperation::ValidateFormat:
-            return "Validate Format";
-        case AudioDecoderOperation::InitializeDecoder:
-            return "Initialize Decoder";
-        case AudioDecoderOperation::AllocateBuffer:
-            return "Allocate Buffer";
-        case AudioDecoderOperation::DecodeAudio:
-            return "Decode Audio";
-        case AudioDecoderOperation::ValidateSampleRate:
-            return "Validate Sample Rate";
-        case AudioDecoderOperation::ValidateChannels:
-            return "Validate Channels";
-        case AudioDecoderOperation::ValidateBitDepth:
-            return "Validate Bit Depth";
-        default:
-            return "";
-        }
-    }
-
     struct Vec3
     {
         float x = 0.0f;
@@ -158,4 +80,57 @@ namespace soundcoe
         Vec3 lerp(const Vec3 &other, float t) const { return ((*this) * (1 - t)) + (other * t); }
         float angle(const Vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
     };
+
+    namespace detail
+    {
+        enum class AudioFormat
+        {
+            Wav,
+            Ogg,
+            Mp3,
+            Unsupported
+        };
+
+        enum class PropertyType
+        {
+            Volume,
+            Pitch,
+            Position,
+            Velocity
+        };
+
+        constexpr std::string_view toString(AudioFormat format)
+        {
+            switch (format)
+            {
+            case AudioFormat::Wav:
+                return "WAV";
+            case AudioFormat::Ogg:
+                return "OGG";
+            case AudioFormat::Mp3:
+                return "MP3";
+            default:
+                return "";
+            }
+        }
+
+        enum class AudioDecoderOperation
+        {
+            OpenFile,
+            DecodeAudio
+        };
+
+        constexpr std::string_view toString(AudioDecoderOperation operation)
+        {
+            switch (operation)
+            {
+            case AudioDecoderOperation::OpenFile:
+                return "Open File";
+            case AudioDecoderOperation::DecodeAudio:
+                return "Decode Audio";
+            default:
+                return "";
+            }
+        }
+    } // namespace detail
 } // namespace soundcoe

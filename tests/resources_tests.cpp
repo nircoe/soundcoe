@@ -9,6 +9,7 @@
 #include <future>
 
 using namespace soundcoe;
+using namespace soundcoe::detail;
 
 class ResourceManagerTests : public ::testing::Test
 {
@@ -122,26 +123,32 @@ TEST_F(ResourceManagerTests, PriorityReplacement)
 
 TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
 {
-    auto bufferOpt1 = m_resourceManager.getBuffer("sounds/test1.wav");
+    // First preload the directory to make files available
+    EXPECT_TRUE(m_resourceManager.preloadDirectory("sounds"));
+    
+    auto bufferOpt1 = m_resourceManager.getBuffer("test1.wav");
     EXPECT_TRUE(bufferOpt1.has_value());
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // test1.wav and test2.wav from directory
     EXPECT_GT(m_resourceManager.getCacheSizeBytes(), 0);
 
-    auto bufferOpt2 = m_resourceManager.getBuffer("sounds/test1.wav");
+    auto bufferOpt2 = m_resourceManager.getBuffer("test1.wav");
     EXPECT_TRUE(bufferOpt2.has_value());
 
     if(bufferOpt1.has_value() && bufferOpt2.has_value())
         EXPECT_EQ(&bufferOpt1.value().get(), &bufferOpt2.value().get());
 
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // Still 2 total files
 
-    EXPECT_TRUE(m_resourceManager.releaseBuffer("sounds/test1.wav"));
-    EXPECT_TRUE(m_resourceManager.releaseBuffer("sounds/test1.wav"));
+    EXPECT_TRUE(m_resourceManager.releaseBuffer("test1.wav"));
+    EXPECT_TRUE(m_resourceManager.releaseBuffer("test1.wav"));
 }
 
 TEST_F(ResourceManagerTests, BufferReferenceCounting)
 {
-    const std::string filename = "sounds/test1.wav";
+    // First preload the directory to make files available
+    EXPECT_TRUE(m_resourceManager.preloadDirectory("sounds"));
+    
+    const std::string filename = "test1.wav";
 
     auto buffer1 = m_resourceManager.getBuffer(filename);
     auto buffer2 = m_resourceManager.getBuffer(filename);
@@ -150,11 +157,11 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
     EXPECT_TRUE(buffer1.has_value());
     EXPECT_TRUE(buffer2.has_value());
     EXPECT_TRUE(buffer3.has_value());
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // test1.wav and test2.wav from directory
 
     m_resourceManager.releaseBuffer(filename);
     m_resourceManager.releaseBuffer(filename);
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // Still 2 total files
 
     m_resourceManager.releaseBuffer(filename);
     buffer1 = m_resourceManager.getBuffer(filename);
@@ -166,9 +173,9 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
     buffer2.reset(); 
     buffer3.reset();
     
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // Still 2 files in cache
     size_t cleaned = m_resourceManager.cleanupUnusedBuffers();
-    EXPECT_EQ(cleaned, 1);
+    EXPECT_EQ(cleaned, 2); // Both files should be cleaned (both have ref count 0)
     EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 0);
 }
 
@@ -207,20 +214,20 @@ TEST_F(ResourceManagerTests, InvalidDirectoryOperations)
     EXPECT_TRUE(m_resourceManager.unloadDirectory("notloaded"));
 }
 
-TEST_F(ResourceManagerTests, FileOperations)
+TEST_F(ResourceManagerTests, FileLoadingThroughDirectory)
 {
-    EXPECT_TRUE(m_resourceManager.preloadFile("sounds/test1.wav"));
-    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 1);
+    EXPECT_TRUE(m_resourceManager.preloadDirectory("sounds"));
+    EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // test1.wav and test2.wav
 
-    auto buffer = m_resourceManager.getBuffer("sounds/test1.wav");
+    auto buffer = m_resourceManager.getBuffer("test1.wav");
     EXPECT_TRUE(buffer.has_value());
 
-    m_resourceManager.releaseBuffer("sounds/test1.wav");
-    EXPECT_TRUE(m_resourceManager.unloadFile("sounds/test1.wav"));
+    m_resourceManager.releaseBuffer("test1.wav");
+    EXPECT_TRUE(m_resourceManager.unloadDirectory("sounds"));
 
-    EXPECT_FALSE(m_resourceManager.preloadFile("nonexistent.wav"));
-    EXPECT_FALSE(m_resourceManager.preloadFile("sounds/readme.txt"));
-    EXPECT_TRUE(m_resourceManager.unloadFile("nonexistent.wav"));
+    // Test that files can only be loaded through directories
+    auto bufferAfterUnload = m_resourceManager.getBuffer("test1.wav");
+    EXPECT_FALSE(bufferAfterUnload.has_value());
 }
 
 TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
@@ -266,8 +273,11 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
 
 TEST_F(ResourceManagerTests, ConcurrentBufferAccess)
 {
+    m_resourceManager.preloadDirectory("sounds");
+    m_resourceManager.preloadDirectory("music");
+
     std::vector<std::future<void>> futures;
-    std::vector<std::string> files = {"sounds/test1.wav", "sounds/test2.wav", "music/music1.wav"};
+    std::vector<std::string> files = {"test1.wav", "test2.wav", "music1.wav"};
 
     for (int i = 0; i < 3; ++i)
     {
@@ -300,8 +310,8 @@ TEST_F(ResourceManagerTests, CompleteWorkflow)
     size_t poolIndex1, poolIndex2;
     auto source1 = m_resourceManager.acquireSource(poolIndex1, SoundPriority::Medium);
     auto source2 = m_resourceManager.acquireSource(poolIndex2, SoundPriority::Medium);
-    auto buffer1 = m_resourceManager.getBuffer("sounds/test1.wav");
-    auto buffer2 = m_resourceManager.getBuffer("sounds/test2.wav");
+    auto buffer1 = m_resourceManager.getBuffer("test1.wav");
+    auto buffer2 = m_resourceManager.getBuffer("test2.wav");
 
     EXPECT_TRUE(source1.has_value());
     EXPECT_TRUE(source2.has_value());
@@ -344,7 +354,10 @@ TEST_F(ResourceManagerTests, CacheLimits)
     m_resourceManager.shutdown();
     m_resourceManager.initialize(TestAudioFiles::s_testRootDir.string(), 4, 1);
 
-    std::vector<std::string> files = {"sounds/test1.wav", "sounds/test2.wav", "music/music1.wav"};
+    m_resourceManager.preloadDirectory("sounds");
+    m_resourceManager.preloadDirectory("music");
+
+    std::vector<std::string> files = {"test1.wav", "test2.wav", "music1.wav"};
 
     for (const auto &file : files)
     {

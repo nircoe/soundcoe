@@ -8,6 +8,7 @@
 #include <future>
 
 using namespace soundcoe;
+using namespace soundcoe::detail;
 
 //==============================================================================
 //               SoundManagerTests - SoundManager comprehensive tests
@@ -77,7 +78,7 @@ TEST_F(SoundManagerTests, PlaySoundBasic)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playSound("general/sfx/beep.wav");
+    auto handle = m_soundManager.playSound("beep.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
     EXPECT_TRUE(SoundManager::isHandleValid(handle));
 
@@ -90,7 +91,7 @@ TEST_F(SoundManagerTests, PlayMusicBasic)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playMusic("general/sfx/click.wav");
+    auto handle = m_soundManager.playMusic("background.wav");
     EXPECT_NE(handle, INVALID_MUSIC_HANDLE);
     EXPECT_TRUE(SoundManager::isHandleValid(handle));
 
@@ -106,7 +107,7 @@ TEST_F(SoundManagerTests, PlaySound3D)
     Vec3 position(1.0f, 2.0f, 3.0f);
     Vec3 velocity(0.1f, 0.2f, 0.3f);
 
-    auto handle = m_soundManager.playSound3D("general/sfx/beep.wav", position, velocity);
+    auto handle = m_soundManager.playSound3D("beep.wav", position, velocity);
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();
@@ -129,7 +130,7 @@ TEST_F(SoundManagerTests, PlaybackControls)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playSound("general/sfx/beep.wav");
+    auto handle = m_soundManager.playSound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();
@@ -152,7 +153,7 @@ TEST_F(SoundManagerTests, VolumeAndPitchControls)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playSound("general/sfx/beep.wav", 0.5f, 1.2f);
+    auto handle = m_soundManager.playSound("beep.wav", 0.5f, 1.2f);
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();
@@ -243,7 +244,7 @@ TEST_F(SoundManagerTests, FadeInSound)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.fadeInSound("general/sfx/beep.wav", 0.1f, 1.0f);
+    auto handle = m_soundManager.fadeInSound("beep.wav", 0.1f, 1.0f);
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();
@@ -257,7 +258,7 @@ TEST_F(SoundManagerTests, FadeInMusic)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.fadeInMusic("general/sfx/click.wav", 0.1f, 0.8f);
+    auto handle = m_soundManager.fadeInMusic("background.wav", 0.1f, 0.8f);
     EXPECT_NE(handle, INVALID_MUSIC_HANDLE);
 
     m_soundManager.update();
@@ -271,7 +272,7 @@ TEST_F(SoundManagerTests, FadeOutSound)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playSound("general/sfx/beep.wav");
+    auto handle = m_soundManager.playSound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();
@@ -287,7 +288,7 @@ TEST_F(SoundManagerTests, FadeOutMusic)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playMusic("general/sfx/click.wav");
+    auto handle = m_soundManager.playMusic("background.wav");
     ASSERT_NE(handle, INVALID_MUSIC_HANDLE);
 
     m_soundManager.update();
@@ -303,10 +304,10 @@ TEST_F(SoundManagerTests, FadeToVolume)
 {
     initializeSoundManager();
 
-    auto soundHandle = m_soundManager.playSound("general/sfx/beep.wav", 1.0f);
+    auto soundHandle = m_soundManager.playSound("beep.wav", 1.0f);
     ASSERT_NE(soundHandle, INVALID_SOUND_HANDLE);
 
-    auto musicHandle = m_soundManager.playMusic("general/sfx/click.wav", 0.5f);
+    auto musicHandle = m_soundManager.playMusic("background.wav", 0.5f);
     ASSERT_NE(musicHandle, INVALID_MUSIC_HANDLE);
 
     m_soundManager.update();
@@ -329,7 +330,7 @@ TEST_F(SoundManagerTests, SceneManagement)
     EXPECT_TRUE(m_soundManager.preloadScene("scene1"));
     EXPECT_TRUE(m_soundManager.isSceneLoaded("scene1"));
 
-    auto handle = m_soundManager.playSound("scene1/sfx/explosion.wav");
+    auto handle = m_soundManager.playSound("explosion.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
     EXPECT_TRUE(m_soundManager.unloadScene("scene1"));
@@ -355,11 +356,11 @@ TEST_F(SoundManagerTests, MultipleSoundsAndMusic)
 
     for (int i = 0; i < 3; ++i)
     {
-        auto soundHandle = m_soundManager.playSound("general/sfx/beep.wav");
+        auto soundHandle = m_soundManager.playSound("beep.wav");
         EXPECT_NE(soundHandle, INVALID_SOUND_HANDLE);
         soundHandles.push_back(soundHandle);
 
-        auto musicHandle = m_soundManager.playMusic("general/sfx/click.wav");
+        auto musicHandle = m_soundManager.playMusic("background.wav");
         EXPECT_NE(musicHandle, INVALID_MUSIC_HANDLE);
         musicHandles.push_back(musicHandle);
     }
@@ -432,7 +433,7 @@ TEST_F(SoundManagerTests, ConcurrentAccess)
         futures.emplace_back(std::async(std::launch::async, [this, &successCount]()
                                         {
             for (int j = 0; j < 10; ++j) {
-                auto handle = m_soundManager.playSound("general/sfx/beep.wav");
+                auto handle = m_soundManager.playSound("beep.wav");
                 if (handle != INVALID_SOUND_HANDLE) {
                     successCount++;
                     m_soundManager.update();
@@ -454,7 +455,7 @@ TEST_F(SoundManagerTests, FadeValidation)
 {
     initializeSoundManager();
 
-    auto handle = m_soundManager.playSound("general/sfx/beep.wav");
+    auto handle = m_soundManager.playSound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
     m_soundManager.update();

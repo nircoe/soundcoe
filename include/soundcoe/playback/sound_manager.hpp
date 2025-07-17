@@ -15,31 +15,35 @@ namespace soundcoe
     constexpr SoundHandle INVALID_SOUND_HANDLE = 0;
     constexpr MusicHandle INVALID_MUSIC_HANDLE = 0;
 
-    struct ActiveAudio
+    namespace detail
     {
-        size_t m_sourceIndex;
-        std::string m_filename;
-        float m_baseVolume;
-        float m_basePitch;
-        bool m_loop;
+        struct ActiveAudio
+        {
+            size_t m_sourceIndex;
+            std::string m_filename;
+            float m_baseVolume;
+            float m_basePitch;
+            bool m_loop;
 
-        bool m_stream = false;
-        size_t m_streamBufferSize = 0;
-        float m_streamPosition = 0.0f;
-        bool m_streamNeedsRefill = false;
+            bool m_stream = false;
+            size_t m_streamBufferSize = 0;
+            float m_streamPosition = 0.0f;
+            bool m_streamNeedsRefill = false;
 
-        bool m_isFading = false;
-        float m_fadeDuration = 0.0f;
-        float m_fadeElapsed = 0.0f;
-        float m_fadeStartVolume = 0.0f;
-        float m_fadeTargetVolume = 0.0f;
-    };
+            bool m_isFading = false;
+            float m_fadeDuration = 0.0f;
+            float m_fadeElapsed = 0.0f;
+            float m_fadeStartVolume = 0.0f;
+            float m_fadeTargetVolume = 0.0f;
+        };
 
-    class SoundManager
+        class SoundManager
     {
         bool m_initialized = false;
 
         ResourceManager m_resourceManager;
+        std::string m_soundSubdir;
+        std::string m_musicSubdir;
 
         std::atomic<size_t> m_nextSoundHandle;
         std::atomic<size_t> m_nextMusicHandle;
@@ -135,8 +139,9 @@ namespace soundcoe
         SoundManager();
         ~SoundManager();
 
-        bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64,
-                        LogLevel level = LogLevel::INFO);
+        bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
+                        size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
+                        const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO);
         void shutdown();
         bool isInitialized() const;
 
@@ -236,4 +241,5 @@ namespace soundcoe
 
         static bool isHandleValid(size_t handle);
     };
+    } // namespace detail
 } // namespace soundcoe

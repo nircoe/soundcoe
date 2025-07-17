@@ -7,6 +7,7 @@ set(SOURCES
     resources/resource_manager.cpp
     playback/sound_manager.cpp
     utils/math.cpp
+    soundcoe.cpp
 )
 
 add_library(soundcoe ${SOURCES})
