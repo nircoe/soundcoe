@@ -2,10 +2,13 @@
 
 #include <soundcoe/playback/sound_manager.hpp>
 
+namespace
+{
+    static soundcoe::detail::SoundManager s_soundManager;
+}
+
 namespace soundcoe
 {
-    static detail::SoundManager s_soundManager;
-
     static bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32, size_t maxCacheSizeMB = 64,
                            LogLevel level = LogLevel::INFO)
     {
