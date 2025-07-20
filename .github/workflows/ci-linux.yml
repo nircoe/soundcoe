@@ -18,13 +18,13 @@ jobs:
           - name: "Linux GCC"
             compiler: gcc
             cmake-generator: 'Ninja'
-            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++'
+            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON'
           
           # Linux with Clang
           - name: "Linux Clang"
             compiler: clang
             cmake-generator: 'Ninja'
-            cmake-options: '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++'
+            cmake-options: '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DSOUNDCOE_BUILD_TESTS=ON'
 
     steps:
     - name: Checkout repository

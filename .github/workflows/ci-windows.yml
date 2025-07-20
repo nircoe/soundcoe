@@ -18,13 +18,13 @@ jobs:
           - name: "Windows MSVC"
             compiler: msvc
             cmake-generator: 'Visual Studio 17 2022'
-            cmake-options: ''
+            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON'
             
           # Windows with MinGW (GCC)
           - name: "Windows MinGW"
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
-            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++'
+            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON'
 
     steps:
     - name: Checkout repository

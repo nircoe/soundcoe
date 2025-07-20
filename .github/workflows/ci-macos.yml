@@ -18,7 +18,7 @@ jobs:
           - name: "macOS Clang"
             compiler: clang
             cmake-generator: 'Ninja'
-            cmake-options: ''
+            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON'
 
     steps:
     - name: Checkout repository
