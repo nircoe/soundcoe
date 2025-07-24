@@ -117,7 +117,7 @@ namespace soundcoe
             Vec3 direction = sourcePosition - listenerPosition;
             Vec3 listenerRight = listenerForward.cross(Vec3::up());
             float dotRight = direction.normalized().dot(listenerRight.normalized());
-            float angle = asinf(dotRight) * (180.0f / M_PI);
+            float angle = asinf(dotRight) * (180.0f / static_cast<float>(M_PI));
             return clamp(angle / 90.0f, -1.0f, 1.0f);
         }
 
