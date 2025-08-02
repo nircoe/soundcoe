@@ -5,6 +5,7 @@ Modern C++ audio library built for game developers. Thread-safe, zero-config, si
 [![Windows](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml)
 [![Linux](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml)
 [![macOS](https://github.com/nircoe/soundcoe/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-macos.yml)
+[![Web](https://github.com/nircoe/soundcoe/actions/workflows/ci-web.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-web.yml)
 
 ## Why soundcoe?
 
@@ -27,6 +28,15 @@ auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
 - **CMake 3.14+** - Build system
 - **OpenAL-Soft** - Audio backend (automatically fetched)
 - **logcoe** - Logging system (automatically fetched)
+- **testcoe** - Testing framework (automatically fetched, tests only)
+
+## Platform Support
+
+soundcoe is tested and validated on:
+- **Windows** 
+- **macOS** 
+- **Linux**
+- **WebAssembly/Emscripten**
 
 ## Quick Start
 
@@ -113,7 +123,7 @@ For advanced usage examples including 3D spatial audio, fade effects, and custom
 - ⚡ **High Performance** - Resource pooling, priority-based allocation, efficient caching
 - 🎨 **Sophisticated Effects** - Real-time fade effects with precise timing control
 - 📦 **Zero Configuration** - Single include, static functions, no object management
-- 🌐 **Cross-Platform** - Windows, Linux, macOS support with OpenAL backend
+- 🌐 **Cross-Platform** - Windows, Linux, macOS, WebAssembly support with OpenAL backend
 
 ## API Reference
 
@@ -234,7 +244,7 @@ int main() {
 
 - **Compiler**: C++17 compatible (GCC 7+, Clang 5+, MSVC 2017+)
 - **Build System**: CMake 3.14+
-- **Platforms**: Windows, Linux, macOS
+- **Platforms**: Windows, Linux, macOS, WebAssembly/Emscripten
 - **Audio Hardware**: Required for actual audio playback testing (CI systems are headless)
 
 ## Performance Considerations

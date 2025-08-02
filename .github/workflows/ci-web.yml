@@ -1,0 +1,95 @@
+name: Web
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          # Test Emscripten builds from all host platforms to validate host OS independence
+          - name: "Linux (Ubuntu) Host"
+            os: ubuntu-latest
+            emsdk-version: '3.1.57'
+            setup-deps: 'sudo apt-get update && sudo apt-get install -y ninja-build'
+            
+          - name: "Windows Host" 
+            os: windows-latest
+            emsdk-version: '3.1.57'
+            setup-deps: 'choco install ninja'
+            
+          - name: "macOS Host"
+            os: macos-latest
+            emsdk-version: '3.1.57'
+            setup-deps: 'brew install ninja'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+
+    - name: Install host dependencies
+      run: ${{ matrix.setup-deps }}
+      shell: bash
+
+    - name: Setup Emscripten SDK
+      uses: mymindstorm/setup-emsdk@v13
+      with:
+        version: ${{ matrix.emsdk-version }}
+
+    - name: Verify Emscripten installation
+      run: |
+        emcc --version
+        echo "EMSDK environment: $EMSDK"
+        echo "CMAKE_SYSTEM_NAME will be set to 'Emscripten' by emcmake"
+      shell: bash
+
+    - name: Configure CMake for WebAssembly
+      run: |
+        mkdir -p build
+        cd build
+        emcmake cmake .. \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release
+        echo "Note: Tests are automatically disabled for Emscripten builds due to testcoe compatibility issues"
+      shell: bash
+
+    - name: Build WebAssembly artifacts
+      run: |
+        cd build
+        emmake ninja
+      shell: bash
+
+    - name: Validate WebAssembly artifacts
+      run: |
+        echo "=== Validating WebAssembly build artifacts ==="
+        cd build
+        
+        # Look for .wasm and .js files  
+        echo "=== WebAssembly Files Found ==="
+        find . -name "*.wasm" -type f | head -10
+        find . -name "*.js" -type f | head -10
+        
+        # Validate soundcoe library was built
+        SOUNDCOE_LIB=$(find . -name "libsoundcoe.a" -type f)
+        if [ -n "$SOUNDCOE_LIB" ]; then
+          echo "✅ soundcoe library built successfully at: $SOUNDCOE_LIB"
+        else
+          echo "❌ soundcoe library missing"
+          exit 1
+        fi
+        
+        echo "✅ WebAssembly build validation completed"
+        echo "Note: Tests are disabled for Emscripten due to testcoe compatibility issues"
+      shell: bash
+
+

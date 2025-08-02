@@ -2,7 +2,7 @@
 
 ## Version History
 
-### v0.1.0 - Initial Release
+### Implemented Features
 - ✅ Thread-safe audio library with complete test suite validation
 - ✅ Multiple audio format support (WAV, OGG, MP3) with dr_wav, dr_mp3, stb_vorbis
 - ✅ Game developer-focused API with static wrapper functions and intuitive terminology
@@ -11,7 +11,7 @@
 - ✅ Advanced fade effects (fade in/out/to-volume) with real-time processing
 - ✅ Intelligent resource management with pooling, priority allocation, handle-based cleanup and caching
 - ✅ Master volume controls for sounds, music, and overall audio
-- ✅ Cross-platform support (Windows, Linux, macOS) with OpenAL backend
+- ✅ Cross-platform support (Windows, Linux, macOS, WebAssembly/Emscripten) with OpenAL backend
 - ✅ Comprehensive error handling with detailed logging integration
 - ✅ CMake integration with FetchContent support
 
