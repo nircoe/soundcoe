@@ -43,6 +43,10 @@ function(configure_openal_for_platform)
         # ================================================================
         message(STATUS "[soundcoe] Configuring OpenAL-Soft for Emscripten/Web build")
         
+        # Disable tests for web builds due to testcoe incompatibility with Emscripten
+        set(SOUNDCOE_BUILD_TESTS OFF CACHE BOOL "Tests disabled for Emscripten" FORCE)
+        message(STATUS "[soundcoe] Tests disabled for Emscripten due to testcoe compatibility issues")
+        
         # Disable ALL native backends except NULL backend
         disable_all_backends_except("NULL")
         disable_all_require_flags()
