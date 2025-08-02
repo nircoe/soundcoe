@@ -352,16 +352,12 @@ Update loaded directories list
 ## Cross-Platform Considerations
 
 ### OpenAL Backend Selection
-```cpp
-// Platform-specific OpenAL configuration
-#ifdef WIN32
-    // WASAPI, DirectSound, WinMM backends
-#elif defined(__linux__)
-    // ALSA, PulseAudio, PipeWire backends
-#elif defined(__APPLE__)
-    // CoreAudio backend
-#endif
-```
+Backend selection is handled automatically by the CMake configuration system. Users can optionally configure specific backends using CMake options:
+
+- **Windows**: Use `SOUNDCOE_ENABLE_WASAPI`, `SOUNDCOE_ENABLE_DSOUND`, etc.
+- **Linux**: Use `SOUNDCOE_ENABLE_ALSA`, `SOUNDCOE_ENABLE_PULSEAUDIO`, etc.
+- **macOS**: Automatic CoreAudio configuration (no user options needed)
+- **WebAssembly**: Automatic NULL backend configuration (no user options needed)
 
 ### Audio Format Support
 - **WAV**: Cross-platform with dr_wav decoder
@@ -371,7 +367,73 @@ Update loaded directories list
 ### Build System Integration
 - **CMake**: FetchContent for automatic dependency management
 - **Static Linking**: Self-contained builds with embedded libraries
-- **Platform Detection**: Automatic backend selection based on platform
+- **Modular Configuration**: Platform-specific OpenAL backend management via `cmake/openal_config.cmake`
+- **Automatic Platform Detection**: CMake platform variables (WIN32, APPLE, UNIX) and CMAKE_SYSTEM_NAME for Emscripten
+
+## Platform Support & Audio Backends
+
+soundcoe uses a sophisticated CMake configuration system that automatically selects appropriate audio backends for each platform.
+
+### Supported Platforms
+
+#### Windows
+- **Primary Backends**: WASAPI (Vista+), DirectSound, WinMM
+- **Optional Backends**: PortAudio
+- **Configuration**: User-configurable via `SOUNDCOE_ENABLE_*` CMake options
+- **Testing**: Math-only CI coverage due to audio hardware limitations
+
+#### macOS
+- **Backend**: CoreAudio (optimal for Apple platforms)
+- **Configuration**: Automatic, no user configuration needed
+- **Testing**: Full CI coverage with Apple Clang
+
+#### Linux/Unix
+- **Primary Backends**: ALSA, PulseAudio, PipeWire (modern Linux audio stack)
+- **Optional Backends**: OSS, JACK, PortAudio
+- **Configuration**: User-configurable via `SOUNDCOE_ENABLE_*` CMake options
+- **Testing**: Full CI coverage with GCC and Clang, virtual audio setup
+
+#### WebAssembly/Emscripten
+- **Backend**: NULL backend (no audio output, for build validation)
+- **Configuration**: Automatic detection via `CMAKE_SYSTEM_NAME=Emscripten`
+- **Testing**: Multi-host build validation (Ubuntu, Windows, macOS → WebAssembly)
+- **Limitations**: Tests auto-disabled due to testcoe compatibility issues
+
+#### Cross-Platform Backends
+- **SDL2/SDL3**: Available as alternatives for projects using SDL framework
+- **WAVE**: File output backend for testing and debugging
+- **PortAudio**: Cross-platform audio I/O library
+
+### Backend Configuration Options
+
+You can customize which audio backends are enabled using CMake options:
+
+#### Windows Configuration
+```bash
+# Enable specific Windows backends
+cmake -B build \
+  -DSOUNDCOE_ENABLE_WASAPI=ON \
+  -DSOUNDCOE_ENABLE_DSOUND=ON \
+  -DSOUNDCOE_ENABLE_WINMM=OFF \
+  -DSOUNDCOE_ENABLE_PORTAUDIO=OFF
+```
+
+#### Linux Configuration
+```bash
+# Enable specific Linux backends
+cmake -B build \
+  -DSOUNDCOE_ENABLE_ALSA=ON \
+  -DSOUNDCOE_ENABLE_PULSEAUDIO=ON \
+  -DSOUNDCOE_ENABLE_PIPEWIRE=ON \
+  -DSOUNDCOE_ENABLE_OSS=OFF \
+  -DSOUNDCOE_ENABLE_JACK=OFF \
+  -DSOUNDCOE_ENABLE_PORTAUDIO=OFF
+```
+
+**Notes:**
+- **macOS/WebAssembly**: No configuration options - backends are selected automatically
+- **Default values**: Most common backends are enabled by default on each platform
+- **Multiple backends**: You can enable multiple backends - OpenAL will choose the best available at runtime
 
 ## Memory Management
 

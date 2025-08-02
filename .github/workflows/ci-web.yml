@@ -12,20 +12,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           # Test Emscripten builds from all host platforms to validate host OS independence
-          - name: "Web (Ubuntu Host)"
+          - name: "Linux (Ubuntu) Host"
             os: ubuntu-latest
             emsdk-version: '3.1.57'
             setup-deps: 'sudo apt-get update && sudo apt-get install -y ninja-build'
             
-          - name: "Web (Windows Host)" 
+          - name: "Windows Host" 
             os: windows-latest
             emsdk-version: '3.1.57'
             setup-deps: 'choco install ninja'
             
-          - name: "Web (macOS Host)"
+          - name: "macOS Host"
             os: macos-latest
             emsdk-version: '3.1.57'
             setup-deps: 'brew install ninja'
@@ -44,14 +45,10 @@ jobs:
       uses: mymindstorm/setup-emsdk@v13
       with:
         version: ${{ matrix.emsdk-version }}
-        actions-cache-folder: 'emsdk-cache'
 
     - name: Verify Emscripten installation
       run: |
         emcc --version
-        em++ --version
-        emcmake --version
-        emmake --version
         echo "EMSDK environment: $EMSDK"
         echo "CMAKE_SYSTEM_NAME will be set to 'Emscripten' by emcmake"
       shell: bash
@@ -77,22 +74,17 @@ jobs:
         echo "=== Validating WebAssembly build artifacts ==="
         cd build
         
-        # Check for main library artifacts
-        echo "Checking for soundcoe library artifacts:"
-        ls -la lib/ || echo "No lib directory found"
-        
         # Look for .wasm and .js files  
         echo "=== WebAssembly Files Found ==="
         find . -name "*.wasm" -type f | head -10
         find . -name "*.js" -type f | head -10
         
-        # Validate library artifacts exist (tests are disabled for Emscripten)
-        if [ -f "lib/libsoundcoe.a" ]; then
-          echo "✅ soundcoe library built successfully"
+        # Validate soundcoe library was built
+        SOUNDCOE_LIB=$(find . -name "libsoundcoe.a" -type f)
+        if [ -n "$SOUNDCOE_LIB" ]; then
+          echo "✅ soundcoe library built successfully at: $SOUNDCOE_LIB"
         else
           echo "❌ soundcoe library missing"
-          echo "Available files in lib/:"
-          ls -la lib/ || echo "Lib directory not found"
           exit 1
         fi
         

@@ -43,6 +43,7 @@ soundcoe/
 │       ├── utils/                  # Math utilities
 │       └── playback/               # SoundManager singleton
 ├── src/                            # Implementation files
+├── cmake/                          # Modular CMake configuration (openal_config.cmake, etc.)
 ├── external/                       # Third-party libraries (dr_libs, stb)
 ├── tests/                          # Comprehensive test suite
 └── docs/                          # Documentation
@@ -50,9 +51,11 @@ soundcoe/
 
 ## Continuous Integration
 
-All pull requests are automatically tested on Windows, Linux, and macOS with multiple compilers.
+All pull requests are automatically tested on Windows, Linux, macOS, and WebAssembly with multiple compilers.
 
-**Windows CI Limitation**: Windows CI runs only math tests (Vec3Tests, MathTests) due to lack of audio backend support in GitHub Actions runners. Full audio testing requires local development machines.
+**CI Testing Limitations**:
+- **Windows CI**: Runs only math tests (Vec3Tests, MathTests) due to lack of audio backend support in GitHub Actions runners
+- **Web CI**: Build validation only - tests auto-disabled due to testcoe/Emscripten compatibility issues
 
 **Note**: Always test actual audio playback locally before submitting pull requests.
 
