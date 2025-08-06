@@ -22,4 +22,18 @@ target_link_libraries(soundcoe
         soundcoe_headers
         OpenAL
         logcoe
+        Threads::Threads
 )
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    target_compile_options(soundcoe PRIVATE
+        -pthread
+        -sUSE_PTHREADS=1
+        -sSHARED_MEMORY=1
+    )
+    target_link_options(soundcoe INTERFACE
+        -pthread
+        -sUSE_PTHREADS=1
+        -sSHARED_MEMORY=1
+    )
+endif()
