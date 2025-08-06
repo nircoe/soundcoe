@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 include(cmake/soundcoe_config.cmake)
 
+find_package(Threads REQUIRED)
+
 message(STATUS "[soundcoe] Fetching OpenAL-Soft from source...")
 
 FetchContent_Declare(
