@@ -59,31 +59,14 @@ jobs:
         cd build
         emcmake cmake .. \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DSOUNDCOE_BUILD_TESTS=ON
-        echo "Note: Enabling tests to verify functional web audio support"
+          -DCMAKE_BUILD_TYPE=Release
+        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
     - name: Build WebAssembly artifacts
       run: |
         cd build
         emmake ninja
-      shell: bash
-
-    - name: Run tests
-      run: |
-        cd build
-        echo "=== Running soundcoe tests in Emscripten environment ==="
-        
-        # Try to run the test executable
-        if [ -f tests/soundcoe_tests ]; then
-          echo "Test executable found: tests/soundcoe_tests"
-          # Note: Running tests in Node.js environment (Emscripten default)
-          node tests/soundcoe_tests.js || echo "Some tests may fail due to web environment limitations"
-        else
-          echo "Test executable not found"
-          ls -la tests/ || echo "No tests directory found"
-        fi
       shell: bash
 
     - name: Validate WebAssembly artifacts
@@ -105,7 +88,8 @@ jobs:
           exit 1
         fi
         
-        echo "WebAssembly build and test validation completed"
+        echo "WebAssembly build validation completed"
+        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
 
