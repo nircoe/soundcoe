@@ -136,7 +136,7 @@ soundcoe::initialize("./audio");  // relative to executable
 soundcoe::initialize(
     "./audio",        // Audio root directory (relative to executable)
     32,              // Max sources (default: 32)
-    64,              // Cache size MB (default: 64)
+    64,              // Cache size MB (default: 64, use soundcoe::UNLIMITED_CACHE for no limit)
     "sfx",           // Sound subdirectory inside each scene/general (default: "sfx")
     "music",         // Music subdirectory inside each scene/general (default: "music")
     LogLevel::INFO   // Log level (default: INFO)
@@ -145,6 +145,21 @@ soundcoe::initialize(
 // Clean shutdown
 soundcoe::shutdown();
 ```
+
+### Cache Management
+
+soundcoe automatically manages audio file caching for optimal performance:
+
+```cpp
+// Standard cache limits
+soundcoe::initialize("./audio", 32, 64);       // 64MB cache limit
+soundcoe::initialize("./audio", 32, 256);      // 256MB cache limit
+
+// Development/Testing: measure actual memory usage
+soundcoe::initialize("./audio", 32, soundcoe::UNLIMITED_CACHE);
+```
+
+**Development Tip**: Use `soundcoe::UNLIMITED_CACHE` during testing to measure your game's peak audio memory usage, then set an appropriate limit for your target platforms.
 
 ### Scene Management
 ```cpp

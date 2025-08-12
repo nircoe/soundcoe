@@ -22,9 +22,10 @@ int main() {
     soundcoe::initialize(
         "./audio",    // Audio directory (relative to executable)
         64,           // Max simultaneous sources (good for action games)
-        128,          // Cache size MB (adjust based on your audio assets)
+        128,          // Cache size MB (adjust based on your audio assets, or soundcoe::UNLIMITED_CACHE)
         "sfx",        // Sound subdirectory inside each scene/general
-        "music"       // Music subdirectory inside each scene/general
+        "music",      // Music subdirectory inside each scene/general
+        LogLevel::INFO // Log level (default: INFO)
     );
     
     soundcoe::preloadScene("level1");
@@ -171,15 +172,18 @@ soundcoe::unloadScene("current_scene");     // Then unload current scene
 // Adjust cache size based on your game's scene complexity
 soundcoe::initialize("./audio", 32, 64);     // 64MB cache for simple scenes
 soundcoe::initialize("./audio", 64, 256);    // 256MB cache for complex scenes
+
+// Development/profiling: measure actual memory usage
+soundcoe::initialize("./audio", 32, soundcoe::UNLIMITED_CACHE);
 ```
 
 ### Source Pool Optimization
 
 ```cpp
 // Configure source pool based on your game - choose how many sources that you would like! remember it is the maximum concurrent amount.
-soundcoe::initialize("./audio", 16);         // 16 sources for games with less concurrent audio
-soundcoe::initialize("./audio", 32);         // 32 sources - default
-soundcoe::initialize("./audio", 64);         // 64 sources for game with more concurrent audio
+soundcoe::initialize("./audio", 16, 64);     // 16 sources for games with less concurrent audio
+soundcoe::initialize("./audio", 32, 64);     // 32 sources - default
+soundcoe::initialize("./audio", 64, 128);    // 64 sources for game with more concurrent audio
 ```
 
 ### Supported Audio Format
@@ -450,6 +454,7 @@ cmake -B build \
 ### Caching Strategy
 - **LRU Eviction**: Least recently used buffers removed first
 - **Size Limits**: Configurable maximum cache size in MB
+- **Unlimited Cache**: Use `soundcoe::UNLIMITED_CACHE` for development/profiling to measure peak memory usage
 - **Usage Tracking**: Statistical data for optimization decisions
 
 ## Audio Format Integration
