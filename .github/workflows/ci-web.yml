@@ -60,7 +60,7 @@ jobs:
         emcmake cmake .. \
           -G Ninja \
           -DCMAKE_BUILD_TYPE=Release
-        echo "Note: Tests are automatically disabled for Emscripten builds due to testcoe compatibility issues"
+        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
     - name: Build WebAssembly artifacts
@@ -82,14 +82,14 @@ jobs:
         # Validate soundcoe library was built
         SOUNDCOE_LIB=$(find . -name "libsoundcoe.a" -type f)
         if [ -n "$SOUNDCOE_LIB" ]; then
-          echo "✅ soundcoe library built successfully at: $SOUNDCOE_LIB"
+          echo "soundcoe library built successfully at: $SOUNDCOE_LIB"
         else
-          echo "❌ soundcoe library missing"
+          echo "soundcoe library missing"
           exit 1
         fi
         
-        echo "✅ WebAssembly build validation completed"
-        echo "Note: Tests are disabled for Emscripten due to testcoe compatibility issues"
+        echo "WebAssembly build validation completed"
+        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
 
