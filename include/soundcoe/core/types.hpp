@@ -4,10 +4,13 @@
 #include <cmath>
 #include <string_view>
 #include <sstream>
+#include <limits>
 
 namespace soundcoe
 {
     using LogLevel = logcoe::LogLevel;
+
+    constexpr size_t UNLIMITED_CACHE = std::numeric_limits<size_t>::max();
 
     enum class SoundState
     {
