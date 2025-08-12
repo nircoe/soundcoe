@@ -17,23 +17,22 @@ target_include_directories(soundcoe
         ${CMAKE_CURRENT_SOURCE_DIR}/../external
 )
 
-target_link_libraries(soundcoe 
-    PUBLIC
-        soundcoe_headers
-        OpenAL
-        logcoe
-        Threads::Threads
-)
-
+# Link libraries based on platform
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-    target_compile_options(soundcoe PRIVATE
-        -pthread
-        -sUSE_PTHREADS=1
-        -sSHARED_MEMORY=1
+    target_link_libraries(soundcoe 
+        PUBLIC
+            soundcoe_headers
+            logcoe
+            Threads::Threads
     )
-    target_link_options(soundcoe INTERFACE
-        -pthread
-        -sUSE_PTHREADS=1
-        -sSHARED_MEMORY=1
+    # Link with Emscripten's built-in OpenAL implementation
+    target_link_options(soundcoe PUBLIC -lopenal)
+else()
+    target_link_libraries(soundcoe 
+        PUBLIC
+            soundcoe_headers
+            OpenAL
+            logcoe
+            Threads::Threads
     )
 endif()

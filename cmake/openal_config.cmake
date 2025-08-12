@@ -37,21 +37,7 @@ endfunction()
 
 # Configure OpenAL-Soft based on target platform
 function(configure_openal_for_platform)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-        # ================================================================
-        # Emscripten/Web Build - Use Emscripten's built-in OpenAL
-        # ================================================================
-        message(STATUS "[soundcoe] Configuring OpenAL-Soft for Emscripten/Web build")
-        
-        # Disable tests for web builds due to testcoe incompatibility with Emscripten
-        set(SOUNDCOE_BUILD_TESTS OFF CACHE BOOL "Tests disabled for Emscripten" FORCE)
-        message(STATUS "[soundcoe] Tests disabled for Emscripten due to testcoe compatibility issues")
-        
-        # Disable ALL native backends except NULL backend
-        disable_all_backends_except("NULL")
-        disable_all_require_flags()
-        
-    elseif(WIN32)
+    if(WIN32)
         # ================================================================
         # Windows Build
         # ================================================================
