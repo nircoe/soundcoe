@@ -1,7 +1,7 @@
 # dr_libs 
 Author: David Reid
 Repository: https://github.com/mackron/dr_libs
-License: Public Domain or MIT No Attribution
+License: Public Domain or MIT-0
 
 Files Included:
 Commit: 92844c5c07f05b21855e37b482ed0b3143256cf6 (master HEAD)

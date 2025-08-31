@@ -12,6 +12,9 @@ namespace soundcoe
 
     constexpr size_t UNLIMITED_CACHE = std::numeric_limits<size_t>::max();
 
+    using SoundHandle = size_t;
+    using MusicHandle = size_t;
+
     enum class SoundState
     {
         Initial,

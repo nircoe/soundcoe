@@ -10,8 +10,6 @@
 
 namespace soundcoe
 {
-    using SoundHandle = size_t;
-    using MusicHandle = size_t;
     constexpr SoundHandle INVALID_SOUND_HANDLE = 0;
     constexpr MusicHandle INVALID_MUSIC_HANDLE = 0;
 
