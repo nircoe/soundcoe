@@ -1,7 +1,7 @@
 # stb
 Author: Sean Barrett
 Repository: https://github.com/nothings/stb
-License: Public Domain or MIT License
+License: MIT License Or Public Domain
 
 Files Included:
 Commit: f58f558c120e9b32c217290b80bad1a0729fbb2c (master HEAD)
