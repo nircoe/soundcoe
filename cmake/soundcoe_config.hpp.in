@@ -1,0 +1,32 @@
+// Auto-generated soundcoe configuration - DO NOT EDIT
+#pragma once
+
+#define SOUNDCOE_USE_LOGCOE @SOUNDCOE_USE_LOGCOE@
+
+#if !SOUNDCOE_USE_LOGCOE
+    #include <string>
+    namespace logcoe
+    {
+        enum class LogLevel { DEBUG, INFO, WARNING, ERROR, NONE };
+
+        inline void initialize([[maybe_unused]] LogLevel level = LogLevel::DEBUG,
+                                [[maybe_unused]] const std::string& defaultSource = "",
+                                [[maybe_unused]] bool enableConsole = true,
+                                [[maybe_unused]] bool enableFile = false,
+                                [[maybe_unused]] const std::string &filename = "logcoe.log") { }
+
+        inline void shutdown() { }
+        inline void debug([[maybe_unused]] const std::string &message, 
+                            [[maybe_unused]] const std::string &source = "",
+                            [[maybe_unused]] bool flush = true) { }
+        inline void info([[maybe_unused]] const std::string &message, 
+                            [[maybe_unused]] const std::string &source = "", 
+                            [[maybe_unused]] bool flush = true) { }
+        inline void warning([[maybe_unused]] const std::string &message, 
+                            [[maybe_unused]] const std::string &source = "", 
+                            [[maybe_unused]] bool flush = true) { }
+        inline void error([[maybe_unused]] const std::string &message, 
+                            [[maybe_unused]] const std::string &source = "", 
+                            [[maybe_unused]] bool flush = true) { }
+    } // namespace logcoe
+#endif

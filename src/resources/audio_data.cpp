@@ -1,6 +1,5 @@
 #include <soundcoe/resources/audio_data.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <logcoe.hpp>
 #include <exception>
 
 #define DR_WAV_IMPLEMENTATION
@@ -8,6 +7,11 @@
 #define DR_MP3_IMPLEMENTATION
 #include <dr_libs/dr_mp3.h>
 #include <stb/stb_vorbis.c>
+
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {

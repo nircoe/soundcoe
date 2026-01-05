@@ -1,7 +1,10 @@
 #include <soundcoe.hpp>
 #include <soundcoe/playback/sound_manager.hpp>
-#include <logcoe.hpp>
 #include <cassert>
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {

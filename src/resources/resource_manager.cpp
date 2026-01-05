@@ -1,8 +1,11 @@
 #include <soundcoe/resources/resource_manager.hpp>
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <logcoe.hpp>
 #include <algorithm>
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {
@@ -116,7 +119,7 @@ namespace soundcoe
             }
 
             logcoe::warning("ResourceManager::preloadDirectory: No audio files found in directory: " + subdirectory);
-            return false;
+            return true;
         }
 
         bool ResourceManager::unloadDirectory(const std::string &subdirectory)
