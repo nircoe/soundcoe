@@ -1,6 +1,28 @@
 # OpenAL-Soft Configuration for soundcoe
 # This file contains all OpenAL backend configurations for different platforms
 
+function(fetch_openal_soft)
+    # Configure OpenAL: Use Emscripten's built-in OpenAL or fetch OpenAL-Soft
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+        message(STATUS "[soundcoe] Using Emscripten's built-in OpenAL implementation")
+        # Emscripten provides its own OpenAL implementation via -lopenal linker flag
+        # No need to fetch or configure OpenAL-Soft
+    else()
+        message(STATUS "[soundcoe] Fetching OpenAL-Soft from source...")
+        
+        FetchContent_Declare(
+            openal
+            GIT_REPOSITORY https://github.com/kcat/openal-soft.git
+            GIT_TAG 1.24.3
+        )
+        
+        configure_openal()
+        FetchContent_MakeAvailable(openal)
+        ignore_external_warnings(OpenAL)
+    endif()
+endfunction()
+
+
 # Helper function to disable all non-target backends
 function(disable_all_backends_except target_backends)
     # All known OpenAL-Soft backends

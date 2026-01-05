@@ -1,10 +1,13 @@
 #pragma once
 
-#include <logcoe.hpp>
 #include <cmath>
 #include <string_view>
 #include <sstream>
 #include <limits>
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {

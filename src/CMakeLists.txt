@@ -22,8 +22,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     target_link_libraries(soundcoe 
         PUBLIC
             soundcoe_headers
-            logcoe
             Threads::Threads
+        PRIVATE
+            $<$<BOOL:${SOUNDCOE_USE_LOGCOE}>:logcoe>
     )
     # Link with Emscripten's built-in OpenAL implementation
     target_link_options(soundcoe PRIVATE -lopenal)
@@ -31,9 +32,9 @@ else()
     target_link_libraries(soundcoe 
         PUBLIC
             soundcoe_headers
-            logcoe
             Threads::Threads
         PRIVATE
             OpenAL
+            $<$<BOOL:${SOUNDCOE_USE_LOGCOE}>:logcoe>
     )
 endif()

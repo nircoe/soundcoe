@@ -1,10 +1,13 @@
 #include <soundcoe/playback/sound_manager.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <AL/al.h>
-#include <logcoe.hpp>
 #include <functional>
 #include <filesystem>
 #include <algorithm>
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {

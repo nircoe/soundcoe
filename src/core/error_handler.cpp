@@ -1,8 +1,11 @@
 #include <soundcoe/core/error_handler.hpp>
-#include <logcoe.hpp>
 #include <iostream>
 #include <sstream>
 #include <exception>
+#include <soundcoe_config.hpp>
+#if SOUNDCOE_USE_LOGCOE
+#include <logcoe.hpp>
+#endif
 
 namespace soundcoe
 {
