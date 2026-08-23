@@ -38,7 +38,7 @@ namespace soundcoe
             AudioContext m_audioContext;
             bool m_initialized = false;
             std::filesystem::path m_audioRootDirectory;
-            size_t m_maxSources = 32;
+            size_t m_maxSources = 64;
             mutable std::mutex m_mutex;
 
             std::vector<SourceAllocation> m_sourcePool;
@@ -66,8 +66,8 @@ namespace soundcoe
             ResourceManager();
             ~ResourceManager();
 
-            void initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
-                            size_t maxCacheSizeMB = 64);
+            void initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
+                            size_t maxCacheSizeMB = UNLIMITED_CACHE);
             void shutdown();
             bool isInitialized() const;
 
