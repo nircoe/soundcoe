@@ -25,6 +25,12 @@ namespace soundcoe
                                                             soundSubdir, musicSubdir, level);
     }
 
+    bool initialize(const init_config &config)
+    {
+        return initialize(config.audioRootDirectory, config.maxSources, config.maxCacheSizeMB,
+                          config.soundSubdir, config.musicSubdir, config.level);
+    }
+
     void shutdown()
     {
         detail::getSoundManagerInstance().shutdown();

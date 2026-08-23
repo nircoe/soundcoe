@@ -25,7 +25,7 @@ int main() {
         128,          // Cache size MB (adjust based on your audio assets, or soundcoe::UNLIMITED_CACHE)
         "sfx",        // Sound subdirectory inside each scene/general
         "music",      // Music subdirectory inside each scene/general
-        LogLevel::INFO // Log level (default: INFO)
+        LogLevel::DEBUG // Log level (default: DEBUG)
     );
     
     soundcoe::preloadScene("level1");
@@ -182,8 +182,8 @@ soundcoe::initialize("./audio", 32, soundcoe::UNLIMITED_CACHE);
 ```cpp
 // Configure source pool based on your game - choose how many sources that you would like! remember it is the maximum concurrent amount.
 soundcoe::initialize("./audio", 16, 64);     // 16 sources for games with less concurrent audio
-soundcoe::initialize("./audio", 32, 64);     // 32 sources - default
-soundcoe::initialize("./audio", 64, 128);    // 64 sources for game with more concurrent audio
+soundcoe::initialize("./audio", 64, 64);     // 64 sources - default
+soundcoe::initialize("./audio", 128, 128);   // 128 sources for game with more concurrent audio
 ```
 
 ### Supported Audio Format
@@ -454,7 +454,7 @@ cmake -B build \
 ### Caching Strategy
 - **LRU Eviction**: Least recently used buffers removed first
 - **Size Limits**: Configurable maximum cache size in MB
-- **Unlimited Cache**: Use `soundcoe::UNLIMITED_CACHE` for development/profiling to measure peak memory usage
+- **Unlimited Cache by Default**: `initialize()` defaults `maxCacheSizeMB` to `soundcoe::UNLIMITED_CACHE`, so nothing evicts during development/profiling; pass a real budget once you've measured peak memory usage
 - **Usage Tracking**: Statistical data for optimization decisions
 
 ## Audio Format Integration

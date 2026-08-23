@@ -135,11 +135,11 @@ soundcoe::initialize("./audio");  // relative to executable
 // Full configuration
 soundcoe::initialize(
     "./audio",        // Audio root directory (relative to executable)
-    32,              // Max sources (default: 32)
-    64,              // Cache size MB (default: 64, use soundcoe::UNLIMITED_CACHE for no limit)
+    64,              // Max sources (default: 64)
+    soundcoe::UNLIMITED_CACHE, // Cache size MB (default: unlimited, cap it once you've profiled real usage)
     "sfx",           // Sound subdirectory inside each scene/general (default: "sfx")
     "music",         // Music subdirectory inside each scene/general (default: "music")
-    LogLevel::INFO   // Log level (default: INFO)
+    LogLevel::DEBUG  // Log level (default: DEBUG)
 );
 
 // Clean shutdown

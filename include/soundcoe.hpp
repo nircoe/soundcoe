@@ -16,6 +16,21 @@ namespace soundcoe
 namespace soundcoe
 {
     /**
+     * @brief Configuration bundle for initialize(), for callers that want to hold/forward init
+     *        settings as a single value (e.g. gamecoe's game::create()) instead of six positional
+     *        arguments.
+     */
+    struct init_config
+    {
+        std::string audioRootDirectory = "assets/audio";
+        std::string soundSubdir = "sfx";
+        std::string musicSubdir = "music";
+        size_t maxSources = 64;
+        size_t maxCacheSizeMB = UNLIMITED_CACHE;
+        LogLevel level = LogLevel::DEBUG;
+    };
+
+    /**
      * @brief Initializes soundcoe with the specified configuration.
      *
      * Sets up an audio context, resource management, and loads the "general" audio directory if it exists.
@@ -26,17 +41,17 @@ namespace soundcoe
      *                          during initialization if exists, and will be loaded till soundcoe::shutdown() will be called.
      * @param maxSources Maximum number of concurrent audio sources that can be played simultaneously.
      *                   Higher values allow more concurrent audio but consume more system resources.
-     *                   Default is 32.
+     *                   Default is 64.
      * @param maxCacheSizeMB Maximum size in megabytes for the audio buffer cache. Larger values keep
      *                       more audio files in memory for faster playback but consume more RAM.
-     *                       Use soundcoe::UNLIMITED_CACHE during development to measure actual usage.
-     *                       Default is 64 MB.
+     *                       Default is soundcoe::UNLIMITED_CACHE, so nothing evicts during development;
+     *                       set a real budget once you've profiled actual usage for shipping.
      * @param soundSubdir Name of the subdirectory within each audio directory (general, scenes) that
      *                    contains sound effects. Default is "sfx".
      * @param musicSubdir Name of the subdirectory within each audio directory (general, scenes) that
      *                    contains music files. Default is "music".
      * @param level Logging level for soundcoe operations. Controls the verbosity of log output.
-     *              Default is LogLevel::INFO.
+     *              Default is LogLevel::DEBUG.
      *
      * @return true if initialization was successful, false if it failed (e.g., invalid directory,
      *         OpenAL initialization failure, or system already initialized).
@@ -56,9 +71,15 @@ namespace soundcoe
      *     // Handle initialization failure
      * }
      */
-    bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
-                           size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
-                           const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO);
+    bool initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
+                           size_t maxCacheSizeMB = UNLIMITED_CACHE, const std::string &soundSubdir = "sfx",
+                           const std::string &musicSubdir = "music", LogLevel level = LogLevel::DEBUG);
+
+    /**
+     * @brief Initializes soundcoe from an init_config bundle. Forwards to the flat-parameter
+     *        overload above - see its documentation for behavior/return value.
+     */
+    bool initialize(const init_config &config);
 
     /**
      * @brief Shuts down soundcoe and releases all resources.

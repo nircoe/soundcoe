@@ -137,9 +137,9 @@ namespace soundcoe
             SoundManager();
             ~SoundManager();
 
-            bool initialize(const std::string &audioRootDirectory, size_t maxSources = 32,
-                            size_t maxCacheSizeMB = 64, const std::string &soundSubdir = "sfx",
-                            const std::string &musicSubdir = "music", LogLevel level = LogLevel::INFO);
+            bool initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
+                            size_t maxCacheSizeMB = UNLIMITED_CACHE, const std::string &soundSubdir = "sfx",
+                            const std::string &musicSubdir = "music", LogLevel level = LogLevel::DEBUG);
             void shutdown();
             bool isInitialized() const;
 
