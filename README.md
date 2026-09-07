@@ -276,4 +276,5 @@ int main() {
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details. Third-party dependency licenses (notably
+OpenAL-Soft's LGPL v2) are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
