@@ -28,8 +28,10 @@ target_link_libraries(soundcoe_tests
         OpenAL
 )
 
-add_custom_command(TARGET soundcoe_tests POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            -t $<TARGET_FILE_DIR:soundcoe_tests>
-            $<TARGET_RUNTIME_DLLS:soundcoe_tests>
-    COMMAND_EXPAND_LISTS)
+if(WIN32)
+    add_custom_command(TARGET soundcoe_tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                -t $<TARGET_FILE_DIR:soundcoe_tests>
+                $<TARGET_RUNTIME_DLLS:soundcoe_tests>
+        COMMAND_EXPAND_LISTS)
+endif()
