@@ -202,7 +202,7 @@ endfunction()
 
 function(configure_openal)
     # Global OpenAL-Soft settings (applies to all platforms)
-    set(LIBTYPE "STATIC" CACHE STRING "Build static library" FORCE)
+    set(LIBTYPE "SHARED" CACHE STRING "Build shared library" FORCE)
     set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
     set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
