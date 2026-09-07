@@ -25,7 +25,7 @@ auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
 
 ## Dependencies
 - **C++17 or later** - Modern C++ standard support
-- **CMake 3.14+** - Build system
+- **CMake 3.22+** - Build system
 - **OpenAL-Soft** - Audio backend (automatically fetched)
 - **logcoe** - Logging system (automatically fetched)
 - **testcoe** - Testing framework (automatically fetched, tests only)
@@ -258,7 +258,7 @@ int main() {
 ## Requirements  
 
 - **Compiler**: C++17 compatible (GCC 7+, Clang 5+, MSVC 2017+)
-- **Build System**: CMake 3.14+
+- **Build System**: CMake 3.22+
 - **Platforms**: Windows, Linux, macOS, WebAssembly/Emscripten
 - **Audio Hardware**: Required for actual audio playback testing (CI systems are headless)
 

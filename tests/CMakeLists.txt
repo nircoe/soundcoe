@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.14)
-
 message(STATUS "[soundcoe] Fetching testcoe from source...")
 include(FetchContent)
 FetchContent_Declare(
