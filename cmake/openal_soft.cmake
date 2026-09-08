@@ -19,6 +19,10 @@ function(fetch_openal_soft)
         configure_openal()
         FetchContent_MakeAvailable(openal)
         ignore_external_warnings(OpenAL)
+
+        if(MINGW)
+            target_link_options(OpenAL PRIVATE -static-libgcc -static-libstdc++ -static)
+        endif()
     endif()
 endfunction()
 
