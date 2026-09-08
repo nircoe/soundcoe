@@ -370,7 +370,7 @@ Backend selection is handled automatically by the CMake configuration system. Us
 
 ### Build System Integration
 - **CMake**: FetchContent for automatic dependency management
-- **Static Linking**: Self-contained builds with embedded libraries
+- **Mixed Linking**: OpenAL-Soft is dynamically linked (LGPL compliance - see THIRD_PARTY_NOTICES.md); dr_libs and stb are statically embedded
 - **Modular Configuration**: Platform-specific OpenAL backend management via `cmake/openal_config.cmake`
 - **Automatic Platform Detection**: CMake platform variables (WIN32, APPLE, UNIX) and CMAKE_SYSTEM_NAME for Emscripten
 
