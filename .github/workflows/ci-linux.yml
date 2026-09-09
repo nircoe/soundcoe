@@ -15,13 +15,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Linux with GCC
           - name: "Linux GCC"
             compiler: gcc
             cmake-generator: 'Ninja'
             cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON'
           
-          # Linux with Clang
           - name: "Linux Clang"
             compiler: clang
             cmake-generator: 'Ninja'
@@ -71,11 +69,11 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
+        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release --parallel
 
     - name: Run tests
       working-directory: build

@@ -15,13 +15,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Windows with MSVC
           - name: "Windows MSVC"
             compiler: msvc
             cmake-generator: ''
             cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON'
             
-          # Windows with MinGW (GCC)
           - name: "Windows MinGW"
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
@@ -43,15 +41,15 @@ jobs:
     - name: Configure CMake
       run: |
         if [ -n "${{ matrix.cmake-generator }}" ]; then
-          cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
+          cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
         else
-          cmake -B build ${{ matrix.cmake-options }}
+          cmake -B build ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
         fi
       shell: bash
 
     - name: Build
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release --parallel
 
     - name: Run tests (math only - no audio hardware in CI)
       working-directory: build

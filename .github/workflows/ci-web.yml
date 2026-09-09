@@ -16,7 +16,6 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          # Test Emscripten builds from all host platforms to validate host OS independence
           - name: "Linux (Ubuntu) Host"
             os: ubuntu-latest
             emsdk-version: '3.1.57'

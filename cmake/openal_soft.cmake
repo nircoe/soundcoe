@@ -14,6 +14,7 @@ function(fetch_openal_soft)
             openal
             GIT_REPOSITORY https://github.com/kcat/openal-soft.git
             GIT_TAG 1.24.3
+            GIT_SHALLOW TRUE
         )
         
         configure_openal()

@@ -15,7 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS with Apple Clang
           - name: "macOS Clang"
             compiler: clang
             cmake-generator: 'Ninja'
@@ -34,11 +33,11 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
+        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release --parallel
 
     - name: Run tests
       working-directory: build
