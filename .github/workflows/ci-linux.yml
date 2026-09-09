@@ -16,6 +16,7 @@ jobs:
       COMMON_CMAKE_FLAGS: >-
         -DCMAKE_BUILD_TYPE=Release
         -DSOUNDCOE_BUILD_TESTS=ON
+        -DSOUNDCOE_USE_LOGCOE=ON
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
     strategy:
@@ -78,7 +79,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{
-          hashFiles('cmake/openal_soft.cmake', 'tests/CMakeLists.txt') }}
+          hashFiles('cmake/openal_soft.cmake', 'cmake/logcoe.cmake', 'tests/CMakeLists.txt') }}
         restore-keys: ccache-${{ runner.os }}-${{ matrix.compiler }}-
 
     - name: Configure CMake

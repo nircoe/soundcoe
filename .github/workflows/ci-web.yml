@@ -69,7 +69,8 @@ jobs:
         cd build
         emcmake cmake .. \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_BUILD_TYPE=Release \
+          -DSOUNDCOE_USE_LOGCOE=ON
         echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
