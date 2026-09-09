@@ -12,6 +12,8 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.draft == false || github.event_name == 'push'
+    env:
+      EM_CACHE_FOLDER: 'emsdk-cache'
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -42,10 +44,17 @@ jobs:
       run: ${{ matrix.setup-deps }}
       shell: bash
 
+    - name: Setup Emscripten cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.EM_CACHE_FOLDER }}
+        key: emsdk-${{ matrix.emsdk-version }}-${{ runner.os }}
+
     - name: Setup Emscripten SDK
       uses: mymindstorm/setup-emsdk@v13
       with:
         version: ${{ matrix.emsdk-version }}
+        actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
 
     - name: Verify Emscripten installation
       run: |

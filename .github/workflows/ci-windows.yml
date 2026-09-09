@@ -19,12 +19,12 @@ jobs:
           - name: "Windows MSVC"
             compiler: msvc
             cmake-generator: ''
-            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON'
-            
+            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache'
+
           - name: "Windows MinGW"
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
-            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON'
+            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
 
     steps:
     - name: Checkout repository
@@ -38,6 +38,22 @@ jobs:
         choco install mingw
       shell: bash
 
+
+    - name: Setup ccache
+      if: matrix.compiler == 'gcc'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/openal_soft.cmake', 'tests/CMakeLists.txt') }}
+        restore-keys: ccache-${{ runner.os }}-${{ matrix.compiler }}-
+
+    - name: Setup sccache
+      if: matrix.compiler == 'msvc'
+      uses: mozilla-actions/sccache-action@v0.0.11
+
+    - name: Set sccache env vars
+      if: matrix.compiler == 'msvc'
+      run: echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+      shell: bash
 
     - name: Configure CMake
       run: |
