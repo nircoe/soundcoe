@@ -11,12 +11,14 @@ jobs:
   build-and-test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+    env:
+      EM_CACHE_FOLDER: 'emsdk-cache'
     strategy:
       fail-fast: false
       max-parallel: 1
       matrix:
         include:
-          # Test Emscripten builds from all host platforms to validate host OS independence
           - name: "Linux (Ubuntu) Host"
             os: ubuntu-latest
             emsdk-version: '3.1.57'
@@ -42,10 +44,17 @@ jobs:
       run: ${{ matrix.setup-deps }}
       shell: bash
 
+    - name: Setup Emscripten cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.EM_CACHE_FOLDER }}
+        key: emsdk-${{ matrix.emsdk-version }}-${{ runner.os }}
+
     - name: Setup Emscripten SDK
-      uses: mymindstorm/setup-emsdk@v13
+      uses: emscripten-core/setup-emsdk@v16
       with:
         version: ${{ matrix.emsdk-version }}
+        actions-cache-folder: ${{ env.EM_CACHE_FOLDER }}
 
     - name: Verify Emscripten installation
       run: |
@@ -60,7 +69,8 @@ jobs:
         cd build
         emcmake cmake .. \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_BUILD_TYPE=Release \
+          -DSOUNDCOE_USE_LOGCOE=ON
         echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 

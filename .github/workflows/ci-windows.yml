@@ -11,21 +11,29 @@ jobs:
   build-and-test:
     name: ${{ matrix.name }}
     runs-on: windows-latest
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+    env:
+      COMMON_CMAKE_FLAGS: '-DCMAKE_BUILD_TYPE=Release -DSOUNDCOE_BUILD_TESTS=ON -DSOUNDCOE_USE_LOGCOE=ON'
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Windows with MSVC
           - name: "Windows MSVC"
             compiler: msvc
-            cmake-generator: ''
-            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON'
-            
-          # Windows with MinGW (GCC)
+            cmake-generator: 'Ninja'
+            cmake-options: >-
+              -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+              -DCMAKE_C_COMPILER_LAUNCHER=sccache
+              -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+              -DCMAKE_POLICY_DEFAULT_CMP0141=NEW
+              -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+
           - name: "Windows MinGW"
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
-            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON'
+            cmake-options: >-
+              -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
     steps:
     - name: Checkout repository
@@ -33,36 +41,41 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Install Windows build tools
-      if: matrix.compiler != 'msvc'
-      run: |
-        choco install mingw
-      shell: bash
+    - name: Setup MSVC dev environment
+      if: matrix.compiler == 'msvc'
+      uses: ilammy/msvc-dev-cmd@v1.13.0
 
+    - name: Setup ccache
+      if: matrix.compiler == 'gcc'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{
+          hashFiles('cmake/openal_soft.cmake', 'cmake/logcoe.cmake', 'tests/CMakeLists.txt') }}
+        restore-keys: ccache-${{ runner.os }}-${{ matrix.compiler }}-
+
+    - name: Setup sccache
+      if: matrix.compiler == 'msvc'
+      uses: mozilla-actions/sccache-action@v0.0.11
+
+    - name: Set sccache env vars
+      if: matrix.compiler == 'msvc'
+      run: echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+      shell: bash
 
     - name: Configure CMake
       run: |
-        if [ -n "${{ matrix.cmake-generator }}" ]; then
-          cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
-        else
-          cmake -B build ${{ matrix.cmake-options }}
-        fi
+        cmake -B build -G "${{ matrix.cmake-generator }}" \
+          ${{ matrix.cmake-options }} ${{ env.COMMON_CMAKE_FLAGS }}
       shell: bash
 
     - name: Build
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release --parallel
 
     - name: Run tests (math only - no audio hardware in CI)
       working-directory: build
       run: |
         echo "Running math tests (no audio hardware available in CI)"
-        if [ "${{ matrix.compiler }}" == "gcc" ]; then
-            cd tests
-            ./soundcoe_tests.exe --suite=Vec3Tests
-            ./soundcoe_tests.exe --suite=MathTests
-        else # MSVC
-            ./tests/Release/soundcoe_tests.exe --suite=Vec3Tests
-            ./tests/Release/soundcoe_tests.exe --suite=MathTests
-        fi
+        ./tests/soundcoe_tests.exe --suite=Vec3Tests
+        ./tests/soundcoe_tests.exe --suite=MathTests
       shell: bash
