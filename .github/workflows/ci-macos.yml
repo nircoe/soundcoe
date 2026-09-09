@@ -20,6 +20,7 @@ jobs:
             compiler: clang
             cmake-generator: 'Ninja'
             cmake-options: >-
+              -DCMAKE_BUILD_TYPE=Release
               -DSOUNDCOE_BUILD_TESTS=ON
               -DSOUNDCOE_USE_LOGCOE=ON
               -DCMAKE_C_COMPILER_LAUNCHER=ccache
@@ -45,7 +46,7 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
+        cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }}
 
     - name: Build
       run: |
