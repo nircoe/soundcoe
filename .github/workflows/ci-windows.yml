@@ -12,19 +12,21 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: windows-latest
     if: github.event.pull_request.draft == false || github.event_name == 'push'
+    env:
+      COMMON_CMAKE_FLAGS: '-DSOUNDCOE_BUILD_TESTS=ON'
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: "Windows MSVC"
             compiler: msvc
-            cmake-generator: ''
-            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache'
+            cmake-generator: 'Ninja'
+            cmake-options: '-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache'
 
           - name: "Windows MinGW"
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
-            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DSOUNDCOE_BUILD_TESTS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
+            cmake-options: '-DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
 
     steps:
     - name: Checkout repository
@@ -33,11 +35,17 @@ jobs:
         submodules: 'recursive'
 
     - name: Install Windows build tools
-      if: matrix.compiler != 'msvc'
       run: |
-        choco install mingw
+        if [ "${{ matrix.compiler }}" == "gcc" ]; then
+          choco install mingw
+        else
+          choco install ninja
+        fi
       shell: bash
 
+    - name: Setup MSVC dev environment
+      if: matrix.compiler == 'msvc'
+      uses: ilammy/msvc-dev-cmd@v1.13.0
 
     - name: Setup ccache
       if: matrix.compiler == 'gcc'
@@ -58,9 +66,9 @@ jobs:
     - name: Configure CMake
       run: |
         if [ -n "${{ matrix.cmake-generator }}" ]; then
-          cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -G "${{ matrix.cmake-generator }}" ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release ${{ env.COMMON_CMAKE_FLAGS }}
         else
-          cmake -B build ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release
+          cmake -B build ${{ matrix.cmake-options }} -DCMAKE_BUILD_TYPE=Release ${{ env.COMMON_CMAKE_FLAGS }}
         fi
       shell: bash
 
