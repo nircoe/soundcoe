@@ -19,7 +19,10 @@ jobs:
           - name: "macOS Clang"
             compiler: clang
             cmake-generator: 'Ninja'
-            cmake-options: '-DSOUNDCOE_BUILD_TESTS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
+            cmake-options: >-
+              -DSOUNDCOE_BUILD_TESTS=ON
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
     steps:
     - name: Checkout repository
@@ -35,7 +38,8 @@ jobs:
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('cmake/openal_soft.cmake', 'tests/CMakeLists.txt') }}
+        key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{
+          hashFiles('cmake/openal_soft.cmake', 'tests/CMakeLists.txt') }}
         restore-keys: ccache-${{ runner.os }}-${{ matrix.compiler }}-
 
     - name: Configure CMake
