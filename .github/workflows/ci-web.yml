@@ -11,6 +11,7 @@ jobs:
   build-and-test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
     strategy:
       fail-fast: false
       max-parallel: 1
