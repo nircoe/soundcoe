@@ -41,30 +41,6 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Get MinGW version
-      id: mingw-version
-      if: matrix.compiler == 'gcc'
-      run: echo "version=$(choco search mingw --exact --limit-output | cut -d'|' -f2)" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Cache MinGW toolchain
-      id: mingw-cache
-      if: matrix.compiler == 'gcc'
-      uses: actions/cache@v4
-      with:
-        path: C:\mingw64
-        key: mingw-${{ runner.os }}-${{ steps.mingw-version.outputs.version }}
-
-    - name: Install MinGW
-      if: matrix.compiler == 'gcc' && steps.mingw-cache.outputs.cache-hit != 'true'
-      run: choco install mingw
-      shell: bash
-
-    - name: Add MinGW to PATH
-      if: matrix.compiler == 'gcc'
-      run: echo "C:\mingw64\bin" >> $GITHUB_PATH
-      shell: bash
-
     - name: Setup MSVC dev environment
       if: matrix.compiler == 'msvc'
       uses: ilammy/msvc-dev-cmd@v1.13.0
