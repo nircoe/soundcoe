@@ -28,20 +28,20 @@ function(fetch_openal_soft)
 endfunction()
 
 
+# All known OpenAL-Soft backends (null and loopback are always built and have no option)
+set(SOUNDCOE_ALL_BACKENDS
+    WASAPI DSOUND WINMM                 # Windows
+    COREAUDIO                           # macOS/iOS
+    OPENSL OBOE                         # Android
+    ALSA PULSEAUDIO PIPEWIRE OSS JACK   # Linux
+    SOLARIS SNDIO                       # Unix variants
+    PORTAUDIO SDL2 SDL3 WAVE OTHERIO    # Cross-platform/utility
+)
+
 # Helper function to disable all non-target backends
 function(disable_all_backends_except target_backends)
-    # All known OpenAL-Soft backends
-    set(ALL_BACKENDS
-        WASAPI DSOUND WINMM           # Windows
-        COREAUDIO                     # macOS/iOS  
-        OPENSL OBOE                   # Android
-        ALSA PULSEAUDIO PIPEWIRE OSS JACK  # Linux
-        SOLARIS SNDIO                 # Unix variants
-        PORTAUDIO SDL2 SDL3 WAVE NULL # Cross-platform/utility
-    )
-    
     # Disable all backends not in target list
-    foreach(backend ${ALL_BACKENDS})
+    foreach(backend ${SOUNDCOE_ALL_BACKENDS})
         list(FIND target_backends ${backend} backend_index)
         if(backend_index EQUAL -1)
             set(ALSOFT_BACKEND_${backend} OFF CACHE BOOL "" FORCE)
@@ -54,7 +54,7 @@ function(disable_all_require_flags)
     set(ALL_REQUIRE_FLAGS
         WASAPI DSOUND WINMM COREAUDIO OPENSL OBOE
         ALSA PULSEAUDIO PIPEWIRE OSS JACK
-        PORTAUDIO SOLARIS SNDIO SDL2 SDL3
+        PORTAUDIO SOLARIS SNDIO SDL2 SDL3 OTHERIO
     )
     
     foreach(flag ${ALL_REQUIRE_FLAGS})
@@ -62,8 +62,60 @@ function(disable_all_require_flags)
     endforeach()
 endfunction()
 
+# Helper function to clear backend flags left in the cache by earlier configures
+function(reset_backend_flags)
+    foreach(backend ${SOUNDCOE_ALL_BACKENDS})
+        unset(ALSOFT_BACKEND_${backend} CACHE)
+    endforeach()
+endfunction()
+
+# Helper function to log available and enabled backends with how to change them
+function(soundcoe_log_backends platform available enabled example)
+    string(REPLACE ";" " " enabled_text "${enabled}")
+    if(enabled_text STREQUAL "")
+        set(enabled_text "none")
+    endif()
+    message(STATUS "[soundcoe] Available backends (${platform}): ${available}")
+    message(STATUS "[soundcoe] Enabled backends: ${enabled_text}")
+    message(STATUS "[soundcoe] Can be changed with \"set(SOUNDCOE_ENABLE_<BACKEND> ON|OFF)\" before adding soundcoe")
+    message(STATUS "[soundcoe] For example: \"set(SOUNDCOE_ENABLE_${example} ON)\"")
+    message(STATUS
+        "[soundcoe] Other modes: \"set(SOUNDCOE_AUTODETECT_BACKENDS ON)\" (OpenAL-Soft picks what it finds)")
+    message(STATUS "[soundcoe] and \"set(SOUNDCOE_ONLY_NULL_BACKEND ON)\" (no audio output, headless/CI use)")
+endfunction()
+
 # Configure OpenAL-Soft based on target platform
 function(configure_openal_for_platform)
+    # Reset stale ALSOFT_REQUIRE_* and ALSOFT_BACKEND_* values left in the cache by earlier configures
+    disable_all_require_flags()
+    reset_backend_flags()
+
+    option(SOUNDCOE_ONLY_NULL_BACKEND
+        "Build OpenAL-Soft with only the always-available null backend (headless/CI use)" OFF)
+
+    option(SOUNDCOE_AUTODETECT_BACKENDS
+        "Let OpenAL-Soft autodetect backends instead of the platform defaults" OFF)
+
+    if(SOUNDCOE_ONLY_NULL_BACKEND AND SOUNDCOE_AUTODETECT_BACKENDS)
+        message(FATAL_ERROR "[soundcoe] SOUNDCOE_ONLY_NULL_BACKEND and SOUNDCOE_AUTODETECT_BACKENDS cannot both be ON")
+    endif()
+
+    if(SOUNDCOE_ONLY_NULL_BACKEND)
+        message(STATUS "[soundcoe] SOUNDCOE_ONLY_NULL_BACKEND is ON, building null-only headless configuration")
+        message(STATUS "[soundcoe] Remove \"set(SOUNDCOE_ONLY_NULL_BACKEND ON)\""
+            " to use the platform's real audio backends")
+        message(STATUS "[soundcoe] Run with ALSOFT_DRIVERS=null, OpenAL-Soft skips the null backend by default")
+        disable_all_backends_except("")
+        return()
+    endif()
+
+    if(SOUNDCOE_AUTODETECT_BACKENDS)
+        message(STATUS "[soundcoe] SOUNDCOE_AUTODETECT_BACKENDS is ON, OpenAL-Soft will pick the backends it finds")
+        message(STATUS "[soundcoe] Set SOUNDCOE_AUTODETECT_BACKENDS to OFF to choose backends explicitly,"
+            " OpenAL-Soft's own output lists what it found")
+        return()
+    endif()
+
     if(WIN32)
         # ================================================================
         # Windows Build
@@ -101,6 +153,7 @@ function(configure_openal_for_platform)
         
         # Disable non-Windows backends
         disable_all_backends_except("${TARGET_BACKENDS}")
+        soundcoe_log_backends("Windows" "WASAPI DSOUND WINMM PORTAUDIO" "${TARGET_BACKENDS}" "PORTAUDIO")
         
     elseif(APPLE)
         # ================================================================
@@ -118,6 +171,7 @@ function(configure_openal_for_platform)
         # Apple platforms use CoreAudio
         set(ALSOFT_REQUIRE_COREAUDIO ON CACHE BOOL "" FORCE)
         disable_all_backends_except("COREAUDIO")
+        message(STATUS "[soundcoe] Enabled backends: COREAUDIO (no options on this platform)")
         
     elseif(ANDROID)
         # ================================================================
@@ -142,12 +196,13 @@ function(configure_openal_for_platform)
         endif()
         
         disable_all_backends_except("${TARGET_BACKENDS}")
+        soundcoe_log_backends("Android" "OPENSL OBOE" "${TARGET_BACKENDS}" "OBOE")
         
-    elseif(UNIX)
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         # ================================================================
-        # Linux/Unix Build  
+        # Linux Build  
         # ================================================================
-        message(STATUS "[soundcoe] Configuring OpenAL-Soft for Linux/Unix")
+        message(STATUS "[soundcoe] Configuring OpenAL-Soft for Linux")
         
         # Linux-specific options
         option(SOUNDCOE_ENABLE_ALSA "Enable ALSA backend" ON)
@@ -190,7 +245,17 @@ function(configure_openal_for_platform)
         endif()
         
         disable_all_backends_except("${TARGET_BACKENDS}")
-        
+        soundcoe_log_backends("Linux" "ALSA PULSEAUDIO PIPEWIRE OSS JACK PORTAUDIO" "${TARGET_BACKENDS}" "JACK")
+
+    elseif(UNIX)
+        # ================================================================
+        # Other UNIX Build (FreeBSD etc.)
+        # ================================================================
+        message(STATUS "[soundcoe] Configuring OpenAL-Soft for ${CMAKE_SYSTEM_NAME} (backend autodetection)")
+        message(STATUS "[soundcoe] No backend options on this platform,"
+            " see OpenAL-Soft's own output for the backends it found")
+        # No force-disable and no REQUIRE flags so OpenAL-Soft autodetects (sndio, OSS, Solaris, ...)
+
     else()
         # ================================================================
         # Unknown Platform - Conservative Configuration
@@ -198,10 +263,9 @@ function(configure_openal_for_platform)
         message(WARNING "[soundcoe] Unknown platform: ${CMAKE_SYSTEM_NAME}")
         message(STATUS "[soundcoe] Using conservative OpenAL-Soft configuration")
         
-        # Disable all backends except NULL for safe fallback
-        disable_all_backends_except("NULL")
-        disable_all_require_flags()
-        
+        # Disable all optional backends for safe fallback (null is always built)
+        disable_all_backends_except("")
+
     endif()
 endfunction()
 

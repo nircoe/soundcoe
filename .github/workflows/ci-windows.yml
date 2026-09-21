@@ -13,7 +13,12 @@ jobs:
     runs-on: windows-latest
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     env:
-      COMMON_CMAKE_FLAGS: '-DCMAKE_BUILD_TYPE=Release -DSOUNDCOE_BUILD_TESTS=ON -DSOUNDCOE_USE_LOGCOE=ON'
+      COMMON_CMAKE_FLAGS: >-
+        -DCMAKE_BUILD_TYPE=Release
+        -DSOUNDCOE_BUILD_TESTS=ON
+        -DSOUNDCOE_USE_LOGCOE=ON
+        -DSOUNDCOE_ONLY_NULL_BACKEND=ON
+      ALSOFT_DRIVERS: 'null'
     strategy:
       fail-fast: false
       matrix:
@@ -72,10 +77,7 @@ jobs:
       run: |
         cmake --build build --config Release --parallel
 
-    - name: Run tests (math only - no audio hardware in CI)
+    - name: Run tests
       working-directory: build
-      run: |
-        echo "Running math tests (no audio hardware available in CI)"
-        ./tests/soundcoe_tests.exe --suite=Vec3Tests
-        ./tests/soundcoe_tests.exe --suite=MathTests
+      run: ./tests/soundcoe_tests.exe
       shell: bash

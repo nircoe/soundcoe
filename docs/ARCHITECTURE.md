@@ -1,45 +1,12 @@
-# soundcoe Architecture & Advanced Usage
+# soundcoe Architecture
 
 ## Overview
 
-soundcoe provides a layered architecture designed for game developers who need powerful audio without complexity. This document covers advanced usage patterns, performance optimization, and internal design for contributors.
-
-## Quick Navigation
-
-- [Advanced Usage Examples](#advanced-usage-examples) - 3D audio, fade effects, custom configurations
-- [Game Performance Tips](#game-performance-tips) - Optimization strategies for games
-- [Internal Architecture](#internal-architecture) - Implementation details for contributors
+This document covers how soundcoe works internally, backend setup, and a few advanced usage examples.
 
 ## Advanced Usage Examples
 
-### Custom Configuration
-
-```cpp
-#include <soundcoe.hpp>
-
-int main() {
-    // Initialize with custom settings for your game
-    soundcoe::initialize(
-        "./audio",    // Audio directory (relative to executable)
-        64,           // Max simultaneous sources (good for action games)
-        128,          // Cache size MB (adjust based on your audio assets, or soundcoe::UNLIMITED_CACHE)
-        "sfx",        // Sound subdirectory inside each scene/general
-        "music",      // Music subdirectory inside each scene/general
-        LogLevel::DEBUG // Log level (default: DEBUG)
-    );
-    
-    soundcoe::preloadScene("level1");
-    
-    // Your game loop here...
-    
-    soundcoe::shutdown();
-    return 0;
-}
-```
-
 ### 3D Spatial Audio
-
-Perfect for first-person shooters, racing games, and immersive experiences:
 
 ```cpp
 // Set up listener (usually your player/camera)
@@ -55,228 +22,69 @@ soundcoe::Vec3 enemyPos(10.0f, 0.0f, -20.0f);
 auto gunshot = soundcoe::playSound3D("gunshot.wav", enemyPos);
 
 soundcoe::Vec3 carPos(-5.0f, 0.0f, 15.0f);
-auto engine = soundcoe::playSound3D("car_engine.wav", carPos, 0.8f, 1.0f, true);
+auto engine = soundcoe::playSound3D("car_engine.wav", carPos, soundcoe::Vec3::zero(), 0.8f, 1.0f, true);
 
 // Update positions in your game loop
+soundcoe::Vec3 updatedCarPos(-5.0f, 0.0f, 10.0f);
 soundcoe::setSoundPosition(engine, updatedCarPos);
 ```
 
 ### Advanced Fade Effects
 
-Great for dynamic music and smooth audio transitions:
-
 ```cpp
-// Fade in background music when entering a scene
 auto musicHandle = soundcoe::fadeInMusic("battle_theme.ogg", 3.0f);
-
-// Fade between different volume levels during gameplay
 soundcoe::fadeToVolumeMusic(musicHandle, 0.3f, 1.5f);  // Fade to 30% over 1.5 seconds
-
-// Fade out when player takes damage or enters stealth
-soundcoe::fadeToVolumeMusic(musicHandle, 0.1f, 0.8f);  // Fade to 10% over 0.8 seconds
-
-// Fade out completely when scene ends
 soundcoe::fadeOutMusic(musicHandle, 2.0f);
-
-// Fade in sound effects for dramatic effect
-auto explosionHandle = soundcoe::fadeInSound("big_explosion.wav", 1.2f);
 ```
 
 ### Master Volume Controls
 
-Essential for game settings and audio mixing:
-
 ```cpp
-// Global volume control (affects everything)
 soundcoe::setMasterVolume(0.8f);
+soundcoe::setMasterSoundsVolume(0.9f);
+soundcoe::setMasterMusicVolume(0.4f);
 
-// Separate control for sound effects and music
-soundcoe::setMasterSoundsVolume(0.9f);   // Keep SFX loud
-soundcoe::setMasterMusicVolume(0.4f);    // Reduce music for gameplay
-
-// Muting system (preserve volume levels)
-soundcoe::muteAll();                     // Mute everything
+// Muting preserves volume levels
+soundcoe::muteAll();
 soundcoe::unmuteAllSounds();             // Unmute sounds only
 soundcoe::unmuteAllMusic();              // Unmute music only
-
-// Check mute status
-if (soundcoe::isMuted()) {
-    // Update UI to show muted state
-}
 ```
-
-### Scene-Based Game Audio
-
-Organize your audio by game scenes for better memory management:
-
-```cpp
-// Menu scene
-soundcoe::preloadScene("menu");
-auto menuMusic = soundcoe::playMusic("menu_theme.ogg", 0.6f, 1.0f, true);
-auto clickSound = soundcoe::playSound("ui_click.wav");
-
-// Scene transition (load new scene first, then unload current scene)
-soundcoe::preloadScene("level1");        // Load new scene first
-soundcoe::fadeOutMusic(menuMusic, 1.0f);
-soundcoe::unloadScene("menu");           // Unload previous scene after loading new one
-
-// In-game audio for the new scene
-auto gameMusic = soundcoe::fadeInMusic("level1_theme.ogg", 2.0f);
-auto ambientSound = soundcoe::playSound("forest_ambient.ogg", 0.4f, 1.0f, true);
-
-// Another scene transition (always load new scene before unloading current scene)
-soundcoe::preloadScene("level2");        // Load next scene first
-soundcoe::unloadScene("level1");         // Then unload current scene
-```
-
-### Thread-Safe Game Integration
-
-soundcoe works safely with multi-threaded game engines:
-
-```cpp
-#include <thread>
-#include <future>
-
-// Audio can be called from any thread
-void gameAudioThread() {
-    while (gameRunning) {
-        // Safe to call from background thread
-        soundcoe::update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-}
-
-void gameLogicThread() {
-    // Safe to call from game logic thread
-    if (playerShoots) {
-        soundcoe::playSound("laser.wav");
-    }
-    
-    if (enemyHit) {
-        soundcoe::playSound3D("enemy_death.wav", enemyPosition);
-    }
-}
-
-// Both threads can safely call soundcoe functions simultaneously
-```
-
-## Game Performance Tips
-
-### Scene Memory Management
-
-```cpp
-// Always load new scene before unloading current scene
-soundcoe::preloadScene("next_scene");       // Load next scene first
-soundcoe::unloadScene("current_scene");     // Then unload current scene
-
-// Adjust cache size based on your game's scene complexity
-soundcoe::initialize("./audio", 32, 64);     // 64MB cache for simple scenes
-soundcoe::initialize("./audio", 64, 256);    // 256MB cache for complex scenes
-
-// Development/profiling: measure actual memory usage
-soundcoe::initialize("./audio", 32, soundcoe::UNLIMITED_CACHE);
-```
-
-### Source Pool Optimization
-
-```cpp
-// Configure source pool based on your game - choose how many sources that you would like! remember it is the maximum concurrent amount.
-soundcoe::initialize("./audio", 16, 64);     // 16 sources for games with less concurrent audio
-soundcoe::initialize("./audio", 64, 64);     // 64 sources - default
-soundcoe::initialize("./audio", 128, 128);   // 128 sources for game with more concurrent audio
-```
-
-### Supported Audio Format
-
-- **WAV**
-- **OGG**
-- **MP3**
-
-### Performance Best Practices
-
-1. **Scene loading order** - Always preload new scenes before unloading current scenes
-2. **Preload scenes** before scene transitions
-3. **Use 3D audio sparingly** - only for important positional sounds
-4. **Limit concurrent sounds** - stop old sounds when playing new ones
-5. **Use fade effects** for smooth scene transitions
 
 ## Internal Architecture
 
-*This section is for contributors and advanced users interested in soundcoe's implementation.*
-
 ### Architecture Overview
 
-soundcoe uses a layered design that hides OpenAL complexity behind a simple static API:
+soundcoe hides OpenAL behind a simple free-function API:
 
 ```
 Game Code → soundcoe API → Internal Systems → OpenAL
 ```
 
-### Key Components
-
-**Public API Layer**
-- Single `soundcoe.hpp` header
-- Static functions only (no objects to manage)
-- Thread-safe by design
-
-**Scene Management**
-- Maps scene names to directory structures
-- Automatic loading/unloading of audio files
-- Smart caching with configurable memory limits
-
-**Resource Management**
-- Source pool with priority-based allocation
-- Buffer caching for loaded audio files
-- Automatic cleanup when scenes are unloaded
-
-**Audio Processing**
-- Real-time fade effects with precise timing
-- 3D spatial audio with distance attenuation
-- Master volume controls with separate mixing channels
-
 ## Core Components
 
 ### Public API Layer
 - **File**: `include/soundcoe.hpp`
-- **Purpose**: Provides clean, game-developer-friendly static functions
-- **Key Features**:
-  - Complete black box experience
-  - No exposed implementation details
-  - Static function API with no object management
-  - Single include file for users
+- **Purpose**: Free functions in the `soundcoe` namespace, forwarding to a `SoundManager` singleton
 
 ### SoundManager (Internal Implementation)
 - **File**: `include/soundcoe/playback/sound_manager.hpp`
 - **Purpose**: Central singleton managing all audio operations
-- **Design Pattern**: Thread-safe singleton with comprehensive state management
 
-#### State Management
-SoundManager uses instance variables with thread-safe access patterns and proper mutex protection for all state management.
-
-#### ActiveAudio Structure
-```cpp
-struct ActiveAudio {
-    size_t m_sourceIndex;
-    std::string m_filename;
-    float m_baseVolume, m_basePitch;
-    bool m_loop;
-    bool m_isFading;
-    float m_fadeDuration, m_fadeElapsed;
-};
-```
+All state is instance data protected by a mutex. `update()` runs fade handling, then cleans up inactive audio.
+A fade out stops the source when the volume reaches 0.
 
 ### ResourceManager
 - **File**: `include/soundcoe/resources/resource_manager.hpp`
 - **Purpose**: Manages OpenAL resources with pooling and caching
-- **Key Features**:
-  - Source pool with priority-based allocation
-  - Intelligent buffer caching with size limits
-  - Directory-to-scene mapping
-  - Automatic resource cleanup
+- Source pool: when no source is free, a stopped source is reused. Otherwise the lowest-priority, oldest source is
+  stopped and taken, unless every source outranks the new sound
+- Buffer cache with a size limit
+- Scene directory loading and unloading
+- Audio decoders in `src/resources/audio_data.cpp`: WAV via dr_wav, MP3 via dr_mp3, OGG via stb_vorbis
 
 ### Core Layer
 - **AudioContext**: OpenAL device and context management
-- **ErrorHandler**: Comprehensive error checking and reporting
+- **ErrorHandler**: Error checking and reporting
 - **Types**: 3D math (Vec3) and audio enumerations
 
 ## Data Flow
@@ -285,43 +93,33 @@ struct ActiveAudio {
 ```
 soundcoe::initialize() called
     ↓
-Acquire SoundManager mutex
+Lock, init logging, validate root dir
     ↓
-Initialize ResourceManager pools
+Init OpenAL context (ResourceManager::initialize -> AudioContext::initialize)
     ↓
-Initialize AudioContext (OpenAL)
+Create source pool, set listener gain
     ↓
-Set default configurations
-    ↓
-Release mutex
+Preload general/ if it exists
 ```
 
 ### 2. Audio Playback Process
 ```
 soundcoe::playSound() called
     ↓
-SoundManager::playSound() internal function
+Get buffer from cache (getBuffer)
     ↓
-Acquire mutex lock
+Acquire source from the pool (acquireSource)
     ↓
-Acquire source from ResourceManager pool
+Configure source and start playback
     ↓
-Load/retrieve buffer from cache
-    ↓
-Configure OpenAL source properties
-    ↓
-Start playback and create handle
-    ↓
-Store in active audio map
-    ↓
-Release mutex lock
+Store handle in active audio map
 ```
 
 ### 3. Scene Management Process
 ```
 soundcoe::preloadScene() called
     ↓
-Map scene name to directory paths
+The scene name is used directly as a subdirectory of the audio root
     ↓
 ResourceManager::preloadDirectory()
     ↓
@@ -335,78 +133,41 @@ Update loaded directories list
 ## Thread Safety Implementation
 
 ### Mutex Strategy
-- **Per-Class Mutex**: Each class (SoundManager, ResourceManager, AudioContext) has its own std::mutex member
-- **Lock Scope**: Every public method acquires its class mutex for the entire duration
-- **Benefits**:
-  - Fine-grained locking reduces contention between different subsystems
-  - No deadlock risk due to careful lock ordering
-  - Atomic operations within each subsystem
-
-### Performance Considerations
-- **Lock Granularity**: Coarse-grained locking for simplicity
-- **Lock Duration**: Minimal time holding locks for audio operations
-- **OpenAL Serialization**: All OpenAL calls properly serialized
-
-### Thread Safety Guarantees
-1. **Handle Consistency**: All threads see consistent handle states
-2. **Audio Integrity**: No interleaved or corrupted audio operations
-3. **Resource Safety**: No concurrent access to OpenAL objects
-4. **State Atomicity**: Configuration changes are atomic
-
-## Cross-Platform Considerations
-
-### OpenAL Backend Selection
-Backend selection is handled automatically by the CMake configuration system. Users can optionally configure specific backends using CMake options:
-
-- **Windows**: Use `SOUNDCOE_ENABLE_WASAPI`, `SOUNDCOE_ENABLE_DSOUND`, etc.
-- **Linux**: Use `SOUNDCOE_ENABLE_ALSA`, `SOUNDCOE_ENABLE_PULSEAUDIO`, etc.
-- **macOS**: Automatic CoreAudio configuration (no user options needed)
-- **WebAssembly**: Automatic NULL backend configuration (no user options needed)
-
-### Audio Format Support
-- **WAV**: Cross-platform with dr_wav decoder
-- **MP3**: Universal compatibility with dr_mp3
-- **OGG**: Open-source format with stb_vorbis
-
-### Build System Integration
-- **CMake**: FetchContent for automatic dependency management
-- **Mixed Linking**: OpenAL-Soft is dynamically linked (LGPL compliance - see THIRD_PARTY_NOTICES.md); dr_libs and stb are statically embedded
-- **Modular Configuration**: Platform-specific OpenAL backend management via `cmake/openal_config.cmake`
-- **Automatic Platform Detection**: CMake platform variables (WIN32, APPLE, UNIX) and CMAKE_SYSTEM_NAME for Emscripten
+- SoundManager, ResourceManager and AudioContext each have one `std::mutex`
+- Every public method locks its class mutex for the whole call
+- Locks nest in one direction: SoundManager, then ResourceManager, then AudioContext.
+  Locks are held for the whole call, including file decode on a cache miss.
 
 ## Platform Support & Audio Backends
 
-soundcoe uses a sophisticated CMake configuration system that automatically selects appropriate audio backends for each platform.
+soundcoe uses a CMake configuration system that automatically selects audio backends for each platform.
+Dependencies come from FetchContent, with backend setup in `cmake/openal_soft.cmake`.
+OpenAL-Soft is linked dynamically (not on Emscripten, see below). dr_libs and stb are embedded.
 
 ### Supported Platforms
 
 #### Windows
-- **Primary Backends**: WASAPI (Vista+), DirectSound, WinMM
+- **Primary Backends**: WASAPI, DirectSound, WinMM
 - **Optional Backends**: PortAudio
 - **Configuration**: User-configurable via `SOUNDCOE_ENABLE_*` CMake options
-- **Testing**: Math-only CI coverage due to audio hardware limitations
 
 #### macOS
-- **Backend**: CoreAudio (optimal for Apple platforms)
+- **Backend**: CoreAudio (native to Apple platforms)
 - **Configuration**: Automatic, no user configuration needed
-- **Testing**: Full CI coverage with Apple Clang
 
 #### Linux/Unix
-- **Primary Backends**: ALSA, PulseAudio, PipeWire (modern Linux audio stack)
+- **Primary Backends**: ALSA, PulseAudio, PipeWire
 - **Optional Backends**: OSS, JACK, PortAudio
 - **Configuration**: User-configurable via `SOUNDCOE_ENABLE_*` CMake options
-- **Testing**: Full CI coverage with GCC and Clang, virtual audio setup
+- **Other UNIX**: FreeBSD and similar systems use OpenAL-Soft backend autodetection
 
 #### WebAssembly/Emscripten
-- **Backend**: NULL backend (no audio output, for build validation)
+- **Backend**: Emscripten's built-in OpenAL (WebAudio). OpenAL-Soft is not fetched, so there is no NULL backend
 - **Configuration**: Automatic detection via `CMAKE_SYSTEM_NAME=Emscripten`
-- **Testing**: Multi-host build validation (Ubuntu, Windows, macOS → WebAssembly)
-- **Limitations**: Tests auto-disabled due to testcoe compatibility issues
 
-#### Cross-Platform Backends
-- **SDL2/SDL3**: Available as alternatives for projects using SDL framework
-- **WAVE**: File output backend for testing and debugging
-- **PortAudio**: Cross-platform audio I/O library
+#### Other Backends
+SDL2/SDL3 and WAVE have no `SOUNDCOE_ENABLE_*` options. At the moment they are reachable only with
+`SOUNDCOE_AUTODETECT_BACKENDS=ON`.
 
 ### Backend Configuration Options
 
@@ -434,76 +195,38 @@ cmake -B build \
   -DSOUNDCOE_ENABLE_PORTAUDIO=OFF
 ```
 
+Options can also be set with `set()` before soundcoe is added. This works the same when soundcoe is pulled in by
+another library such as gamecoe, as long as you set them before adding that library:
+```cmake
+set(SOUNDCOE_ENABLE_PULSEAUDIO OFF)
+FetchContent_MakeAvailable(soundcoe)  # or gamecoe
+```
+
+#### Headless / autodetect modes
+```bash
+# Null backend only, no audio output (used by CI)
+cmake -B build -DSOUNDCOE_ONLY_NULL_BACKEND=ON
+ALSOFT_DRIVERS=null ./build/tests/soundcoe_tests
+```
+`ALSOFT_DRIVERS=null` is needed because OpenAL-Soft skips the null backend by default.
+`SOUNDCOE_AUTODETECT_BACKENDS=ON` lets OpenAL-Soft pick whatever backends it finds.
+The two options cannot both be ON.
+
 **Notes:**
-- **macOS/WebAssembly**: No configuration options - backends are selected automatically
-- **Default values**: Most common backends are enabled by default on each platform
-- **Multiple backends**: You can enable multiple backends - OpenAL will choose the best available at runtime
+- **macOS/WebAssembly**: No configuration options, backends are selected automatically
 
 ## Memory Management
 
-### Static Storage
-- **Lifetime**: All state stored within a static SoundManager instance
-- **Initialization**: Lazy initialization on first API call
-- **Cleanup**: Explicit cleanup through `shutdown()`
-
-### Resource Management
-- **RAII Design**: Automatic cleanup through destructors
-- **Shared Buffers**: Shared buffer ownership with reference counting
-- **Pool Allocation**: Pre-allocated source pools reduce dynamic allocation
-
-### Caching Strategy
-- **LRU Eviction**: Least recently used buffers removed first
-- **Size Limits**: Configurable maximum cache size in MB
-- **Unlimited Cache by Default**: `initialize()` defaults `maxCacheSizeMB` to `soundcoe::UNLIMITED_CACHE`, so nothing evicts during development/profiling; pass a real budget once you've measured peak memory usage
-- **Usage Tracking**: Statistical data for optimization decisions
-
-## Audio Format Integration
-- **dr_wav**: High-quality WAV decoding with comprehensive format support
-- **dr_mp3**: Efficient MP3 decoding for compressed audio
-- **stb_vorbis**: OGG Vorbis support for open-source compression
-
-## 3D Spatial Audio
-
-soundcoe provides 3D spatial audio through OpenAL's built-in capabilities, with listener positioning handled internally by the SoundManager.
-
-### OpenAL 3D Features
-- **Source Positioning**: 3D coordinates for each audio source
-- **Listener Orientation**: Position, velocity, and orientation vectors
-- **Distance Attenuation**: Automatic volume reduction with distance
-- **Doppler Effect**: Pitch shifting based on relative velocity
-```
-
-## Real-Time Effects System
-
-soundcoe provides real-time audio effects processing, with fade effects handled during the update cycle.
-
-### Effect Types
-- **Fade In**: Gradual volume increase from 0 to target
-- **Fade Out**: Gradual volume decrease to 0, then stop
-- **Fade to Volume**: Transition between any two volume levels
+- The singleton is constructed on first use. Call `initialize()` before anything else, calls made before it fail
+  with a not-initialized error.
+- Cleanup is explicit through `shutdown()`.
+- The cache owns buffers (`unique_ptr`). A manual reference count tracks sources using each one.
+- Source pools are pre-created, so playback does not create sources. Buffers are still decoded at runtime on a
+  cache miss. Only the source pool is fixed in size, buffer memory is unbounded unless a cache limit is set.
+- Eviction prefers unused buffers (refcount 0), then lower-priority, then least recently accessed. Buffers still in
+  use can be evicted and their sources are detached.
 
 ## Error Handling
 
-soundcoe provides comprehensive error handling with detailed logging integration.
-
-### Integration with logcoe
-- **Structured Logging**: Consistent error reporting format
-- **Context Information**: File names, operations, and parameters
-- **Debug Tracing**: Detailed operation logging at debug level
-
-## Performance Characteristics
-
-### Time Complexity
-- **Audio Playback**: O(1) for handle operations
-- **Scene Loading**: O(n) where n is number of files in directory
-- **Resource Lookup**: O(1) hash table lookups for cached resources
-
-### Space Complexity
-- **Memory Usage**: Configurable cache size limits
-- **Resource Pools**: Fixed-size pools prevent memory growth
-- **Handle Storage**: Minimal overhead per active audio instance
-
-### Optimization Strategies
-- **Resource Pooling**: Prevents runtime allocation during gameplay
-- **Intelligent Caching**: Keeps frequently used audio in memory
-- **Priority System**: Ensures important audio plays when resources are limited
+Logging goes through logcoe (optional, `SOUNDCOE_USE_LOGCOE`). Messages are prefixed `Class::method`.
+Failures return false or invalid handles, lower layers throw via ErrorHandler.
