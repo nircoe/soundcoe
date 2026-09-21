@@ -17,8 +17,10 @@ jobs:
         -DCMAKE_BUILD_TYPE=Release
         -DSOUNDCOE_BUILD_TESTS=ON
         -DSOUNDCOE_USE_LOGCOE=ON
+        -DSOUNDCOE_ONLY_NULL_BACKEND=ON
         -DCMAKE_C_COMPILER_LAUNCHER=ccache
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      ALSOFT_DRIVERS: 'null'
     strategy:
       fail-fast: false
       matrix:
@@ -42,37 +44,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build libasound2-dev libpulse-dev libpipewire-0.3-dev pulseaudio
-      shell: bash
-
-    - name: Setup virtual audio for testing
-      run: |
-        # Kill any existing PulseAudio instances
-        pulseaudio --kill 2>/dev/null || true
-        
-        # Start PulseAudio with a simple configuration
-        pulseaudio --start --log-target=stderr --exit-idle-time=-1 --disable-shm=1
-        
-        # Wait for PulseAudio to start
-        sleep 3
-        
-        # Create a virtual null sink
-        pactl load-module module-null-sink sink_name=virtual rate=44100 || echo "Failed to create null sink, continuing"
-        
-        # Set it as default if it was created successfully
-        pactl set-default-sink virtual 2>/dev/null || echo "Using default sink"
-        
-        # Create basic ALSA configuration
-        echo "pcm.!default { type pulse }" > ~/.asoundrc
-        echo "ctl.!default { type pulse }" >> ~/.asoundrc
-        
-        # Set environment variables for OpenAL
-        echo "ALSOFT_DRIVERS=pulse,alsa" >> $GITHUB_ENV
-        echo "ALSOFT_PCM_CARD=default" >> $GITHUB_ENV
-        
-        # Verify setup
-        pactl info || echo "PulseAudio info failed"
-        echo "Audio setup completed"
+        sudo apt-get install -y ninja-build
       shell: bash
 
     - name: Setup ccache
