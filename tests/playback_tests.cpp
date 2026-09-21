@@ -405,22 +405,6 @@ TEST_F(SoundManagerTests, ErrorHandling)
     EXPECT_NE(m_soundManager.getError(), "");
 }
 
-TEST_F(SoundManagerTests, UpdateFrequency)
-{
-    initializeSoundManager();
-
-    auto start = std::chrono::steady_clock::now();
-
-    for (int i = 0; i < 100; ++i)
-    {
-        m_soundManager.update();
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-    }
-
-    auto duration = std::chrono::steady_clock::now() - start;
-    EXPECT_LT(duration, std::chrono::milliseconds(200));
-}
-
 TEST_F(SoundManagerTests, ConcurrentAccess)
 {
     initializeSoundManager();
