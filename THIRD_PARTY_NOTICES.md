@@ -35,6 +35,7 @@ If you ship a binary built with soundcoe (e.g. a game built on
 
 ## Appendix: OpenAL-Soft License (LGPL v2, full text)
 
+```text
                   GNU LIBRARY GENERAL PUBLIC LICENSE
                        Version 2, June 1991
 
@@ -472,3 +473,4 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGES.
 
                      END OF TERMS AND CONDITIONS
+```

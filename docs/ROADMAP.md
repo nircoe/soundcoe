@@ -1,19 +1,13 @@
 # soundcoe Roadmap
 
-## Version History
+## Implemented Features
 
-### Implemented Features
-- Thread-safe audio library with a test suite
-- Multiple audio format support (WAV, OGG, MP3) with dr_wav, dr_mp3, stb_vorbis
-- Static wrapper function API for game developers
+- WAV, OGG and MP3 support
 - Scene-based audio management with directory organization
-- 3D spatial audio with distance attenuation and doppler effects
+- 3D spatial audio with listener and source position and velocity
 - Fade effects (fade in/out/to-volume) with real-time processing
 - Resource management with pooling, priority allocation, handle-based cleanup and caching
-- Master volume controls for sounds, music, and overall audio
 - Cross-platform support (Windows, Linux, macOS, WebAssembly/Emscripten) with OpenAL backend
-- Error handling with logging integration
-- CMake integration with FetchContent support
 
 ## Future Plans
 
@@ -36,7 +30,4 @@ Have an idea for soundcoe? Please open an issue on GitHub with the "enhancement"
 
 ## Versioning
 
-soundcoe follows [Semantic Versioning](https://semver.org/):
-- MAJOR version for incompatible API changes
-- MINOR version for backwards-compatible functionality additions
-- PATCH version for backwards-compatible bug fixes
+soundcoe follows [Semantic Versioning](https://semver.org/) (SemVer).
