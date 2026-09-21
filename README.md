@@ -1,6 +1,6 @@
 # soundcoe
 
-Modern C++ audio library built for game developers. Thread-safe, zero-config, single-include design with OpenAL backend.
+C++ audio library for game developers. Thread-safe, zero-config, single-include design with OpenAL backend.
 
 [![Windows](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml)
 [![Linux](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml)
@@ -9,10 +9,10 @@ Modern C++ audio library built for game developers. Thread-safe, zero-config, si
 
 ## Why soundcoe?
 
-✨ **Just Works** - Single `#include <soundcoe.hpp>`, static functions, no setup required  
-🎮 **Game-Focused** - Scene management, fade effects, spatial audio, handle-based control  
-🔒 **Thread-Safe** - Call from any thread without worry  
-⚡ **High Performance** - Resource pooling, smart caching, priority-based allocation  
+**Simple** - Single `#include <soundcoe.hpp>`, static functions, no setup required  
+**Game-Focused** - Scene management, fade effects, spatial audio, handle-based control  
+**Thread-Safe** - Call from any thread  
+**Performance** - Resource pooling, caching, priority-based allocation  
 
 ```cpp
 soundcoe::initialize("./audio");
@@ -24,7 +24,7 @@ auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
 ```
 
 ## Dependencies
-- **C++17 or later** - Modern C++ standard support
+- **C++17 or later** - Required language standard
 - **CMake 3.22+** - Build system
 - **OpenAL-Soft** - Audio backend (automatically fetched)
 - **logcoe** - Logging system (automatically fetched)
@@ -32,11 +32,11 @@ auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
 
 ## Platform Support
 
-soundcoe is tested and validated on:
-- **Windows** 
-- **macOS** 
-- **Linux**
-- **WebAssembly/Emscripten**
+soundcoe is tested on:
+- Windows
+- macOS
+- Linux
+- WebAssembly/Emscripten
 
 ## Quick Start
 
@@ -79,7 +79,7 @@ your_game/
             └── battle_theme.ogg
 ```
 
-**Note**: Ensure your audio directory is accessible relative to your executable at runtime (copy it to your build directory during the build process).
+Note: Ensure your audio directory is accessible relative to your executable at runtime (copy it to your build directory during the build process).
 
 ### 3. Use in your application
 
@@ -112,19 +112,6 @@ int main() {
 
 For advanced usage examples including 3D spatial audio, fade effects, and custom configurations, see [Architecture Documentation](docs/ARCHITECTURE.md).
 
-## Features
-
-- 🎮 **Game Developer Focused** - Black box API designed for game development workflows
-- 🔒 **Thread-Safe** - Safe concurrent access from multiple game threads
-- 🎵 **Multiple Audio Formats** - WAV, OGG, MP3 support with high-quality decoders
-- 🌍 **3D Spatial Audio** - Full 3D positioning with distance attenuation and doppler effects
-- 🎚️ **Advanced Audio Control** - Fade in/out/to-volume, pitch/volume control, looping
-- 📁 **Scene Management** - Directory-based audio organization with automatic loading/unloading
-- ⚡ **High Performance** - Resource pooling, priority-based allocation, efficient caching
-- 🎨 **Sophisticated Effects** - Real-time fade effects with precise timing control
-- 📦 **Zero Configuration** - Single include, static functions, no object management
-- 🌐 **Cross-Platform** - Windows, Linux, macOS, WebAssembly support with OpenAL backend
-
 ## API Reference
 
 ### Initialization
@@ -148,7 +135,7 @@ soundcoe::shutdown();
 
 ### Cache Management
 
-soundcoe automatically manages audio file caching for optimal performance:
+soundcoe caches loaded audio files automatically:
 
 ```cpp
 // Standard cache limits
@@ -159,7 +146,7 @@ soundcoe::initialize("./audio", 32, 256);      // 256MB cache limit
 soundcoe::initialize("./audio", 32, soundcoe::UNLIMITED_CACHE);
 ```
 
-**Development Tip**: Use `soundcoe::UNLIMITED_CACHE` during testing to measure your game's peak audio memory usage, then set an appropriate limit for your target platforms.
+Development tip: Use `soundcoe::UNLIMITED_CACHE` during testing to measure your game's peak audio memory usage, then set an appropriate limit for your target platforms.
 
 ### Scene Management
 ```cpp
@@ -216,13 +203,13 @@ soundcoe::isMuted();
 
 | Format | Extension | Quality | Use Case |
 |--------|-----------|---------|----------|
-| **WAV** | `.wav` | Lossless | Short sound effects, high-quality audio |
+| **WAV** | `.wav` | Lossless | Short sound effects, audio where quality matters |
 | **OGG** | `.ogg` | Compressed | Music, ambient sounds, voice |
 | **MP3** | `.mp3` | Compressed | Music, voice, compatibility |
 
 ## Thread Safety
 
-soundcoe is fully thread-safe and designed for multi-threaded game engines:
+soundcoe is thread-safe, so multiple game threads can call it at once:
 
 ```cpp
 #include <thread>
@@ -266,7 +253,7 @@ int main() {
 
 - **Resource Pooling**: Pre-allocated source pools prevent runtime allocation
 - **Scene Management**: Load only needed audio, automatic cleanup on scene transitions
-- **Thread Contention**: Minimal mutex contention with efficient lock granularity
+- **Thread Contention**: Per-class mutexes limit contention
 
 ## Documentation
 

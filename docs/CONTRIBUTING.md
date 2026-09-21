@@ -43,7 +43,7 @@ soundcoe/
 │       ├── utils/                  # Math utilities
 │       └── playback/               # SoundManager singleton
 ├── src/                            # Implementation files
-├── cmake/                          # Modular CMake configuration (openal_config.cmake, etc.)
+├── cmake/                          # Modular CMake configuration (openal_soft.cmake, etc.)
 ├── external/                       # Third-party libraries (dr_libs, stb)
 ├── tests/                          # Comprehensive test suite
 └── docs/                          # Documentation
@@ -53,11 +53,14 @@ soundcoe/
 
 All pull requests are automatically tested on Windows, Linux, macOS, and WebAssembly with multiple compilers.
 
-**CI Testing Limitations**:
-- **Windows CI**: Runs only math tests (Vec3Tests, MathTests) due to lack of audio backend support in GitHub Actions runners
-- **Web CI**: Build validation only - tests auto-disabled due to testcoe/Emscripten compatibility issues
+CI testing limitations:
+- Linux and Windows CI: Run the full suite headlessly with `-DSOUNDCOE_ONLY_NULL_BACKEND=ON` and
+  `ALSOFT_DRIVERS=null`.
+- macOS CI: Uses real CoreAudio
+- Web CI: Build validation only. Tests are auto-disabled due to testcoe/Emscripten compatibility issues
 
-**Note**: Always test actual audio playback locally before submitting pull requests.
+Note: The null backend produces no audible output, so verify audio playback locally before submitting pull
+requests. A null-only build needs `ALSOFT_DRIVERS=null` to run, because OpenAL-Soft skips the null backend by default.
 
 ## Making Changes
 
@@ -107,8 +110,8 @@ return play(activeSounds,filename,volume);
 - Add tests for new features in appropriate test files
 - Ensure thread safety tests pass for concurrent operations
 - Test edge cases and error conditions
-- **CI testing**: Focus on API functionality, resource management, and mathematical calculations
-- **Local testing required**: Verify actual audio playback and format compatibility on development machines
+- CI testing: Focus on API functionality, resource management, and mathematical calculations
+- Local testing required: Verify actual audio playback and format compatibility on development machines
 - Include tests for 3D spatial audio calculations
 - Test scene management and resource cleanup
 
@@ -127,7 +130,7 @@ return play(activeSounds,filename,volume);
 
 Follow this format for consistency across the project:
 
-**Format:**
+Format:
 ```
 [Component]: Brief description (#PR_NUMBER)
 
@@ -136,15 +139,15 @@ Follow this format for consistency across the project:
 - Add comprehensive testing coverage
 ```
 
-**Style Rules:**
-- **Header**: `[Component]: Action description (#PR_NUMBER)`
-- **Components**: Core, Resources, Playback, API, CI, Build, Docs, Production, Fix, etc.
-- **Action verbs**: "Add", "Implement", "Fix", "Update", "Remove"
-- **Bullet points**: Group related features, start with action verbs
-- **Technical details**: Include key technical aspects and architecture decisions
-- **Testing**: Always mention testing coverage when applicable
+Style rules:
+- Header: `[Component]: Action description (#PR_NUMBER)`
+- Components: Core, Resources, Playback, API, CI, Build, Docs, Production, Fix, etc.
+- Action verbs: "Add", "Implement", "Fix", "Update", "Remove"
+- Bullet points: Group related features, start with action verbs
+- Technical details: Include key technical aspects and architecture decisions
+- Testing: Always mention testing coverage when applicable
 
-**Examples:**
+Examples:
 ```
 [Core]: Initialize audio system foundation (#1)
 [Resources]: Implement resource management and utilities (#2)  
@@ -161,7 +164,7 @@ PR titles should match the commit message format:
 - PR title will become the merge commit message
 - Keep titles concise and descriptive
 
-**Example PR titles:**
+Example PR titles:
 - `[API]: Add streaming support for large audio files`
 - `[Core]: Fix memory leak in resource manager`
 - `[Docs]: Update installation instructions`
@@ -172,19 +175,19 @@ Test your changes locally on your development platform. The CI will handle cross
 
 ## Adding New Features
 
-1. **Add to public API**: Update `include/soundcoe.hpp` with static wrapper functions
-2. **Implement internally**: Add to appropriate layer (Core/Resources/Playback) with thread safety
-3. **Add tests**: Include functional and thread safety tests
-4. **Update docs**: Add examples to README.md or ARCHITECTURE.md if needed
+1. Add to public API: Update `include/soundcoe.hpp` with static wrapper functions
+2. Implement internally: Add to appropriate layer (Core/Resources/Playback) with thread safety
+3. Add tests: Include functional and thread safety tests
+4. Update docs: Add examples to README.md or ARCHITECTURE.md if needed
 
 ## Thread Safety Guidelines
 
 When modifying soundcoe:
 
-1. **Always Use Mutex**: Every function that accesses shared state must lock the appropriate mutex
-2. **Minimize Lock Duration**: Perform operations efficiently under lock
-3. **Avoid Nested Locks**: Each class uses its own mutex to prevent cross-class deadlocks
-4. **Test Concurrency**: Add thread safety tests for new functionality
+1. Always use a mutex: Every function that accesses shared state must lock the appropriate mutex
+2. Minimize lock duration: Perform operations efficiently under lock
+3. Avoid nested locks: Each class uses its own mutex to prevent cross-class deadlocks
+4. Test concurrency: Add thread safety tests for new functionality
 
 ### Thread Safety Checklist
 - [ ] Function acquires appropriate mutex before accessing shared state
@@ -195,10 +198,10 @@ When modifying soundcoe:
 ## Debugging Tips
 
 ### Common Issues
-- **Build Failures**: Check C++17 compiler compatibility and CMake version
-- **Test Failures**: Verify audio file permissions and format validity
-- **Thread Issues**: Use thread sanitizer when available
-- **Audio Problems**: Check OpenAL backend and driver compatibility
+- Build failures: Check C++17 compiler compatibility and CMake version
+- Test failures: Verify audio file permissions and format validity
+- Thread issues: Use thread sanitizer when available
+- Audio problems: Check OpenAL backend and driver compatibility
 
 ### Debugging Tools
 ```bash
@@ -214,19 +217,19 @@ cmake -DCMAKE_CXX_FLAGS="-fsanitize=address" ..
 
 ### Debugging Audio Issues
 - Use different audio formats to isolate decoder problems
-- **Local testing required**: Test with different OpenAL backends on development machines
+- Local testing required: Test with different OpenAL backends on development machines
 - Check system audio permissions and hardware availability
 - Use logging to trace resource allocation
-- **Note**: CI systems are headless - actual audio playback must be tested locally
+- Note: CI systems are headless. Test actual audio playback locally
 
 ## Performance Considerations
 
 When contributing:
 
-- **Minimize Lock Contention**: Keep critical sections small
-- **Avoid Dynamic Allocation**: Use object pools during gameplay
-- **Efficient Audio Loading**: Consider streaming for large files
-- **OpenAL Efficiency**: Batch operations when possible
+- Minimize lock contention: Keep critical sections small
+- Avoid dynamic allocation: Use object pools during gameplay
+- Efficient audio loading: Consider streaming for large files
+- OpenAL efficiency: Batch operations when possible
 
 ## Documentation Standards
 
@@ -244,5 +247,3 @@ Feel free to open an issue for:
 - Questions about the codebase
 - Discussion about implementation approaches
 - Help with development setup
-
-We're here to help make contributing to soundcoe as smooth as possible!

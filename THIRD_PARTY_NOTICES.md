@@ -2,7 +2,7 @@
 
 ## OpenAL-Soft
 
-- **License:** GNU Library General Public License, Version 2 (June 1991) — confirmed from
+- **License:** GNU Library General Public License, Version 2 (June 1991), confirmed from
   upstream's own `COPYING` file header at the pinned tag below, not v2.1.
 - **Version used:** pinned at tag `1.24.3`.
 - **Source:** https://github.com/kcat/openal-soft (use the `1.24.3` tag for the exact
@@ -29,7 +29,7 @@ README. Source: https://github.com/nothings/stb
 If you ship a binary built with soundcoe (e.g. a game built on
 [gamecoe](https://github.com/nircoe/gamecoe)), OpenAL-Soft's LGPL v2 license requires you to:
 
-1. Ship OpenAL as a separate, replaceable shared library — soundcoe's default dynamic linking.
+1. Ship OpenAL as a separate, replaceable shared library (soundcoe's default dynamic linking).
 2. Include a copy of the LGPL v2 license text (the appendix below satisfies this).
 3. Point users to the pinned tag and URL above for OpenAL-Soft's corresponding source.
 
