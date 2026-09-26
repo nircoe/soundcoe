@@ -18,19 +18,16 @@ else()
     target_compile_options(soundcoe PRIVATE -Werror -Wall -Wextra -Wpedantic)
 endif()
 
-target_include_directories(soundcoe
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../external
-)
-
 # Link libraries based on platform
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-    target_link_libraries(soundcoe 
+    target_link_libraries(soundcoe
         PUBLIC
             soundcoe_headers
             Threads::Threads
         PRIVATE
             $<$<BOOL:${SOUNDCOE_USE_LOGCOE}>:logcoe>
+            stb_vorbis
+            dr_libs
     )
     # Link with Emscripten's built-in OpenAL implementation
     target_link_options(soundcoe PRIVATE -lopenal)
@@ -42,6 +39,8 @@ else()
         PRIVATE
             OpenAL
             $<$<BOOL:${SOUNDCOE_USE_LOGCOE}>:logcoe>
+            stb_vorbis
+            dr_libs
     )
 endif()
 
