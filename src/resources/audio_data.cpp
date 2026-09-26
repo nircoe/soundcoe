@@ -6,7 +6,15 @@
 #include <dr_libs/dr_wav.h>
 #define DR_MP3_IMPLEMENTATION
 #include <dr_libs/dr_mp3.h>
+// Suppresses a known false-positive warning inside vendored stb_vorbis.c, not a soundcoe issue
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtautological-compare"
+#endif
 #include <stb/stb_vorbis.c>
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE

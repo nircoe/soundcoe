@@ -61,12 +61,12 @@ namespace soundcoe
         }
 
         SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept : m_bufferId(other.m_bufferId),
-                                                                m_filename(std::move(other.m_filename)),
-                                                                m_loaded(other.m_loaded),
                                                                 m_format(other.m_format),
                                                                 m_size(other.m_size),
                                                                 m_sampleRate(other.m_sampleRate),
-                                                                m_duration(other.m_duration)
+                                                                m_duration(other.m_duration),
+                                                                m_loaded(other.m_loaded),
+                                                                m_filename(std::move(other.m_filename))
         {
             other.m_bufferId = 0;
             other.m_loaded = false;
@@ -125,13 +125,13 @@ namespace soundcoe
             switch(format)
             {
                 case AudioFormat::Wav:
-                    loadFromAudioData(std::move(AudioData::loadFromWav(filename)));
+                    loadFromAudioData(AudioData::loadFromWav(filename));
                     break;
                 case AudioFormat::Mp3:
-                    loadFromAudioData(std::move(AudioData::loadFromMp3(filename)));
+                    loadFromAudioData(AudioData::loadFromMp3(filename));
                     break;
                 case AudioFormat::Ogg:
-                    loadFromAudioData(std::move(AudioData::loadFromOgg(filename)));
+                    loadFromAudioData(AudioData::loadFromOgg(filename));
                     break;
                 default:
                     std::string message = "SoundBuffer::loadFromFile: Unsupported audio format: " + filename;
