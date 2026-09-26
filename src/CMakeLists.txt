@@ -12,6 +12,12 @@ set(SOURCES
 
 add_library(soundcoe ${SOURCES})
 
+if(MSVC)
+    target_compile_options(soundcoe PRIVATE /W4 /WX)
+else()
+    target_compile_options(soundcoe PRIVATE -Werror -Wall -Wextra -Wpedantic)
+endif()
+
 target_include_directories(soundcoe
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../external

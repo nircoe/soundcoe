@@ -59,8 +59,7 @@ namespace soundcoe
 
         void SoundSource::create()
         {
-            bool isSource = false;
-            if(m_created) 
+            if(m_created)
             {
                 logcoe::info("SoundSource::create: SoundSource is already created");
                 return;
