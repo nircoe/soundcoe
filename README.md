@@ -25,7 +25,7 @@ auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
 
 ## Requirements
 
-- C++20 compiler
+- C++23 compiler
 - CMake 3.22+
 - Windows, Linux, macOS or WebAssembly (Emscripten)
 
