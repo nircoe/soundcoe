@@ -135,7 +135,9 @@ TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
     EXPECT_TRUE(bufferOpt2.has_value());
 
     if(bufferOpt1.has_value() && bufferOpt2.has_value())
+    {
         EXPECT_EQ(&bufferOpt1.value().get(), &bufferOpt2.value().get());
+    }
 
     EXPECT_EQ(m_resourceManager.getCachedBufferCount(), 2); // Still 2 total files
 
@@ -374,7 +376,7 @@ TEST_F(ResourceManagerTests, ProperShutdown)
 {
     m_resourceManager.preloadDirectory("sounds");
     size_t poolIndex;
-    auto source = m_resourceManager.acquireSource(poolIndex, SoundPriority::Medium);
+    [[maybe_unused]] auto source = m_resourceManager.acquireSource(poolIndex, SoundPriority::Medium);
 
     EXPECT_NO_THROW(m_resourceManager.shutdown());
     EXPECT_FALSE(m_resourceManager.isInitialized());

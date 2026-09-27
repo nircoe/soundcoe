@@ -2,11 +2,9 @@
 #include <soundcoe/core/error_handler.hpp>
 #include <exception>
 
-#define DR_WAV_IMPLEMENTATION
 #include <dr_libs/dr_wav.h>
-#define DR_MP3_IMPLEMENTATION
 #include <dr_libs/dr_mp3.h>
-#include <stb/stb_vorbis.c>
+#include <stb/stb_vorbis.h>
 
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE

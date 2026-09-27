@@ -10,6 +10,8 @@ set(SOUNDCOE_SOURCE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include(FetchContent)
 include(cmake/soundcoe_config.cmake)
 
+add_subdirectory(external)
+
 find_package(Threads REQUIRED)
 
 fetch_openal_soft()
@@ -26,7 +28,7 @@ if(SOUNDCOE_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-install(TARGETS soundcoe soundcoe_headers
+install(TARGETS soundcoe soundcoe_headers stb_vorbis dr_libs
     EXPORT soundcoe-targets
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

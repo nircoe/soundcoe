@@ -92,19 +92,19 @@ namespace soundcoe
 
     void pauseAllSounds()
     {
-        bool succeed = detail::getSoundManagerInstance().pauseAllSounds();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAllSounds();
         assert(succeed);
     }
 
     void pauseAllMusic()
     {
-        bool succeed = detail::getSoundManagerInstance().pauseAllMusic();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAllMusic();
         assert(succeed);
     }
 
     void pauseAll()
     {
-        bool succeed = detail::getSoundManagerInstance().pauseAll();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAll();
         assert(succeed);
     }
 
@@ -120,19 +120,19 @@ namespace soundcoe
 
     void resumeAllSounds()
     {
-        bool succeed = detail::getSoundManagerInstance().resumeAllSounds();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAllSounds();
         assert(succeed);
     }
 
     void resumeAllMusic()
     {
-        bool succeed = detail::getSoundManagerInstance().resumeAllMusic();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAllMusic();
         assert(succeed);
     }
 
     void resumeAll()
     {
-        bool succeed = detail::getSoundManagerInstance().resumeAll();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAll();
         assert(succeed);
     }
 
@@ -148,19 +148,19 @@ namespace soundcoe
 
     void stopAllSounds()
     {
-        bool succeed = detail::getSoundManagerInstance().stopAllSounds();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAllSounds();
         assert(succeed);
     }
 
     void stopAllMusic()
     {
-        bool succeed = detail::getSoundManagerInstance().stopAllMusic();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAllMusic();
         assert(succeed);
     }
 
     void stopAll()
     {
-        bool succeed = detail::getSoundManagerInstance().stopAll();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAll();
         assert(succeed);
     }
 
@@ -330,37 +330,37 @@ namespace soundcoe
 
     void muteAllSounds()
     {
-        bool succeed = detail::getSoundManagerInstance().muteAllSounds();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAllSounds();
         assert(succeed);
     }
 
     void muteAllMusic()
     {
-        bool succeed = detail::getSoundManagerInstance().muteAllMusic();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAllMusic();
         assert(succeed);
     }
 
     void muteAll()
     {
-        bool succeed = detail::getSoundManagerInstance().muteAll();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAll();
         assert(succeed);
     }
 
     void unmuteAllSounds()
     {
-        bool succeed = detail::getSoundManagerInstance().unmuteAllSounds();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAllSounds();
         assert(succeed);
     }
 
     void unmuteAllMusic()
     {
-        bool succeed = detail::getSoundManagerInstance().unmuteAllMusic();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAllMusic();
         assert(succeed);
     }
 
     void unmuteAll()
     {
-        bool succeed = detail::getSoundManagerInstance().unmuteAll();
+        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAll();
         assert(succeed);
     }
 
