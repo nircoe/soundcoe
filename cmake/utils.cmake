@@ -27,6 +27,14 @@ function(ignore_external_warnings target_name)
     endif()
 endfunction()
 
+function(enable_strict_warnings target_name)
+    if(MSVC)
+        target_compile_options(${target_name} PRIVATE /W4 /WX)
+    else()
+        target_compile_options(${target_name} PRIVATE -Werror -Wall -Wextra -Wpedantic)
+    endif()
+endfunction()
+
 # Function to recursively ignore warnings for all targets in a directory
 function(ignore_external_warnings_recursive dir_name)
     # Get all targets in this directory

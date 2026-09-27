@@ -29,11 +29,7 @@ target_link_libraries(soundcoe_tests
         OpenAL
 )
 
-if(MSVC)
-    target_compile_options(soundcoe_tests PRIVATE /W4 /WX)
-else()
-    target_compile_options(soundcoe_tests PRIVATE -Werror -Wall -Wextra -Wpedantic)
-endif()
+enable_strict_warnings(soundcoe_tests)
 
 if(WIN32)
     add_custom_command(TARGET soundcoe_tests POST_BUILD

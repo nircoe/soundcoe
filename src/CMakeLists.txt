@@ -12,11 +12,7 @@ set(SOURCES
 
 add_library(soundcoe ${SOURCES})
 
-if(MSVC)
-    target_compile_options(soundcoe PRIVATE /W4 /WX)
-else()
-    target_compile_options(soundcoe PRIVATE -Werror -Wall -Wextra -Wpedantic)
-endif()
+enable_strict_warnings(soundcoe)
 
 # Link libraries based on platform
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
