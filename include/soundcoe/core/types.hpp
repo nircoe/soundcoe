@@ -15,53 +15,53 @@ namespace soundcoe
 
     constexpr size_t UNLIMITED_CACHE = std::numeric_limits<size_t>::max();
 
-    using SoundHandle = size_t;
-    using MusicHandle = size_t;
+    using sound_handle = size_t;
+    using music_handle = size_t;
 
-    enum class SoundState
+    enum class sound_state
     {
-        Initial,
-        Playing,
-        Paused,
-        Stopped
+        initial,
+        playing,
+        paused,
+        stopped
     };
 
-    enum class SoundPriority
+    enum class sound_priority
     {
-        Low,
-        Medium,
-        High,
-        Critical
+        low,
+        medium,
+        high,
+        critical
     };
 
-    struct Vec3
+    struct vec3
     {
         float x = 0.0f;
         float y = 0.0f;
         float z = 0.0f;
 
-        Vec3() = default;
-        Vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+        vec3() = default;
+        vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
-        static Vec3 zero() { return Vec3(); }
-        static Vec3 up() { return Vec3(0.0f, 1.0f, 0.0f); }
-        static float dot(const Vec3 &v, const Vec3 &u) { return v.dot(u); }
-        static Vec3 cross(const Vec3 &v, const Vec3 &u) { return v.cross(u); }
-        static float distance(const Vec3 &v, const Vec3 &u) { return v.distance(u); }
-        static Vec3 lerp(const Vec3 &v, const Vec3 &u, float t) { return v.lerp(u, t); }
+        static vec3 zero() { return vec3(); }
+        static vec3 up() { return vec3(0.0f, 1.0f, 0.0f); }
+        static float dot(const vec3 &v, const vec3 &u) { return v.dot(u); }
+        static vec3 cross(const vec3 &v, const vec3 &u) { return v.cross(u); }
+        static float distance(const vec3 &v, const vec3 &u) { return v.distance(u); }
+        static vec3 lerp(const vec3 &v, const vec3 &u, float t) { return v.lerp(u, t); }
 
-        Vec3 operator+(const Vec3 &other) const { return Vec3(x + other.x, y + other.y, z + other.z); }
-        Vec3 operator-(const Vec3 &other) const { return Vec3(x - other.x, y - other.y, z - other.z); }
-        Vec3 operator*(float f) const { return Vec3(f * x, f * y, f * z); }
-        bool operator==(const Vec3 &other) const { return (x == other.x && y == other.y && z == other.z); }
-        bool operator!=(const Vec3 &other) const { return !(*this == other); }
-        void operator+=(const Vec3 &other)
+        vec3 operator+(const vec3 &other) const { return vec3(x + other.x, y + other.y, z + other.z); }
+        vec3 operator-(const vec3 &other) const { return vec3(x - other.x, y - other.y, z - other.z); }
+        vec3 operator*(float f) const { return vec3(f * x, f * y, f * z); }
+        bool operator==(const vec3 &other) const { return (x == other.x && y == other.y && z == other.z); }
+        bool operator!=(const vec3 &other) const { return !(*this == other); }
+        void operator+=(const vec3 &other)
         {
             x += other.x;
             y += other.y;
             z += other.z;
         }
-        void operator-=(const Vec3 &other)
+        void operator-=(const vec3 &other)
         {
             x -= other.x;
             y -= other.y;
@@ -75,67 +75,67 @@ namespace soundcoe
         }
 
         float length() const { return sqrtf((x * x) + (y * y) + (z * z)); }
-        float lengthSquared() const { return (x * x) + (y * y) + (z * z); }
-        Vec3 normalized() const
+        float length_squared() const { return (x * x) + (y * y) + (z * z); }
+        vec3 normalized() const
         {
             float len = this->length();
-            return len == 0.0f ? Vec3() : Vec3(x / len, y / len, z / len);
+            return len == 0.0f ? vec3() : vec3(x / len, y / len, z / len);
         }
         void normalize() { *this = this->normalized(); }
-        float distance(const Vec3 &other) const { return (*this - other).length(); }
-        float distanceSquared(const Vec3 &other) const { return (*this - other).lengthSquared(); }
-        float dot(const Vec3 &other) const { return (x * other.x) + (y * other.y) + (z * other.z); }
-        Vec3 cross(const Vec3 &other) const { return Vec3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x); }
-        Vec3 lerp(const Vec3 &other, float t) const { return ((*this) * (1 - t)) + (other * t); }
-        float angle(const Vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
+        float distance(const vec3 &other) const { return (*this - other).length(); }
+        float distance_squared(const vec3 &other) const { return (*this - other).length_squared(); }
+        float dot(const vec3 &other) const { return (x * other.x) + (y * other.y) + (z * other.z); }
+        vec3 cross(const vec3 &other) const { return vec3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x); }
+        vec3 lerp(const vec3 &other, float t) const { return ((*this) * (1 - t)) + (other * t); }
+        float angle(const vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
     };
 
     namespace detail
     {
-        enum class AudioFormat
+        enum class audio_format
         {
-            Wav,
-            Ogg,
-            Mp3,
-            Unsupported
+            wav,
+            ogg,
+            mp3,
+            unsupported
         };
 
-        enum class PropertyType
+        enum class property_type
         {
-            Volume,
-            Pitch,
-            Position,
-            Velocity
+            volume,
+            pitch,
+            position,
+            velocity
         };
 
-        constexpr std::string_view toString(AudioFormat format)
+        constexpr std::string_view to_string(audio_format format)
         {
             switch (format)
             {
-            case AudioFormat::Wav:
+            case audio_format::wav:
                 return "WAV";
-            case AudioFormat::Ogg:
+            case audio_format::ogg:
                 return "OGG";
-            case AudioFormat::Mp3:
+            case audio_format::mp3:
                 return "MP3";
             default:
                 return "";
             }
         }
 
-        enum class AudioDecoderOperation
+        enum class audio_decoder_operation
         {
-            OpenFile,
-            DecodeAudio
+            open_file,
+            decode_audio
         };
 
-        constexpr std::string_view toString(AudioDecoderOperation operation)
+        constexpr std::string_view to_string(audio_decoder_operation operation)
         {
             switch (operation)
             {
-            case AudioDecoderOperation::OpenFile:
+            case audio_decoder_operation::open_file:
                 return "Open File";
-            case AudioDecoderOperation::DecodeAudio:
+            case audio_decoder_operation::decode_audio:
                 return "Decode Audio";
             default:
                 return "";
