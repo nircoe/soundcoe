@@ -392,18 +392,18 @@ TEST_F(ResourceManagerTests, ProperShutdown)
 class SoundBufferTests : public ::testing::Test
 {
 private:
-    AudioContext m_audioContext;
+    audio_context m_audio_context;
 
 protected:
     void SetUp() override
     {
         TestAudioFiles::createTestFiles();
-        m_audioContext.initialize();
+        m_audio_context.initialize();
     }
 
     void TearDown() override
     {
-        try { m_audioContext.shutdown(); }
+        try { m_audio_context.shutdown(); }
         catch(...) {}
     }
 
@@ -413,75 +413,75 @@ protected:
 
 TEST_F(SoundBufferTests, DefaultConstruction)
 {
-    SoundBuffer buffer;
-    EXPECT_FALSE(buffer.isLoaded());
-    EXPECT_EQ(buffer.getBufferId(), 0);
-    EXPECT_EQ(buffer.getFileName(), "");
+    sound_buffer buffer;
+    EXPECT_FALSE(buffer.is_loaded());
+    EXPECT_EQ(buffer.get_buffer_id(), 0);
+    EXPECT_EQ(buffer.get_filename(), "");
 }
 
 TEST_F(SoundBufferTests, FileConstructionAndLoading)
 {
     std::string filename = (TestAudioFiles::s_testSubDir1 / "test1.wav").string();
-    SoundBuffer buffer(filename);
-    
-    EXPECT_TRUE(buffer.isLoaded());
-    EXPECT_NE(buffer.getBufferId(), 0);
-    EXPECT_GT(buffer.getDuration(), 0.0f);
-    EXPECT_EQ(buffer.getFileName(), filename);
+    sound_buffer buffer(filename);
+
+    EXPECT_TRUE(buffer.is_loaded());
+    EXPECT_NE(buffer.get_buffer_id(), 0);
+    EXPECT_GT(buffer.get_duration(), 0.0f);
+    EXPECT_EQ(buffer.get_filename(), filename);
 }
 
 TEST_F(SoundBufferTests, MoveSemantics)
 {
     std::string filename = (TestAudioFiles::s_testSubDir1 / "test1.wav").string();
-    SoundBuffer buffer1(filename);
-    ALuint originalId = buffer1.getBufferId();
-    
-    SoundBuffer buffer2 = std::move(buffer1);
-    EXPECT_EQ(buffer2.getBufferId(), originalId);
-    EXPECT_FALSE(buffer1.isLoaded());
-    EXPECT_EQ(buffer1.getBufferId(), 0);
+    sound_buffer buffer1(filename);
+    ALuint original_id = buffer1.get_buffer_id();
+
+    sound_buffer buffer2 = std::move(buffer1);
+    EXPECT_EQ(buffer2.get_buffer_id(), original_id);
+    EXPECT_FALSE(buffer1.is_loaded());
+    EXPECT_EQ(buffer1.get_buffer_id(), 0);
 }
 
 TEST_F(SoundBufferTests, LoadAndUnload)
 {
-    SoundBuffer buffer;
+    sound_buffer buffer;
     std::string filename = (TestAudioFiles::s_testSubDir1 / "test1.wav").string();
-    
-    buffer.loadFromFile(filename);
-    EXPECT_TRUE(buffer.isLoaded());
-    EXPECT_NE(buffer.getBufferId(), 0);
-    
+
+    buffer.load_from_file(filename);
+    EXPECT_TRUE(buffer.is_loaded());
+    EXPECT_NE(buffer.get_buffer_id(), 0);
+
     buffer.unload();
-    EXPECT_FALSE(buffer.isLoaded());
-    EXPECT_EQ(buffer.getBufferId(), 0);
+    EXPECT_FALSE(buffer.is_loaded());
+    EXPECT_EQ(buffer.get_buffer_id(), 0);
 }
 
 TEST_F(SoundBufferTests, InvalidFileHandling)
 {
-    SoundBuffer buffer;
-    EXPECT_THROW(buffer.loadFromFile("nonexistent.wav"), std::runtime_error);
-    EXPECT_FALSE(buffer.isLoaded());
-    
-    std::string txtFile = (TestAudioFiles::s_testSubDir1 / "readme.txt").string();
-    EXPECT_THROW(buffer.loadFromFile(txtFile), std::runtime_error);
-    EXPECT_FALSE(buffer.isLoaded());
+    sound_buffer buffer;
+    EXPECT_THROW(buffer.load_from_file("nonexistent.wav"), std::runtime_error);
+    EXPECT_FALSE(buffer.is_loaded());
+
+    std::string txt_file = (TestAudioFiles::s_testSubDir1 / "readme.txt").string();
+    EXPECT_THROW(buffer.load_from_file(txt_file), std::runtime_error);
+    EXPECT_FALSE(buffer.is_loaded());
 }
 
 class SoundSourceTests : public ::testing::Test
 {
 private:
-    AudioContext m_audioContext;
+    audio_context m_audio_context;
 
 protected:
     void SetUp() override
     {
         TestAudioFiles::createTestFiles();
-        m_audioContext.initialize();
+        m_audio_context.initialize();
     }
 
     void TearDown() override
     {
-        try { m_audioContext.shutdown(); }
+        try { m_audio_context.shutdown(); }
         catch(...) {}
     }
 
@@ -491,78 +491,78 @@ protected:
 
 TEST_F(SoundSourceTests, DefaultConstruction)
 {
-    SoundSource source;
-    EXPECT_FALSE(source.isCreated());
-    EXPECT_EQ(source.getSourceId(), 0);
-    EXPECT_EQ(source.getVolume(), 1.0f);
-    EXPECT_EQ(source.getPitch(), 1.0f);
-    EXPECT_FALSE(source.isLooping());
+    sound_source source;
+    EXPECT_FALSE(source.is_created());
+    EXPECT_EQ(source.get_source_id(), 0);
+    EXPECT_EQ(source.get_volume(), 1.0f);
+    EXPECT_EQ(source.get_pitch(), 1.0f);
+    EXPECT_FALSE(source.is_looping());
 }
 
 TEST_F(SoundSourceTests, PropertySettersAndGetters)
 {
-    SoundSource source;
+    sound_source source;
     source.create();
-    
-    EXPECT_TRUE(source.setVolume(0.5f));
-    EXPECT_FLOAT_EQ(source.getVolume(), 0.5f);
-    
-    EXPECT_TRUE(source.setPitch(1.5f));
-    EXPECT_FLOAT_EQ(source.getPitch(), 1.5f);
-    
-    Vec3 pos(1.0f, 2.0f, 3.0f);
-    EXPECT_TRUE(source.setPosition(pos));
-    EXPECT_EQ(source.getPosition().x, pos.x);
-    EXPECT_EQ(source.getPosition().y, pos.y);
-    EXPECT_EQ(source.getPosition().z, pos.z);
-    
-    EXPECT_TRUE(source.setLooping(true));
-    EXPECT_TRUE(source.isLooping());
+
+    EXPECT_TRUE(source.set_volume(0.5f));
+    EXPECT_FLOAT_EQ(source.get_volume(), 0.5f);
+
+    EXPECT_TRUE(source.set_pitch(1.5f));
+    EXPECT_FLOAT_EQ(source.get_pitch(), 1.5f);
+
+    vec3 pos(1.0f, 2.0f, 3.0f);
+    EXPECT_TRUE(source.set_position(pos));
+    EXPECT_EQ(source.get_position().x, pos.x);
+    EXPECT_EQ(source.get_position().y, pos.y);
+    EXPECT_EQ(source.get_position().z, pos.z);
+
+    EXPECT_TRUE(source.set_looping(true));
+    EXPECT_TRUE(source.is_looping());
 }
 
 TEST_F(SoundSourceTests, BufferAttachmentAndPlayback)
 {
     std::string filename = (TestAudioFiles::s_testSubDir1 / "test1.wav").string();
-    SoundBuffer buffer(filename);
-    SoundSource source;
-    
-    EXPECT_NO_THROW(source.attachBuffer(buffer));
-    EXPECT_EQ(source.getBufferId(), buffer.getBufferId());
-    
+    sound_buffer buffer(filename);
+    sound_source source;
+
+    EXPECT_NO_THROW(source.attach_buffer(buffer));
+    EXPECT_EQ(source.get_buffer_id(), buffer.get_buffer_id());
+
     EXPECT_TRUE(source.play());
     EXPECT_TRUE(source.pause());
     EXPECT_TRUE(source.stop());
-    EXPECT_TRUE(source.isStopped());
-    
-    source.detachBuffer();
-    EXPECT_EQ(source.getBufferId(), 0);
+    EXPECT_TRUE(source.is_stopped());
+
+    source.detach_buffer();
+    EXPECT_EQ(source.get_buffer_id(), 0);
 }
 
 TEST_F(SoundSourceTests, StateManagement)
 {
     std::string filename = (TestAudioFiles::s_testSubDir1 / "test1.wav").string();
-    SoundBuffer buffer(filename);
-    SoundSource source;
-    
-    source.attachBuffer(buffer);
-    EXPECT_EQ(source.getState(), SoundState::Initial);
-    EXPECT_FALSE(source.isStopped());
-    
+    sound_buffer buffer(filename);
+    sound_source source;
+
+    source.attach_buffer(buffer);
+    EXPECT_EQ(source.get_state(), sound_state::initial);
+    EXPECT_FALSE(source.is_stopped());
+
     source.play();
-    SoundState state = source.getState();
-    EXPECT_TRUE(state == SoundState::Playing || state == SoundState::Stopped);
-    
+    sound_state state = source.get_state();
+    EXPECT_TRUE(state == sound_state::playing || state == sound_state::stopped);
+
     source.stop();
-    EXPECT_EQ(source.getState(), SoundState::Stopped);
+    EXPECT_EQ(source.get_state(), sound_state::stopped);
 }
 
 TEST_F(SoundSourceTests, MoveSemantics)
 {
-    SoundSource source1;
-    ALuint originalId = source1.getSourceId();
-    
-    SoundSource source2 = std::move(source1);
-    EXPECT_EQ(source2.getSourceId(), originalId);
-    EXPECT_FALSE(source1.isCreated());
-    EXPECT_EQ(source1.getSourceId(), 0);
+    sound_source source1;
+    ALuint original_id = source1.get_source_id();
+
+    sound_source source2 = std::move(source1);
+    EXPECT_EQ(source2.get_source_id(), original_id);
+    EXPECT_FALSE(source1.is_created());
+    EXPECT_EQ(source1.get_source_id(), 0);
 }
