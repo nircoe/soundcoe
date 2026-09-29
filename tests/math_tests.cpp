@@ -20,8 +20,8 @@ class MathTests : public ::testing::Test
 {
 protected:
     const float EPSILON = 0.0001f;
-    
-    void expectNear(float actual, float expected, float tolerance = 0.0001f)
+
+    void expect_near(float actual, float expected, float tolerance = 0.0001f)
     {
         EXPECT_NEAR(actual, expected, tolerance);
     }
@@ -33,85 +33,85 @@ protected:
 
 TEST_F(MathTests, VectorDistance)
 {
-    Vec3 a(0.0f, 0.0f, 0.0f);
-    Vec3 b(3.0f, 4.0f, 0.0f);
-    
-    expectNear(distance(a, b), 5.0f);
-    expectNear(distance(b, a), 5.0f);
-    expectNear(distance(a, a), 0.0f);
+    vec3 a(0.0f, 0.0f, 0.0f);
+    vec3 b(3.0f, 4.0f, 0.0f);
+
+    expect_near(distance(a, b), 5.0f);
+    expect_near(distance(b, a), 5.0f);
+    expect_near(distance(a, a), 0.0f);
 }
 
 TEST_F(MathTests, VectorDistanceSquared)
 {
-    Vec3 a(0.0f, 0.0f, 0.0f);
-    Vec3 b(3.0f, 4.0f, 0.0f);
-    
-    expectNear(distanceSquared(a, b), 25.0f);
-    expectNear(distanceSquared(b, a), 25.0f);
-    expectNear(distanceSquared(a, a), 0.0f);
+    vec3 a(0.0f, 0.0f, 0.0f);
+    vec3 b(3.0f, 4.0f, 0.0f);
+
+    expect_near(distance_squared(a, b), 25.0f);
+    expect_near(distance_squared(b, a), 25.0f);
+    expect_near(distance_squared(a, a), 0.0f);
 }
 
 TEST_F(MathTests, VectorNormalized)
 {
-    Vec3 v(3.0f, 4.0f, 0.0f);
-    Vec3 norm = normalized(v);
-    
-    expectNear(length(norm), 1.0f);
-    expectNear(norm.x, 0.6f);
-    expectNear(norm.y, 0.8f);
-    expectNear(norm.z, 0.0f);
-    
-    Vec3 zero = Vec3::zero();
-    Vec3 normalizedZero = normalized(zero);
-    EXPECT_EQ(normalizedZero.x, 0.0f);
-    EXPECT_EQ(normalizedZero.y, 0.0f);
-    EXPECT_EQ(normalizedZero.z, 0.0f);
+    vec3 v(3.0f, 4.0f, 0.0f);
+    vec3 norm = normalized(v);
+
+    expect_near(length(norm), 1.0f);
+    expect_near(norm.x, 0.6f);
+    expect_near(norm.y, 0.8f);
+    expect_near(norm.z, 0.0f);
+
+    vec3 zero = vec3::zero();
+    vec3 normalized_zero = normalized(zero);
+    EXPECT_EQ(normalized_zero.x, 0.0f);
+    EXPECT_EQ(normalized_zero.y, 0.0f);
+    EXPECT_EQ(normalized_zero.z, 0.0f);
 }
 
 TEST_F(MathTests, VectorLength)
 {
-    Vec3 v(3.0f, 4.0f, 0.0f);
-    expectNear(length(v), 5.0f);
-    
-    Vec3 zero = Vec3::zero();
-    expectNear(length(zero), 0.0f);
+    vec3 v(3.0f, 4.0f, 0.0f);
+    expect_near(length(v), 5.0f);
+
+    vec3 zero = vec3::zero();
+    expect_near(length(zero), 0.0f);
 }
 
 TEST_F(MathTests, VectorLengthSquared)
 {
-    Vec3 v(3.0f, 4.0f, 0.0f);
-    expectNear(lengthSquared(v), 25.0f);
-    
-    Vec3 zero = Vec3::zero();
-    expectNear(lengthSquared(zero), 0.0f);
+    vec3 v(3.0f, 4.0f, 0.0f);
+    expect_near(length_squared(v), 25.0f);
+
+    vec3 zero = vec3::zero();
+    expect_near(length_squared(zero), 0.0f);
 }
 
 TEST_F(MathTests, VectorDot)
 {
-    Vec3 a(1.0f, 2.0f, 3.0f);
-    Vec3 b(4.0f, 5.0f, 6.0f);
-    
-    expectNear(dot(a, b), 32.0f);
-    
-    Vec3 x(1.0f, 0.0f, 0.0f);
-    Vec3 y(0.0f, 1.0f, 0.0f);
-    expectNear(dot(x, y), 0.0f);
+    vec3 a(1.0f, 2.0f, 3.0f);
+    vec3 b(4.0f, 5.0f, 6.0f);
+
+    expect_near(dot(a, b), 32.0f);
+
+    vec3 x(1.0f, 0.0f, 0.0f);
+    vec3 y(0.0f, 1.0f, 0.0f);
+    expect_near(dot(x, y), 0.0f);
 }
 
 TEST_F(MathTests, VectorCross)
 {
-    Vec3 x(1.0f, 0.0f, 0.0f);
-    Vec3 y(0.0f, 1.0f, 0.0f);
-    Vec3 result = cross(x, y);
-    
-    expectNear(result.x, 0.0f);
-    expectNear(result.y, 0.0f);
-    expectNear(result.z, 1.0f);
-    
-    Vec3 parallel1(1.0f, 2.0f, 3.0f);
-    Vec3 parallel2(2.0f, 4.0f, 6.0f);
-    Vec3 crossParallel = cross(parallel1, parallel2);
-    expectNear(length(crossParallel), 0.0f);
+    vec3 x(1.0f, 0.0f, 0.0f);
+    vec3 y(0.0f, 1.0f, 0.0f);
+    vec3 result = cross(x, y);
+
+    expect_near(result.x, 0.0f);
+    expect_near(result.y, 0.0f);
+    expect_near(result.z, 1.0f);
+
+    vec3 parallel1(1.0f, 2.0f, 3.0f);
+    vec3 parallel2(2.0f, 4.0f, 6.0f);
+    vec3 cross_parallel = cross(parallel1, parallel2);
+    expect_near(length(cross_parallel), 0.0f);
 }
 
 //==============================================================================
@@ -120,38 +120,38 @@ TEST_F(MathTests, VectorCross)
 
 TEST_F(MathTests, DbToLinear)
 {
-    expectNear(dbToLinear(-6.0f), 0.5f, 0.01f);
-    expectNear(dbToLinear(0.0f), 1.0f);
-    expectNear(dbToLinear(-20.0f), 0.1f, 0.01f);
-    expectNear(dbToLinear(6.0f), 2.0f, 0.01f);
+    expect_near(db_to_linear(-6.0f), 0.5f, 0.01f);
+    expect_near(db_to_linear(0.0f), 1.0f);
+    expect_near(db_to_linear(-20.0f), 0.1f, 0.01f);
+    expect_near(db_to_linear(6.0f), 2.0f, 0.01f);
 }
 
 TEST_F(MathTests, LinearToDb)
 {
-    expectNear(linearToDb(0.5f), -6.0f, 0.1f);
-    expectNear(linearToDb(1.0f), 0.0f);
-    expectNear(linearToDb(0.1f), -20.0f, 0.1f);
-    expectNear(linearToDb(2.0f), 6.0f, 0.1f);
-    
-    EXPECT_EQ(linearToDb(0.0f), -std::numeric_limits<float>::infinity());
-    EXPECT_EQ(linearToDb(-1.0f), -std::numeric_limits<float>::infinity());
+    expect_near(linear_to_db(0.5f), -6.0f, 0.1f);
+    expect_near(linear_to_db(1.0f), 0.0f);
+    expect_near(linear_to_db(0.1f), -20.0f, 0.1f);
+    expect_near(linear_to_db(2.0f), 6.0f, 0.1f);
+
+    EXPECT_EQ(linear_to_db(0.0f), -std::numeric_limits<float>::infinity());
+    EXPECT_EQ(linear_to_db(-1.0f), -std::numeric_limits<float>::infinity());
 }
 
 TEST_F(MathTests, DbToGain)
 {
-    expectNear(dbToGain(0.0f), 1.0f);
-    expectNear(dbToGain(-3.0f), 0.5f, 0.01f);
-    expectNear(dbToGain(3.0f), 2.0f, 0.01f);
+    expect_near(db_to_gain(0.0f), 1.0f);
+    expect_near(db_to_gain(-3.0f), 0.5f, 0.01f);
+    expect_near(db_to_gain(3.0f), 2.0f, 0.01f);
 }
 
 TEST_F(MathTests, GainToDb)
 {
-    expectNear(gainToDb(1.0f), 0.0f);
-    expectNear(gainToDb(0.5f), -3.0f, 0.1f);
-    expectNear(gainToDb(2.0f), 3.0f, 0.1f);
-    
-    EXPECT_EQ(gainToDb(0.0f), -std::numeric_limits<float>::infinity());
-    EXPECT_EQ(gainToDb(-1.0f), -std::numeric_limits<float>::infinity());
+    expect_near(gain_to_db(1.0f), 0.0f);
+    expect_near(gain_to_db(0.5f), -3.0f, 0.1f);
+    expect_near(gain_to_db(2.0f), 3.0f, 0.1f);
+
+    EXPECT_EQ(gain_to_db(0.0f), -std::numeric_limits<float>::infinity());
+    EXPECT_EQ(gain_to_db(-1.0f), -std::numeric_limits<float>::infinity());
 }
 
 //==============================================================================
@@ -160,16 +160,16 @@ TEST_F(MathTests, GainToDb)
 
 TEST_F(MathTests, SamplesToTime)
 {
-    expectNear(samplesToTime(44100, 44100), 1.0f);
-    expectNear(samplesToTime(22050, 44100), 0.5f);
-    expectNear(samplesToTime(1000, 0), 0.0f);
+    expect_near(samples_to_time(44100, 44100), 1.0f);
+    expect_near(samples_to_time(22050, 44100), 0.5f);
+    expect_near(samples_to_time(1000, 0), 0.0f);
 }
 
 TEST_F(MathTests, TimeToSamples)
 {
-    EXPECT_EQ(timeToSamples(1.0f, 44100), 44100);
-    EXPECT_EQ(timeToSamples(0.5f, 44100), 22050);
-    EXPECT_EQ(timeToSamples(-1.0f, 44100), 0);
+    EXPECT_EQ(time_to_samples(1.0f, 44100), 44100);
+    EXPECT_EQ(time_to_samples(0.5f, 44100), 22050);
+    EXPECT_EQ(time_to_samples(-1.0f, 44100), 0);
 }
 
 //==============================================================================
@@ -178,41 +178,41 @@ TEST_F(MathTests, TimeToSamples)
 
 TEST_F(MathTests, Lerp)
 {
-    expectNear(lerp(0.0f, 10.0f, 0.0f), 0.0f);
-    expectNear(lerp(0.0f, 10.0f, 1.0f), 10.0f);
-    expectNear(lerp(0.0f, 10.0f, 0.5f), 5.0f);
-    expectNear(lerp(0.0f, 10.0f, 0.25f), 2.5f);
+    expect_near(lerp(0.0f, 10.0f, 0.0f), 0.0f);
+    expect_near(lerp(0.0f, 10.0f, 1.0f), 10.0f);
+    expect_near(lerp(0.0f, 10.0f, 0.5f), 5.0f);
+    expect_near(lerp(0.0f, 10.0f, 0.25f), 2.5f);
 }
 
 TEST_F(MathTests, Clamp)
 {
-    expectNear(clamp(0.5f, 0.0f, 1.0f), 0.5f);
-    expectNear(clamp(-0.5f, 0.0f, 1.0f), 0.0f);
-    expectNear(clamp(1.5f, 0.0f, 1.0f), 1.0f);
-    
-    expectNear(clamp(15.0f, 10.0f, 20.0f), 15.0f);
-    expectNear(clamp(5.0f, 10.0f, 20.0f), 10.0f);
-    expectNear(clamp(25.0f, 10.0f, 20.0f), 20.0f);
+    expect_near(clamp(0.5f, 0.0f, 1.0f), 0.5f);
+    expect_near(clamp(-0.5f, 0.0f, 1.0f), 0.0f);
+    expect_near(clamp(1.5f, 0.0f, 1.0f), 1.0f);
+
+    expect_near(clamp(15.0f, 10.0f, 20.0f), 15.0f);
+    expect_near(clamp(5.0f, 10.0f, 20.0f), 10.0f);
+    expect_near(clamp(25.0f, 10.0f, 20.0f), 20.0f);
 }
 
 TEST_F(MathTests, Smoothstep)
 {
-    expectNear(smoothstep(0.0f, 1.0f, 0.0f), 0.0f);
-    expectNear(smoothstep(0.0f, 1.0f, 1.0f), 1.0f);
-    expectNear(smoothstep(0.0f, 1.0f, 0.5f), 0.5f);
-    
-    float linear25 = 0.25f;
-    float smooth25 = smoothstep(0.0f, 1.0f, 0.25f);
-    EXPECT_LT(smooth25, linear25);
+    expect_near(smoothstep(0.0f, 1.0f, 0.0f), 0.0f);
+    expect_near(smoothstep(0.0f, 1.0f, 1.0f), 1.0f);
+    expect_near(smoothstep(0.0f, 1.0f, 0.5f), 0.5f);
+
+    float linear_25 = 0.25f;
+    float smooth_25 = smoothstep(0.0f, 1.0f, 0.25f);
+    EXPECT_LT(smooth_25, linear_25);
 }
 
 TEST_F(MathTests, ExponentialFade)
 {
-    expectNear(exponentialFade(0.0f), 0.0f);
-    expectNear(exponentialFade(1.0f), 1.0f);
-    
-    expectNear(exponentialFade(0.5f, 1.0f), 0.5f);
-    EXPECT_LT(exponentialFade(0.5f, 2.0f), 0.5f);
+    expect_near(exponential_fade(0.0f), 0.0f);
+    expect_near(exponential_fade(1.0f), 1.0f);
+
+    expect_near(exponential_fade(0.5f, 1.0f), 0.5f);
+    EXPECT_LT(exponential_fade(0.5f, 2.0f), 0.5f);
 }
 
 //==============================================================================
@@ -221,33 +221,33 @@ TEST_F(MathTests, ExponentialFade)
 
 TEST_F(MathTests, VolumeByDistance)
 {
-    expectNear(calculateVolumeByDistance(0.0f, 100.0f), 1.0f);
-    expectNear(calculateVolumeByDistance(100.0f, 100.0f), 0.0f);
-    expectNear(calculateVolumeByDistance(50.0f, 100.0f, 1.0f), 0.5f);
-    expectNear(calculateVolumeByDistance(150.0f, 100.0f), 0.0f);
-    expectNear(calculateVolumeByDistance(50.0f, 0.0f), 0.0f);
-    expectNear(calculateVolumeByDistance(50.0f, -10.0f), 0.0f);
-    expectNear(calculateVolumeByDistance(-50.0f, 100.0f, 1.0f), 0.5f);
+    expect_near(calculate_volume_by_distance(0.0f, 100.0f), 1.0f);
+    expect_near(calculate_volume_by_distance(100.0f, 100.0f), 0.0f);
+    expect_near(calculate_volume_by_distance(50.0f, 100.0f, 1.0f), 0.5f);
+    expect_near(calculate_volume_by_distance(150.0f, 100.0f), 0.0f);
+    expect_near(calculate_volume_by_distance(50.0f, 0.0f), 0.0f);
+    expect_near(calculate_volume_by_distance(50.0f, -10.0f), 0.0f);
+    expect_near(calculate_volume_by_distance(-50.0f, 100.0f, 1.0f), 0.5f);
 }
 
 TEST_F(MathTests, PanCalculation)
 {
-    Vec3 listener(0.0f, 0.0f, 0.0f);
-    Vec3 forward(0.0f, 0.0f, -1.0f);
-    
-    Vec3 rightSource(1.0f, 0.0f, 0.0f);
-    float rightPan = calculatePan(listener, rightSource, forward);
-    EXPECT_GT(rightPan, 0.0f);
-    EXPECT_LE(rightPan, 1.0f);
-    
-    Vec3 leftSource(-1.0f, 0.0f, 0.0f);
-    float leftPan = calculatePan(listener, leftSource, forward);
-    EXPECT_LT(leftPan, 0.0f);
-    EXPECT_GE(leftPan, -1.0f);
-    
-    Vec3 frontSource(0.0f, 0.0f, -1.0f);
-    float frontPan = calculatePan(listener, frontSource, forward);
-    expectNear(frontPan, 0.0f, 0.1f);
+    vec3 listener(0.0f, 0.0f, 0.0f);
+    vec3 forward(0.0f, 0.0f, -1.0f);
+
+    vec3 right_source(1.0f, 0.0f, 0.0f);
+    float right_pan = calculate_pan(listener, right_source, forward);
+    EXPECT_GT(right_pan, 0.0f);
+    EXPECT_LE(right_pan, 1.0f);
+
+    vec3 left_source(-1.0f, 0.0f, 0.0f);
+    float left_pan = calculate_pan(listener, left_source, forward);
+    EXPECT_LT(left_pan, 0.0f);
+    EXPECT_GE(left_pan, -1.0f);
+
+    vec3 front_source(0.0f, 0.0f, -1.0f);
+    float front_pan = calculate_pan(listener, front_source, forward);
+    expect_near(front_pan, 0.0f, 0.1f);
 }
 
 //==============================================================================
@@ -256,21 +256,21 @@ TEST_F(MathTests, PanCalculation)
 
 TEST_F(MathTests, SemitonesToRatio)
 {
-    expectNear(semitonesToRatio(12.0f), 2.0f, 0.01f);
-    expectNear(semitonesToRatio(0.0f), 1.0f);
-    expectNear(semitonesToRatio(-12.0f), 0.5f, 0.01f);
-    expectNear(semitonesToRatio(24.0f), 4.0f, 0.01f);
-    expectNear(semitonesToRatio(7.0f), 1.498f, 0.01f);
+    expect_near(semitones_to_ratio(12.0f), 2.0f, 0.01f);
+    expect_near(semitones_to_ratio(0.0f), 1.0f);
+    expect_near(semitones_to_ratio(-12.0f), 0.5f, 0.01f);
+    expect_near(semitones_to_ratio(24.0f), 4.0f, 0.01f);
+    expect_near(semitones_to_ratio(7.0f), 1.498f, 0.01f);
 }
 
 TEST_F(MathTests, RatioToSemitones)
 {
-    expectNear(ratioToSemitones(2.0f), 12.0f, 0.01f);
-    expectNear(ratioToSemitones(1.0f), 0.0f);
-    expectNear(ratioToSemitones(0.5f), -12.0f, 0.01f);
-    expectNear(ratioToSemitones(4.0f), 24.0f, 0.01f);
-    expectNear(ratioToSemitones(0.0f), 0.0f);
-    expectNear(ratioToSemitones(-1.0f), 0.0f);
+    expect_near(ratio_to_semitones(2.0f), 12.0f, 0.01f);
+    expect_near(ratio_to_semitones(1.0f), 0.0f);
+    expect_near(ratio_to_semitones(0.5f), -12.0f, 0.01f);
+    expect_near(ratio_to_semitones(4.0f), 24.0f, 0.01f);
+    expect_near(ratio_to_semitones(0.0f), 0.0f);
+    expect_near(ratio_to_semitones(-1.0f), 0.0f);
 }
 
 //==============================================================================
@@ -279,10 +279,10 @@ TEST_F(MathTests, RatioToSemitones)
 
 TEST_F(MathTests, EdgeCases)
 {
-    expectNear(dbToLinear(-100.0f), 0.00001f, 0.000001f);
-    EXPECT_GT(dbToLinear(100.0f), 10000.0f);
-    
-    Vec3 veryFar(1000000.0f, 1000000.0f, 1000000.0f);
-    Vec3 origin = Vec3::zero();
-    EXPECT_GT(distance(origin, veryFar), 1000000.0f);
+    expect_near(db_to_linear(-100.0f), 0.00001f, 0.000001f);
+    EXPECT_GT(db_to_linear(100.0f), 10000.0f);
+
+    vec3 very_far(1000000.0f, 1000000.0f, 1000000.0f);
+    vec3 origin = vec3::zero();
+    EXPECT_GT(distance(origin, very_far), 1000000.0f);
 }
