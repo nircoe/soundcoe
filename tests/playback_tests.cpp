@@ -17,11 +17,11 @@ using namespace soundcoe::detail;
 class SoundManagerTests : public ::testing::Test
 {
 protected:
-    SoundManager m_soundManager;
+    sound_manager m_soundManager;
 
     void SetUp() override
     {
-        TestAudioFiles::createTestFiles();
+        test_audio_files::create_test_files();
     }
 
     void TearDown() override
@@ -33,12 +33,12 @@ protected:
         catch (...)
         {
         }
-        TestAudioFiles::cleanup();
+        test_audio_files::cleanup();
     }
 
     void initializeSoundManager()
     {
-        ASSERT_TRUE(m_soundManager.initialize(TestAudioFiles::s_testRootDir.string(), 8, 32));
+        ASSERT_TRUE(m_soundManager.initialize(test_audio_files::s_test_root_dir.string(), 8, 32));
     }
 
     void waitForFade(float duration)
@@ -57,21 +57,21 @@ protected:
 TEST_F(SoundManagerTests, InitializationAndShutdown)
 {
     initializeSoundManager();
-    EXPECT_TRUE(m_soundManager.isInitialized());
+    EXPECT_TRUE(m_soundManager.is_initialized());
 
     m_soundManager.shutdown();
-    EXPECT_FALSE(m_soundManager.isInitialized());
+    EXPECT_FALSE(m_soundManager.is_initialized());
 
-    EXPECT_TRUE(m_soundManager.initialize(TestAudioFiles::s_testRootDir.string()));
-    EXPECT_TRUE(m_soundManager.isInitialized());
+    EXPECT_TRUE(m_soundManager.initialize(test_audio_files::s_test_root_dir.string()));
+    EXPECT_TRUE(m_soundManager.is_initialized());
 }
 
 TEST_F(SoundManagerTests, InvalidInitialization)
 {
-    SoundManager manager;
+    sound_manager manager;
     EXPECT_FALSE(manager.initialize(""));
     EXPECT_FALSE(manager.initialize("/nonexistent/path"));
-    EXPECT_FALSE(manager.isInitialized());
+    EXPECT_FALSE(manager.is_initialized());
 }
 
 TEST_F(SoundManagerTests, PlaySoundBasic)
@@ -80,7 +80,7 @@ TEST_F(SoundManagerTests, PlaySoundBasic)
 
     auto handle = m_soundManager.playSound("beep.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
-    EXPECT_TRUE(SoundManager::isHandleValid(handle));
+    EXPECT_TRUE(sound_manager::is_handle_valid(handle));
 
     m_soundManager.update();
     EXPECT_TRUE(m_soundManager.isSoundPlaying(handle));
@@ -93,7 +93,7 @@ TEST_F(SoundManagerTests, PlayMusicBasic)
 
     auto handle = m_soundManager.playMusic("background.wav");
     EXPECT_NE(handle, INVALID_MUSIC_HANDLE);
-    EXPECT_TRUE(SoundManager::isHandleValid(handle));
+    EXPECT_TRUE(sound_manager::is_handle_valid(handle));
 
     m_soundManager.update();
     EXPECT_TRUE(m_soundManager.isMusicPlaying(handle));
@@ -120,7 +120,7 @@ TEST_F(SoundManagerTests, InvalidFileHandling)
 
     auto handle = m_soundManager.playSound("nonexistent/file.wav");
     EXPECT_EQ(handle, INVALID_SOUND_HANDLE);
-    EXPECT_FALSE(SoundManager::isHandleValid(handle));
+    EXPECT_FALSE(sound_manager::is_handle_valid(handle));
 
     auto musicHandle = m_soundManager.playMusic("");
     EXPECT_EQ(musicHandle, INVALID_MUSIC_HANDLE);
@@ -325,26 +325,26 @@ TEST_F(SoundManagerTests, SceneManagement)
 {
     initializeSoundManager();
 
-    EXPECT_TRUE(m_soundManager.isSceneLoaded("general"));
+    EXPECT_TRUE(m_soundManager.is_scene_loaded("general"));
 
-    EXPECT_TRUE(m_soundManager.preloadScene("scene1"));
-    EXPECT_TRUE(m_soundManager.isSceneLoaded("scene1"));
+    EXPECT_TRUE(m_soundManager.preload_scene("scene1"));
+    EXPECT_TRUE(m_soundManager.is_scene_loaded("scene1"));
 
     auto handle = m_soundManager.playSound("explosion.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
-    EXPECT_TRUE(m_soundManager.unloadScene("scene1"));
-    EXPECT_FALSE(m_soundManager.isSceneLoaded("scene1"));
+    EXPECT_TRUE(m_soundManager.unload_scene("scene1"));
+    EXPECT_FALSE(m_soundManager.is_scene_loaded("scene1"));
 }
 
 TEST_F(SoundManagerTests, InvalidSceneOperations)
 {
     initializeSoundManager();
 
-    EXPECT_FALSE(m_soundManager.preloadScene(""));
-    EXPECT_FALSE(m_soundManager.preloadScene("nonexistent"));
-    EXPECT_FALSE(m_soundManager.isSceneLoaded(""));
-    EXPECT_FALSE(m_soundManager.isSceneLoaded("nonexistent"));
+    EXPECT_FALSE(m_soundManager.preload_scene(""));
+    EXPECT_FALSE(m_soundManager.preload_scene("nonexistent"));
+    EXPECT_FALSE(m_soundManager.is_scene_loaded(""));
+    EXPECT_FALSE(m_soundManager.is_scene_loaded("nonexistent"));
 }
 
 TEST_F(SoundManagerTests, MultipleSoundsAndMusic)
