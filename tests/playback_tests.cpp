@@ -8,7 +8,7 @@
 #include <future>
 
 using namespace soundcoe;
-using namespace soundcoe::detail;
+using namespace soundcoe::internal;
 
 //==============================================================================
 //               SoundManagerTests - SoundManager comprehensive tests

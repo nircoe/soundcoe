@@ -13,7 +13,7 @@ namespace soundcoe
     constexpr sound_handle INVALID_SOUND_HANDLE = 0;
     constexpr music_handle INVALID_MUSIC_HANDLE = 0;
 
-    namespace detail
+    namespace internal
     {
         struct active_audio
         {
@@ -239,5 +239,5 @@ namespace soundcoe
 
             static bool is_handle_valid(size_t handle);
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

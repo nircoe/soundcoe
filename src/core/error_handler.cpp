@@ -9,7 +9,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         std::string create_error_message(const std::string& error_type, const std::string& operation, const std::string& error)
         {
@@ -120,5 +120,5 @@ namespace soundcoe
             logcoe::error(message);
             throw std::runtime_error(message);
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

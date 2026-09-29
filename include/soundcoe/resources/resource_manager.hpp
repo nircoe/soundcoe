@@ -16,7 +16,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         struct source_allocation
         {
@@ -90,5 +90,5 @@ namespace soundcoe
 
             std::optional<std::reference_wrapper<source_allocation>> get_source_allocation(size_t index);
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

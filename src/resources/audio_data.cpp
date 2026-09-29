@@ -13,7 +13,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         audio_data::audio_data() : m_pcm_data(nullptr), m_pcm_data_size(0), m_channels(0), m_bits_per_sample(0), m_sample_rate(0),
                                     m_duration(0.0f), m_openal_format(AL_NONE), m_source_format(audio_format::unsupported) { }
@@ -205,5 +205,5 @@ namespace soundcoe
             if (is_valid_ogg(filename)) return audio_format::ogg;
             return audio_format::unsupported;
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

@@ -9,7 +9,7 @@
 #include <future>
 
 using namespace soundcoe;
-using namespace soundcoe::detail;
+using namespace soundcoe::internal;
 
 class ResourceManagerTests : public ::testing::Test
 {

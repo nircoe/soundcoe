@@ -90,7 +90,7 @@ namespace soundcoe
         float angle(const vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
     };
 
-    namespace detail
+    namespace internal
     {
         enum class audio_format
         {
@@ -141,5 +141,5 @@ namespace soundcoe
                 return "";
             }
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

@@ -8,7 +8,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         audio_context::audio_context() { }
 
@@ -127,5 +127,5 @@ namespace soundcoe
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_context;
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

@@ -8,7 +8,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         sound_source::sound_source() : m_position(vec3::zero()), m_velocity(vec3::zero()) { }
 
@@ -320,5 +320,5 @@ namespace soundcoe
 
             return static_cast<ALuint>(buffer_id);
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

@@ -9,7 +9,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class audio_context
         {
@@ -34,5 +34,5 @@ namespace soundcoe
             ALCdevice *get_device() const;
             ALCcontext *get_context() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

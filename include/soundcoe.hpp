@@ -5,7 +5,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class sound_manager;
 

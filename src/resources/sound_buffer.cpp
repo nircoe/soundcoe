@@ -13,7 +13,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         void sound_buffer::load_from_audio_data(audio_data &&audio_data_)
         {
@@ -202,5 +202,5 @@ namespace soundcoe
         bool sound_buffer::is_streaming() const { return m_stream; }
 
         const std::string &sound_buffer::get_filename() const { return m_filename; }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

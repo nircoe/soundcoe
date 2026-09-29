@@ -14,7 +14,7 @@
 #endif
 
 using namespace soundcoe;
-using namespace soundcoe::detail;
+using namespace soundcoe::internal;
 
 //==============================================================================
 //       AudioContextTests - audio_context singleton and initialization tests

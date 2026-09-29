@@ -6,7 +6,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class audio_data
         {
@@ -56,5 +56,5 @@ namespace soundcoe
 
             ALboolean is_valid() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

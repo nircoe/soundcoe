@@ -11,7 +11,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         void sound_manager::update_all_sounds_volume()
         {
@@ -1196,5 +1196,5 @@ namespace soundcoe
         }
 
         bool sound_manager::is_handle_valid(size_t handle) { return handle != INVALID_SOUND_HANDLE; }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

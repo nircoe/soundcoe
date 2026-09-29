@@ -7,7 +7,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class error_handler
         {
@@ -24,5 +24,5 @@ namespace soundcoe
 
             static void throw_on_audio_error(const std::string &filename, audio_format format, audio_decoder_operation operation);
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

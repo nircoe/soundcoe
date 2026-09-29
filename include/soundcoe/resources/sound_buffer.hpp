@@ -7,7 +7,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class sound_buffer
         {
@@ -47,5 +47,5 @@ namespace soundcoe
             bool is_streaming() const;
             const std::string &get_filename() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

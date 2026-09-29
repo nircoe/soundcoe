@@ -7,7 +7,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         class sound_source
         {
@@ -58,5 +58,5 @@ namespace soundcoe
             ALuint get_source_id() const;
             ALuint get_buffer_id() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

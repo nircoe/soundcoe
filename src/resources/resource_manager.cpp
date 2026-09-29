@@ -9,7 +9,7 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
         resource_manager::resource_manager() : m_audio_context(), m_audio_root_directory(), m_source_pool(),
                                              m_free_source_indices(), m_buffer_cache(), m_loaded_directories() {}
@@ -696,5 +696,5 @@ namespace soundcoe
                 return std::ref(m_source_pool[index]);
             return std::nullopt;
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe
