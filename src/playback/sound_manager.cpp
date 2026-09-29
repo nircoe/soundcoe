@@ -690,7 +690,7 @@ namespace soundcoe
             std::lock_guard<std::mutex> lock(m_mutex);
 
             if (!check_audio_state(m_active_sounds, handle, sound_state::paused, "resume_sound"))
-                return set_error("sound_manager::" + std::string("resume_sound") + ": Sound is not paused");
+                return set_error("sound_manager::resume_sound: Sound is not paused");
 
             return audio_operation(m_active_sounds, handle, sound_state::playing, "resume_sound");
         }
@@ -700,7 +700,7 @@ namespace soundcoe
             std::lock_guard<std::mutex> lock(m_mutex);
 
             if (!check_audio_state(m_active_music, handle, sound_state::paused, "resume_music"))
-                return set_error("sound_manager::" + std::string("resume_music") + ": Music is not paused");
+                return set_error("sound_manager::resume_music: Music is not paused");
 
             return audio_operation(m_active_music, handle, sound_state::playing, "resume_music");
         }
