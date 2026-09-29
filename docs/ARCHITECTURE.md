@@ -10,44 +10,44 @@ This document covers how soundcoe works internally, backend setup, and a few adv
 
 ```cpp
 // Set up listener (usually your player/camera)
-soundcoe::Vec3 playerPos(0.0f, 1.5f, 0.0f);        // Player position
-soundcoe::Vec3 playerVel(2.0f, 0.0f, 0.0f);        // Player velocity (for doppler)
-soundcoe::Vec3 forward(0.0f, 0.0f, -1.0f);         // Looking direction
-soundcoe::Vec3 up(0.0f, 1.0f, 0.0f);               // Up vector
+soundcoe::vec3 player_pos(0.0f, 1.5f, 0.0f);        // Player position
+soundcoe::vec3 player_vel(2.0f, 0.0f, 0.0f);        // Player velocity (for doppler)
+soundcoe::vec3 forward(0.0f, 0.0f, -1.0f);         // Looking direction
+soundcoe::vec3 up(0.0f, 1.0f, 0.0f);               // Up vector
 
-soundcoe::updateListener(playerPos, playerVel, forward, up);
+soundcoe::update_listener(player_pos, player_vel, forward, up);
 
 // Play 3D positioned sounds
-soundcoe::Vec3 enemyPos(10.0f, 0.0f, -20.0f);
-auto gunshot = soundcoe::playSound3D("gunshot.wav", enemyPos);
+soundcoe::vec3 enemy_pos(10.0f, 0.0f, -20.0f);
+auto gunshot = soundcoe::play_sound3d("gunshot.wav", enemy_pos);
 
-soundcoe::Vec3 carPos(-5.0f, 0.0f, 15.0f);
-auto engine = soundcoe::playSound3D("car_engine.wav", carPos, soundcoe::Vec3::zero(), 0.8f, 1.0f, true);
+soundcoe::vec3 car_pos(-5.0f, 0.0f, 15.0f);
+auto engine = soundcoe::play_sound3d("car_engine.wav", car_pos, soundcoe::vec3::zero(), 0.8f, 1.0f, true);
 
 // Update positions in your game loop
-soundcoe::Vec3 updatedCarPos(-5.0f, 0.0f, 10.0f);
-soundcoe::setSoundPosition(engine, updatedCarPos);
+soundcoe::vec3 updated_car_pos(-5.0f, 0.0f, 10.0f);
+soundcoe::set_sound_position(engine, updated_car_pos);
 ```
 
 ### Advanced Fade Effects
 
 ```cpp
-auto musicHandle = soundcoe::fadeInMusic("battle_theme.ogg", 3.0f);
-soundcoe::fadeToVolumeMusic(musicHandle, 0.3f, 1.5f);  // Fade to 30% over 1.5 seconds
-soundcoe::fadeOutMusic(musicHandle, 2.0f);
+auto music_handle_ = soundcoe::fade_in_music("battle_theme.ogg", 3.0f);
+soundcoe::fade_to_volume_music(music_handle_, 0.3f, 1.5f);  // Fade to 30% over 1.5 seconds
+soundcoe::fade_out_music(music_handle_, 2.0f);
 ```
 
 ### Master Volume Controls
 
 ```cpp
-soundcoe::setMasterVolume(0.8f);
-soundcoe::setMasterSoundsVolume(0.9f);
-soundcoe::setMasterMusicVolume(0.4f);
+soundcoe::set_master_volume(0.8f);
+soundcoe::set_master_sounds_volume(0.9f);
+soundcoe::set_master_music_volume(0.4f);
 
 // Muting preserves volume levels
-soundcoe::muteAll();
-soundcoe::unmuteAllSounds();             // Unmute sounds only
-soundcoe::unmuteAllMusic();              // Unmute music only
+soundcoe::mute_all();
+soundcoe::unmute_all_sounds();             // Unmute sounds only
+soundcoe::unmute_all_music();              // Unmute music only
 ```
 
 ## Internal Architecture
@@ -64,16 +64,16 @@ Game Code → soundcoe API → Internal Systems → OpenAL
 
 ### Public API Layer
 - **File**: `include/soundcoe.hpp`
-- **Purpose**: Free functions in the `soundcoe` namespace, forwarding to a `SoundManager` singleton
+- **Purpose**: Free functions in the `soundcoe` namespace, forwarding to a `sound_manager` singleton
 
-### SoundManager (Internal Implementation)
+### sound_manager (Internal Implementation)
 - **File**: `include/soundcoe/playback/sound_manager.hpp`
 - **Purpose**: Central singleton managing all audio operations
 
 All state is instance data protected by a mutex. `update()` runs fade handling, then cleans up inactive audio.
 A fade out stops the source when the volume reaches 0.
 
-### ResourceManager
+### resource_manager
 - **File**: `include/soundcoe/resources/resource_manager.hpp`
 - **Purpose**: Manages OpenAL resources with pooling and caching
 - Source pool: when no source is free, a stopped source is reused. Otherwise the lowest-priority, oldest source is
@@ -83,9 +83,9 @@ A fade out stops the source when the volume reaches 0.
 - Audio decoders in `src/resources/audio_data.cpp`: WAV via dr_wav, MP3 via dr_mp3, OGG via stb_vorbis
 
 ### Core Layer
-- **AudioContext**: OpenAL device and context management
-- **ErrorHandler**: Error checking and reporting
-- **Types**: 3D math (Vec3) and audio enumerations
+- **audio_context**: OpenAL device and context management
+- **error_handler**: Error checking and reporting
+- **Types**: 3D math (vec3) and audio enumerations
 
 ## Data Flow
 
@@ -95,7 +95,7 @@ soundcoe::initialize() called
     ↓
 Lock, init logging, validate root dir
     ↓
-Init OpenAL context (ResourceManager::initialize -> AudioContext::initialize)
+Init OpenAL context (resource_manager::initialize -> audio_context::initialize)
     ↓
 Create source pool, set listener gain
     ↓
@@ -104,11 +104,11 @@ Preload general/ if it exists
 
 ### 2. Audio Playback Process
 ```
-soundcoe::playSound() called
+soundcoe::play_sound() called
     ↓
-Get buffer from cache (getBuffer)
+Get buffer from cache (get_buffer)
     ↓
-Acquire source from the pool (acquireSource)
+Acquire source from the pool (acquire_source)
     ↓
 Configure source and start playback
     ↓
@@ -117,11 +117,11 @@ Store handle in active audio map
 
 ### 3. Scene Management Process
 ```
-soundcoe::preloadScene() called
+soundcoe::preload_scene() called
     ↓
 The scene name is used directly as a subdirectory of the audio root
     ↓
-ResourceManager::preloadDirectory()
+resource_manager::preload_directory()
     ↓
 Scan directory for audio files
     ↓
@@ -133,9 +133,9 @@ Update loaded directories list
 ## Thread Safety Implementation
 
 ### Mutex Strategy
-- SoundManager, ResourceManager and AudioContext each have one `std::mutex`
+- sound_manager, resource_manager and audio_context each have one `std::mutex`
 - Every public method locks its class mutex for the whole call
-- Locks nest in one direction: SoundManager, then ResourceManager, then AudioContext.
+- Locks nest in one direction: sound_manager, then resource_manager, then audio_context.
   Locks are held for the whole call, including file decode on a cache miss.
 
 ## Platform Support & Audio Backends
@@ -229,4 +229,4 @@ The two options cannot both be ON.
 ## Error Handling
 
 Logging goes through logcoe (optional, `SOUNDCOE_USE_LOGCOE`). Messages are prefixed `Class::method`.
-Failures return false or invalid handles, lower layers throw via ErrorHandler.
+Failures return false or invalid handles, lower layers throw via error_handler.

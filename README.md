@@ -16,11 +16,11 @@ C++ audio library for game developers. Thread-safe, zero-config, single-include 
 
 ```cpp
 soundcoe::initialize("./audio");
-soundcoe::preloadScene("menu");
+soundcoe::preload_scene("menu");
 
-auto click = soundcoe::playSound("ui_click.wav"); 
-auto music = soundcoe::fadeInMusic("theme.ogg", 2.0f);
-auto explosion = soundcoe::playSound3D("boom.wav", {10.0f, 0.0f, -20.0f});
+auto click = soundcoe::play_sound("ui_click.wav"); 
+auto music = soundcoe::fade_in_music("theme.ogg", 2.0f);
+auto explosion = soundcoe::play_sound3d("boom.wav", {10.0f, 0.0f, -20.0f});
 ```
 
 ## Requirements
@@ -73,11 +73,11 @@ Note: Ensure your audio directory is accessible relative to your executable at r
 
 int main() {
     soundcoe::initialize("./audio");  // relative to executable
-    soundcoe::preloadScene("menu");
+    soundcoe::preload_scene("menu");
 
-    auto clickHandle = soundcoe::playSound("ui_click.wav");
-    auto musicHandle = soundcoe::playMusic("menu_ambient.ogg");
-    soundcoe::fadeOutMusic(musicHandle, 2.0f);
+    auto click_handle = soundcoe::play_sound("ui_click.wav");
+    auto music_handle_ = soundcoe::play_music("menu_ambient.ogg");
+    soundcoe::fade_out_music(music_handle_, 2.0f);
 
     soundcoe::shutdown();
     return 0;
@@ -102,7 +102,7 @@ soundcoe::initialize(
 
 Use `soundcoe::UNLIMITED_CACHE` while developing to measure peak audio memory, then set a limit (in MB) for your target platforms.
 
-On constrained targets, use a lower `maxSources` (default 64) and a real cache limit to save memory.
+On constrained targets, use a lower `max_sources` (default 64) and a real cache limit to save memory.
 
 The full function list is documented in the docstrings of `include/soundcoe.hpp`. When changing scenes, load the next
 scene before unloading the previous one.
