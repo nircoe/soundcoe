@@ -10,432 +10,432 @@ namespace soundcoe
 {
     namespace detail
     {
-        SoundManager& getSoundManagerInstance()
+        sound_manager& get_sound_manager_instance()
         {
-            static SoundManager s_soundManager;
-            return s_soundManager;
+            static sound_manager s_sound_manager;
+            return s_sound_manager;
         }
     }
 
-    bool initialize(const std::string &audioRootDirectory, size_t maxSources,
-                    size_t maxCacheSizeMB, const std::string &soundSubdir,
-                    const std::string &musicSubdir, LogLevel level)
+    bool initialize(const std::string &audio_root_directory, size_t max_sources,
+                    size_t max_cache_size_mb, const std::string &sound_subdir,
+                    const std::string &music_subdir, LogLevel level)
     {
-        return detail::getSoundManagerInstance().initialize(audioRootDirectory, maxSources, maxCacheSizeMB,
-                                                            soundSubdir, musicSubdir, level);
+        return detail::get_sound_manager_instance().initialize(audio_root_directory, max_sources, max_cache_size_mb,
+                                                            sound_subdir, music_subdir, level);
     }
 
     bool initialize(const init_config &config)
     {
-        return initialize(config.audioRootDirectory, config.maxSources, config.maxCacheSizeMB,
-                          config.soundSubdir, config.musicSubdir, config.level);
+        return initialize(config.audio_root_directory, config.max_sources, config.max_cache_size_mb,
+                          config.sound_subdir, config.music_subdir, config.level);
     }
 
     void shutdown()
     {
-        detail::getSoundManagerInstance().shutdown();
+        detail::get_sound_manager_instance().shutdown();
     }
 
-    bool isInitialized()
+    bool is_initialized()
     {
-        return detail::getSoundManagerInstance().isInitialized();
+        return detail::get_sound_manager_instance().is_initialized();
     }
 
-    bool preloadScene(const std::string &sceneName)
+    bool preload_scene(const std::string &scene_name)
     {
-        return detail::getSoundManagerInstance().preloadScene(sceneName);
+        return detail::get_sound_manager_instance().preload_scene(scene_name);
     }
 
-    bool unloadScene(const std::string &sceneName)
+    bool unload_scene(const std::string &scene_name)
     {
-        return detail::getSoundManagerInstance().unloadScene(sceneName);
+        return detail::get_sound_manager_instance().unload_scene(scene_name);
     }
 
-    bool isSceneLoaded(const std::string &sceneName)
+    bool is_scene_loaded(const std::string &scene_name)
     {
-        return detail::getSoundManagerInstance().isSceneLoaded(sceneName);
+        return detail::get_sound_manager_instance().is_scene_loaded(scene_name);
     }
 
     void update()
     {
-        detail::getSoundManagerInstance().update();
+        detail::get_sound_manager_instance().update();
     }
 
-    SoundHandle playSound(const std::string &filename, float volume, float pitch, bool loop,
-                          SoundPriority priority)
+    sound_handle play_sound(const std::string &filename, float volume, float pitch, bool loop,
+                          sound_priority priority)
     {
-        return detail::getSoundManagerInstance().playSound(filename, volume, pitch, loop, priority);
+        return detail::get_sound_manager_instance().play_sound(filename, volume, pitch, loop, priority);
     }
 
-    SoundHandle playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity,
+    sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity,
                             float volume, float pitch, bool loop,
-                            SoundPriority priority)
+                            sound_priority priority)
     {
-        return detail::getSoundManagerInstance().playSound3D(filename, position, velocity, volume, pitch, loop, priority);
+        return detail::get_sound_manager_instance().play_sound3d(filename, position, velocity, volume, pitch, loop, priority);
     }
 
-    MusicHandle playMusic(const std::string &filename, float volume, float pitch, bool loop,
-                          SoundPriority priority)
+    music_handle play_music(const std::string &filename, float volume, float pitch, bool loop,
+                          sound_priority priority)
     {
-        return detail::getSoundManagerInstance().playMusic(filename, volume, pitch, loop, priority);
+        return detail::get_sound_manager_instance().play_music(filename, volume, pitch, loop, priority);
     }
 
-    bool pauseSound(SoundHandle handle)
+    bool pause_sound(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().pauseSound(handle);
+        return detail::get_sound_manager_instance().pause_sound(handle);
     }
 
-    bool pauseMusic(MusicHandle handle)
+    bool pause_music(music_handle handle)
     {
-        return detail::getSoundManagerInstance().pauseMusic(handle);
+        return detail::get_sound_manager_instance().pause_music(handle);
     }
 
-    void pauseAllSounds()
+    void pause_all_sounds()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAllSounds();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().pause_all_sounds();
         assert(succeed);
     }
 
-    void pauseAllMusic()
+    void pause_all_music()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAllMusic();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().pause_all_music();
         assert(succeed);
     }
 
-    void pauseAll()
+    void pause_all()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().pauseAll();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().pause_all();
         assert(succeed);
     }
 
-    bool resumeSound(SoundHandle handle)
+    bool resume_sound(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().resumeSound(handle);
+        return detail::get_sound_manager_instance().resume_sound(handle);
     }
 
-    bool resumeMusic(MusicHandle handle)
+    bool resume_music(music_handle handle)
     {
-        return detail::getSoundManagerInstance().resumeMusic(handle);
+        return detail::get_sound_manager_instance().resume_music(handle);
     }
 
-    void resumeAllSounds()
+    void resume_all_sounds()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAllSounds();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().resume_all_sounds();
         assert(succeed);
     }
 
-    void resumeAllMusic()
+    void resume_all_music()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAllMusic();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().resume_all_music();
         assert(succeed);
     }
 
-    void resumeAll()
+    void resume_all()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().resumeAll();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().resume_all();
         assert(succeed);
     }
 
-    bool stopSound(SoundHandle handle)
+    bool stop_sound(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().stopSound(handle);
+        return detail::get_sound_manager_instance().stop_sound(handle);
     }
 
-    bool stopMusic(MusicHandle handle)
+    bool stop_music(music_handle handle)
     {
-        return detail::getSoundManagerInstance().stopMusic(handle);
+        return detail::get_sound_manager_instance().stop_music(handle);
     }
 
-    void stopAllSounds()
+    void stop_all_sounds()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAllSounds();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().stop_all_sounds();
         assert(succeed);
     }
 
-    void stopAllMusic()
+    void stop_all_music()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAllMusic();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().stop_all_music();
         assert(succeed);
     }
 
-    void stopAll()
+    void stop_all()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().stopAll();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().stop_all();
         assert(succeed);
     }
 
-    bool setSoundVolume(SoundHandle handle, float volume)
+    bool set_sound_volume(sound_handle handle, float volume)
     {
-        return detail::getSoundManagerInstance().setSoundVolume(handle, volume);
+        return detail::get_sound_manager_instance().set_sound_volume(handle, volume);
     }
 
-    bool setMusicVolume(MusicHandle handle, float volume)
+    bool set_music_volume(music_handle handle, float volume)
     {
-        return detail::getSoundManagerInstance().setMusicVolume(handle, volume);
+        return detail::get_sound_manager_instance().set_music_volume(handle, volume);
     }
 
-    bool setSoundPitch(SoundHandle handle, float pitch)
+    bool set_sound_pitch(sound_handle handle, float pitch)
     {
-        return detail::getSoundManagerInstance().setSoundPitch(handle, pitch);
+        return detail::get_sound_manager_instance().set_sound_pitch(handle, pitch);
     }
 
-    bool setMusicPitch(MusicHandle handle, float pitch)
+    bool set_music_pitch(music_handle handle, float pitch)
     {
-        return detail::getSoundManagerInstance().setMusicPitch(handle, pitch);
+        return detail::get_sound_manager_instance().set_music_pitch(handle, pitch);
     }
 
-    bool setSoundPosition(SoundHandle handle, const Vec3 &position)
+    bool set_sound_position(sound_handle handle, const vec3 &position)
     {
-        return detail::getSoundManagerInstance().setSoundPosition(handle, position);
+        return detail::get_sound_manager_instance().set_sound_position(handle, position);
     }
 
-    bool setSoundVelocity(SoundHandle handle, const Vec3 &velocity)
+    bool set_sound_velocity(sound_handle handle, const vec3 &velocity)
     {
-        return detail::getSoundManagerInstance().setSoundVelocity(handle, velocity);
+        return detail::get_sound_manager_instance().set_sound_velocity(handle, velocity);
     }
 
-    bool isSoundPlaying(SoundHandle handle)
+    bool is_sound_playing(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().isSoundPlaying(handle);
+        return detail::get_sound_manager_instance().is_sound_playing(handle);
     }
 
-    bool isMusicPlaying(MusicHandle handle)
+    bool is_music_playing(music_handle handle)
     {
-        return detail::getSoundManagerInstance().isMusicPlaying(handle);
+        return detail::get_sound_manager_instance().is_music_playing(handle);
     }
 
-    bool isSoundPaused(SoundHandle handle)
+    bool is_sound_paused(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().isSoundPaused(handle);
+        return detail::get_sound_manager_instance().is_sound_paused(handle);
     }
 
-    bool isMusicPaused(MusicHandle handle)
+    bool is_music_paused(music_handle handle)
     {
-        return detail::getSoundManagerInstance().isMusicPaused(handle);
+        return detail::get_sound_manager_instance().is_music_paused(handle);
     }
 
-    bool isSoundStopped(SoundHandle handle)
+    bool is_sound_stopped(sound_handle handle)
     {
-        return detail::getSoundManagerInstance().isSoundStopped(handle);
+        return detail::get_sound_manager_instance().is_sound_stopped(handle);
     }
 
-    bool isMusicStopped(MusicHandle handle)
+    bool is_music_stopped(music_handle handle)
     {
-        return detail::getSoundManagerInstance().isMusicStopped(handle);
+        return detail::get_sound_manager_instance().is_music_stopped(handle);
     }
 
-    size_t getActiveSoundsCount()
+    size_t get_active_sounds_count()
     {
-        return detail::getSoundManagerInstance().getActiveSoundsCount();
+        return detail::get_sound_manager_instance().get_active_sounds_count();
     }
 
-    size_t getActiveMusicCount()
+    size_t get_active_music_count()
     {
-        return detail::getSoundManagerInstance().getActiveMusicCount();
+        return detail::get_sound_manager_instance().get_active_music_count();
     }
 
-    SoundHandle fadeInSound(const std::string &filename, float duration,
+    sound_handle fade_in_sound(const std::string &filename, float duration,
                             float volume, float pitch, bool loop,
-                            SoundPriority priority)
+                            sound_priority priority)
     {
-        return detail::getSoundManagerInstance().fadeInSound(filename, duration, volume, pitch, loop, priority);
+        return detail::get_sound_manager_instance().fade_in_sound(filename, duration, volume, pitch, loop, priority);
     }
 
-    MusicHandle fadeInMusic(const std::string &filename, float duration,
+    music_handle fade_in_music(const std::string &filename, float duration,
                             float volume, float pitch, bool loop,
-                            SoundPriority priority)
+                            sound_priority priority)
     {
-        return detail::getSoundManagerInstance().fadeInMusic(filename, duration, volume, pitch, loop, priority);
+        return detail::get_sound_manager_instance().fade_in_music(filename, duration, volume, pitch, loop, priority);
     }
 
-    bool fadeOutSound(SoundHandle handle, float duration)
+    bool fade_out_sound(sound_handle handle, float duration)
     {
-        return detail::getSoundManagerInstance().fadeOutSound(handle, duration);
+        return detail::get_sound_manager_instance().fade_out_sound(handle, duration);
     }
 
-    bool fadeOutMusic(MusicHandle handle, float duration)
+    bool fade_out_music(music_handle handle, float duration)
     {
-        return detail::getSoundManagerInstance().fadeOutMusic(handle, duration);
+        return detail::get_sound_manager_instance().fade_out_music(handle, duration);
     }
 
-    bool fadeToVolumeSound(SoundHandle handle, float targetVolume, float duration)
+    bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration)
     {
-        return detail::getSoundManagerInstance().fadeToVolumeSound(handle, targetVolume, duration);
+        return detail::get_sound_manager_instance().fade_to_volume_sound(handle, target_volume, duration);
     }
 
-    bool fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration)
+    bool fade_to_volume_music(music_handle handle, float target_volume, float duration)
     {
-        return detail::getSoundManagerInstance().fadeToVolumeMusic(handle, targetVolume, duration);
+        return detail::get_sound_manager_instance().fade_to_volume_music(handle, target_volume, duration);
     }
 
-    bool setMasterVolume(float volume)
+    bool set_master_volume(float volume)
     {
-        return detail::getSoundManagerInstance().setMasterVolume(volume);
+        return detail::get_sound_manager_instance().set_master_volume(volume);
     }
 
-    bool setMasterSoundsVolume(float volume)
+    bool set_master_sounds_volume(float volume)
     {
-        return detail::getSoundManagerInstance().setMasterSoundsVolume(volume);
+        return detail::get_sound_manager_instance().set_master_sounds_volume(volume);
     }
 
-    bool setMasterMusicVolume(float volume)
+    bool set_master_music_volume(float volume)
     {
-        return detail::getSoundManagerInstance().setMasterMusicVolume(volume);
+        return detail::get_sound_manager_instance().set_master_music_volume(volume);
     }
 
-    bool setMasterPitch(float pitch)
+    bool set_master_pitch(float pitch)
     {
-        return detail::getSoundManagerInstance().setMasterPitch(pitch);
+        return detail::get_sound_manager_instance().set_master_pitch(pitch);
     }
 
-    bool setMasterSoundsPitch(float pitch)
+    bool set_master_sounds_pitch(float pitch)
     {
-        return detail::getSoundManagerInstance().setMasterSoundsPitch(pitch);
+        return detail::get_sound_manager_instance().set_master_sounds_pitch(pitch);
     }
 
-    bool setMasterMusicPitch(float pitch)
+    bool set_master_music_pitch(float pitch)
     {
-        return detail::getSoundManagerInstance().setMasterMusicPitch(pitch);
+        return detail::get_sound_manager_instance().set_master_music_pitch(pitch);
     }
 
-    float getMasterVolume()
+    float get_master_volume()
     {
-        return detail::getSoundManagerInstance().getMasterVolume();
+        return detail::get_sound_manager_instance().get_master_volume();
     }
 
-    float getMasterSoundsVolume()
+    float get_master_sounds_volume()
     {
-        return detail::getSoundManagerInstance().getMasterSoundsVolume();
+        return detail::get_sound_manager_instance().get_master_sounds_volume();
     }
 
-    float getMasterMusicVolume()
+    float get_master_music_volume()
     {
-        return detail::getSoundManagerInstance().getMasterMusicVolume();
+        return detail::get_sound_manager_instance().get_master_music_volume();
     }
 
-    float getMasterPitch()
+    float get_master_pitch()
     {
-        return detail::getSoundManagerInstance().getMasterPitch();
+        return detail::get_sound_manager_instance().get_master_pitch();
     }
 
-    float getMasterSoundsPitch()
+    float get_master_sounds_pitch()
     {
-        return detail::getSoundManagerInstance().getMasterSoundsPitch();
+        return detail::get_sound_manager_instance().get_master_sounds_pitch();
     }
 
-    float getMasterMusicPitch()
+    float get_master_music_pitch()
     {
-        return detail::getSoundManagerInstance().getMasterMusicPitch();
+        return detail::get_sound_manager_instance().get_master_music_pitch();
     }
 
-    void muteAllSounds()
+    void mute_all_sounds()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAllSounds();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().mute_all_sounds();
         assert(succeed);
     }
 
-    void muteAllMusic()
+    void mute_all_music()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAllMusic();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().mute_all_music();
         assert(succeed);
     }
 
-    void muteAll()
+    void mute_all()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().muteAll();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().mute_all();
         assert(succeed);
     }
 
-    void unmuteAllSounds()
+    void unmute_all_sounds()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAllSounds();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().unmute_all_sounds();
         assert(succeed);
     }
 
-    void unmuteAllMusic()
+    void unmute_all_music()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAllMusic();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().unmute_all_music();
         assert(succeed);
     }
 
-    void unmuteAll()
+    void unmute_all()
     {
-        [[maybe_unused]] bool succeed = detail::getSoundManagerInstance().unmuteAll();
+        [[maybe_unused]] bool succeed = detail::get_sound_manager_instance().unmute_all();
         assert(succeed);
     }
 
-    bool isMuted()
+    bool is_muted()
     {
-        return detail::getSoundManagerInstance().isMuted();
+        return detail::get_sound_manager_instance().is_muted();
     }
 
-    bool isSoundsMuted()
+    bool is_sounds_muted()
     {
-        return detail::getSoundManagerInstance().isSoundsMuted();
+        return detail::get_sound_manager_instance().is_sounds_muted();
     }
 
-    bool isMusicMuted()
+    bool is_music_muted()
     {
-        return detail::getSoundManagerInstance().isMusicMuted();
+        return detail::get_sound_manager_instance().is_music_muted();
     }
 
-    bool updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up)
+    bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up)
     {
-        return detail::getSoundManagerInstance().updateListener(position, velocity, forward, up);
+        return detail::get_sound_manager_instance().update_listener(position, velocity, forward, up);
     }
 
-    bool setListenerPosition(const Vec3 &position)
+    bool set_listener_position(const vec3 &position)
     {
-        return detail::getSoundManagerInstance().setListenerPosition(position);
+        return detail::get_sound_manager_instance().set_listener_position(position);
     }
 
-    bool setListenerVelocity(const Vec3 &velocity)
+    bool set_listener_velocity(const vec3 &velocity)
     {
-        return detail::getSoundManagerInstance().setListenerVelocity(velocity);
+        return detail::get_sound_manager_instance().set_listener_velocity(velocity);
     }
 
-    bool setListenerForward(const Vec3 &forward)
+    bool set_listener_forward(const vec3 &forward)
     {
-        return detail::getSoundManagerInstance().setListenerForward(forward);
+        return detail::get_sound_manager_instance().set_listener_forward(forward);
     }
 
-    bool setListenerUp(const Vec3 &up)
+    bool set_listener_up(const vec3 &up)
     {
-        return detail::getSoundManagerInstance().setListenerUp(up);
+        return detail::get_sound_manager_instance().set_listener_up(up);
     }
 
-    Vec3 getListenerPosition()
+    vec3 get_listener_position()
     {
-        return detail::getSoundManagerInstance().getListenerPosition();
+        return detail::get_sound_manager_instance().get_listener_position();
     }
 
-    Vec3 getListenerVelocity()
+    vec3 get_listener_velocity()
     {
-        return detail::getSoundManagerInstance().getListenerVelocity();
+        return detail::get_sound_manager_instance().get_listener_velocity();
     }
 
-    Vec3 getListenerForward()
+    vec3 get_listener_forward()
     {
-        return detail::getSoundManagerInstance().getListenerForward();
+        return detail::get_sound_manager_instance().get_listener_forward();
     }
 
-    Vec3 getListenerUp()
+    vec3 get_listener_up()
     {
-        return detail::getSoundManagerInstance().getListenerUp();
+        return detail::get_sound_manager_instance().get_listener_up();
     }
 
-    const std::string getError()
+    const std::string get_error()
     {
-        return detail::getSoundManagerInstance().getError();
+        return detail::get_sound_manager_instance().get_error();
     }
 
-    void clearError()
+    void clear_error()
     {
-        detail::getSoundManagerInstance().clearError();
+        detail::get_sound_manager_instance().clear_error();
     }
 
-    bool isHandleValid(size_t handle)
+    bool is_handle_valid(size_t handle)
     {
-        return detail::getSoundManagerInstance().isHandleValid(handle);
+        return detail::get_sound_manager_instance().is_handle_valid(handle);
     }
 } // namespace soundcoe
