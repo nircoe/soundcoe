@@ -74,7 +74,7 @@ namespace soundcoe
             bool preload_directory(const std::string &subdirectory);
             bool unload_directory(const std::string &subdirectory);
 
-            std::optional<std::reference_wrapper<sound_source>> acquire_source(size_t &pool_index, sound_priority priority = sound_priority::Medium);
+            std::optional<std::reference_wrapper<sound_source>> acquire_source(size_t &pool_index, sound_priority priority = sound_priority::medium);
             std::optional<std::reference_wrapper<sound_buffer>> get_buffer(const std::string &filename);
             bool release_source(std::reference_wrapper<sound_source> source);
             bool release_buffer(std::reference_wrapper<sound_buffer> buffer);

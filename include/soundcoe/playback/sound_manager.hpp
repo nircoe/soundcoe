@@ -149,93 +149,93 @@ namespace soundcoe
 
             void update();
 
-            SoundHandle playSound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                SoundPriority priority = SoundPriority::Medium);
-            SoundHandle playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity = Vec3::zero(),
+            sound_handle play_sound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+                                sound_priority priority = sound_priority::medium);
+            sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    SoundPriority priority = SoundPriority::Medium);
-            MusicHandle playMusic(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                SoundPriority priority = SoundPriority::Critical);
+                                    sound_priority priority = sound_priority::medium);
+            music_handle play_music(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+                                sound_priority priority = sound_priority::critical);
 
-            bool pauseSound(SoundHandle handle);
-            bool pauseMusic(MusicHandle handle);
-            bool pauseAllSounds();
-            bool pauseAllMusic();
-            bool pauseAll();
-            bool resumeSound(SoundHandle handle);
-            bool resumeMusic(MusicHandle handle);
-            bool resumeAllSounds();
-            bool resumeAllMusic();
-            bool resumeAll();
-            bool stopSound(SoundHandle handle);
-            bool stopMusic(MusicHandle handle);
-            bool stopAllSounds();
-            bool stopAllMusic();
-            bool stopAll();
-            bool setSoundVolume(SoundHandle handle, float volume);
-            bool setMusicVolume(MusicHandle handle, float volume);
-            bool setSoundPitch(SoundHandle handle, float pitch);
-            bool setMusicPitch(MusicHandle handle, float pitch);
-            bool setSoundPosition(SoundHandle handle, const Vec3 &position);
-            bool setSoundVelocity(SoundHandle handle, const Vec3 &velocity);
+            bool pause_sound(sound_handle handle);
+            bool pause_music(music_handle handle);
+            bool pause_all_sounds();
+            bool pause_all_music();
+            bool pause_all();
+            bool resume_sound(sound_handle handle);
+            bool resume_music(music_handle handle);
+            bool resume_all_sounds();
+            bool resume_all_music();
+            bool resume_all();
+            bool stop_sound(sound_handle handle);
+            bool stop_music(music_handle handle);
+            bool stop_all_sounds();
+            bool stop_all_music();
+            bool stop_all();
+            bool set_sound_volume(sound_handle handle, float volume);
+            bool set_music_volume(music_handle handle, float volume);
+            bool set_sound_pitch(sound_handle handle, float pitch);
+            bool set_music_pitch(music_handle handle, float pitch);
+            bool set_sound_position(sound_handle handle, const vec3 &position);
+            bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
-            bool isSoundPlaying(SoundHandle handle);
-            bool isMusicPlaying(MusicHandle handle);
-            bool isSoundPaused(SoundHandle handle);
-            bool isMusicPaused(MusicHandle handle);
-            bool isSoundStopped(SoundHandle handle);
-            bool isMusicStopped(MusicHandle handle);
+            bool is_sound_playing(sound_handle handle);
+            bool is_music_playing(music_handle handle);
+            bool is_sound_paused(sound_handle handle);
+            bool is_music_paused(music_handle handle);
+            bool is_sound_stopped(sound_handle handle);
+            bool is_music_stopped(music_handle handle);
 
-            size_t getActiveSoundsCount() const;
-            size_t getActiveMusicCount() const;
+            size_t get_active_sounds_count() const;
+            size_t get_active_music_count() const;
 
-            SoundHandle fadeInSound(const std::string &filename, float duration,
+            sound_handle fade_in_sound(const std::string &filename, float duration,
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    SoundPriority priority = SoundPriority::Medium);
-            MusicHandle fadeInMusic(const std::string &filename, float duration,
+                                    sound_priority priority = sound_priority::medium);
+            music_handle fade_in_music(const std::string &filename, float duration,
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                    SoundPriority priority = SoundPriority::Critical);
-            bool fadeOutSound(SoundHandle handle, float duration);
-            bool fadeOutMusic(MusicHandle handle, float duration);
-            bool fadeToVolumeSound(SoundHandle handle, float targetVolume, float duration);
-            bool fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration);
+                                    sound_priority priority = sound_priority::critical);
+            bool fade_out_sound(sound_handle handle, float duration);
+            bool fade_out_music(music_handle handle, float duration);
+            bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration);
+            bool fade_to_volume_music(music_handle handle, float target_volume, float duration);
 
-            bool setMasterVolume(float volume);
-            bool setMasterSoundsVolume(float volume);
-            bool setMasterMusicVolume(float volume);
-            bool setMasterPitch(float pitch);
-            bool setMasterSoundsPitch(float pitch);
-            bool setMasterMusicPitch(float pitch);
-            float getMasterVolume() const;
-            float getMasterSoundsVolume() const;
-            float getMasterMusicVolume() const;
-            float getMasterPitch() const;
-            float getMasterSoundsPitch() const;
-            float getMasterMusicPitch() const;
+            bool set_master_volume(float volume);
+            bool set_master_sounds_volume(float volume);
+            bool set_master_music_volume(float volume);
+            bool set_master_pitch(float pitch);
+            bool set_master_sounds_pitch(float pitch);
+            bool set_master_music_pitch(float pitch);
+            float get_master_volume() const;
+            float get_master_sounds_volume() const;
+            float get_master_music_volume() const;
+            float get_master_pitch() const;
+            float get_master_sounds_pitch() const;
+            float get_master_music_pitch() const;
 
-            bool muteAllSounds();
-            bool muteAllMusic();
-            bool muteAll();
-            bool unmuteAllSounds();
-            bool unmuteAllMusic();
-            bool unmuteAll();
-            bool isMuted() const;
-            bool isSoundsMuted() const;
-            bool isMusicMuted() const;
+            bool mute_all_sounds();
+            bool mute_all_music();
+            bool mute_all();
+            bool unmute_all_sounds();
+            bool unmute_all_music();
+            bool unmute_all();
+            bool is_muted() const;
+            bool is_sounds_muted() const;
+            bool is_music_muted() const;
 
-            bool updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up = Vec3::up());
-            bool setListenerPosition(const Vec3 &position);
-            bool setListenerVelocity(const Vec3 &velocity);
-            bool setListenerForward(const Vec3 &forward);
-            bool setListenerUp(const Vec3 &up = Vec3::up());
+            bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
+            bool set_listener_position(const vec3 &position);
+            bool set_listener_velocity(const vec3 &velocity);
+            bool set_listener_forward(const vec3 &forward);
+            bool set_listener_up(const vec3 &up = vec3::up());
 
-            Vec3 getListenerPosition();
-            Vec3 getListenerVelocity();
-            Vec3 getListenerForward();
-            Vec3 getListenerUp();
+            vec3 get_listener_position();
+            vec3 get_listener_velocity();
+            vec3 get_listener_forward();
+            vec3 get_listener_up();
 
-            const std::string getError();
-            void clearError();
+            const std::string get_error();
+            void clear_error();
 
             static bool is_handle_valid(size_t handle);
         };

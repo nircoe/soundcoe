@@ -624,249 +624,249 @@ namespace soundcoe
             m_last_update = now;
         }
 
-        SoundHandle sound_manager::playSound(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority)
+        sound_handle sound_manager::play_sound(const std::string &filename, float volume, float pitch, bool loop, sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return play(m_active_sounds, m_sound_subdir + filename, volume, pitch, loop, priority, m_next_sound_handle, "playSound",
+            return play(m_active_sounds, m_sound_subdir + filename, volume, pitch, loop, priority, m_next_sound_handle, "play_sound",
                         m_master_sounds_volume, m_master_sounds_pitch);
         }
 
-        SoundHandle sound_manager::playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity,
-                                              float volume, float pitch, bool loop, SoundPriority priority)
+        sound_handle sound_manager::play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity,
+                                              float volume, float pitch, bool loop, sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return play(m_active_sounds, m_sound_subdir + filename, volume, pitch, loop, priority, m_next_sound_handle, "playSound3D",
+            return play(m_active_sounds, m_sound_subdir + filename, volume, pitch, loop, priority, m_next_sound_handle, "play_sound3d",
                         m_master_sounds_volume, m_master_sounds_pitch, true, position, velocity);
         }
 
-        MusicHandle sound_manager::playMusic(const std::string &filename, float volume, float pitch, bool loop, SoundPriority priority)
+        music_handle sound_manager::play_music(const std::string &filename, float volume, float pitch, bool loop, sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return play(m_active_music, m_music_subdir + filename, volume, pitch, loop, priority, m_next_music_handle, "playMusic",
+            return play(m_active_music, m_music_subdir + filename, volume, pitch, loop, priority, m_next_music_handle, "play_music",
                         m_master_music_volume, m_master_music_pitch);
         }
 
-        bool sound_manager::pauseSound(SoundHandle handle)
+        bool sound_manager::pause_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation(m_active_sounds, handle, SoundState::Paused, "pauseSound");
+            return audio_operation(m_active_sounds, handle, sound_state::paused, "pause_sound");
         }
 
-        bool sound_manager::pauseMusic(MusicHandle handle)
+        bool sound_manager::pause_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation(m_active_music, handle, SoundState::Paused, "pauseMusic");
+            return audio_operation(m_active_music, handle, sound_state::paused, "pause_music");
         }
 
-        bool sound_manager::pauseAllSounds()
+        bool sound_manager::pause_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Paused, "pauseAllSounds");
+            return audio_operation_all(m_active_sounds, sound_state::paused, "pause_all_sounds");
         }
 
-        bool sound_manager::pauseAllMusic()
+        bool sound_manager::pause_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_music, SoundState::Paused, "pauseAllMusic");
+            return audio_operation_all(m_active_music, sound_state::paused, "pause_all_music");
         }
 
-        bool sound_manager::pauseAll()
+        bool sound_manager::pause_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Paused, "pauseAll") &&
-                   audio_operation_all(m_active_music, SoundState::Paused, "pauseAll");
+            return audio_operation_all(m_active_sounds, sound_state::paused, "pause_all") &&
+                   audio_operation_all(m_active_music, sound_state::paused, "pause_all");
         }
 
-        bool sound_manager::resumeSound(SoundHandle handle)
+        bool sound_manager::resume_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (!check_audio_state(m_active_sounds, handle, SoundState::Paused, "resumeSound"))
-                return set_error("SoundManager::resumeSound: Sound is not paused");
+            if (!check_audio_state(m_active_sounds, handle, sound_state::paused, "resume_sound"))
+                return set_error("sound_manager::" + std::string("resume_sound") + ": Sound is not paused");
 
-            return audio_operation(m_active_sounds, handle, SoundState::Playing, "resumeSound");
+            return audio_operation(m_active_sounds, handle, sound_state::playing, "resume_sound");
         }
 
-        bool sound_manager::resumeMusic(MusicHandle handle)
+        bool sound_manager::resume_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (!check_audio_state(m_active_music, handle, SoundState::Paused, "resumeMusic"))
-                return set_error("SoundManager::resumeMusic: Music is not paused");
+            if (!check_audio_state(m_active_music, handle, sound_state::paused, "resume_music"))
+                return set_error("sound_manager::" + std::string("resume_music") + ": Music is not paused");
 
-            return audio_operation(m_active_music, handle, SoundState::Playing, "resumeMusic");
+            return audio_operation(m_active_music, handle, sound_state::playing, "resume_music");
         }
 
-        bool sound_manager::resumeAllSounds()
+        bool sound_manager::resume_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Playing, "resumeAllSounds");
+            return audio_operation_all(m_active_sounds, sound_state::playing, "resume_all_sounds");
         }
 
-        bool sound_manager::resumeAllMusic()
+        bool sound_manager::resume_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_music, SoundState::Playing, "resumeAllMusic");
+            return audio_operation_all(m_active_music, sound_state::playing, "resume_all_music");
         }
 
-        bool sound_manager::resumeAll()
+        bool sound_manager::resume_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Playing, "resumeAll") &&
-                   audio_operation_all(m_active_music, SoundState::Playing, "resumeAll");
+            return audio_operation_all(m_active_sounds, sound_state::playing, "resume_all") &&
+                   audio_operation_all(m_active_music, sound_state::playing, "resume_all");
         }
 
-        bool sound_manager::stopSound(SoundHandle handle)
+        bool sound_manager::stop_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation(m_active_sounds, handle, SoundState::Stopped, "stopSound");
+            return audio_operation(m_active_sounds, handle, sound_state::stopped, "stop_sound");
         }
 
-        bool sound_manager::stopMusic(MusicHandle handle)
+        bool sound_manager::stop_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation(m_active_music, handle, SoundState::Stopped, "stopMusic");
+            return audio_operation(m_active_music, handle, sound_state::stopped, "stop_music");
         }
 
-        bool sound_manager::stopAllSounds()
+        bool sound_manager::stop_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Stopped, "stopAllSounds");
+            return audio_operation_all(m_active_sounds, sound_state::stopped, "stop_all_sounds");
         }
 
-        bool sound_manager::stopAllMusic()
+        bool sound_manager::stop_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_music, SoundState::Stopped, "stopAllMusic");
+            return audio_operation_all(m_active_music, sound_state::stopped, "stop_all_music");
         }
 
-        bool sound_manager::stopAll()
+        bool sound_manager::stop_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, SoundState::Stopped, "stopAll") &&
-                   audio_operation_all(m_active_music, SoundState::Stopped, "stopAll");
+            return audio_operation_all(m_active_sounds, sound_state::stopped, "stop_all") &&
+                   audio_operation_all(m_active_music, sound_state::stopped, "stop_all");
         }
 
-        bool sound_manager::setSoundVolume(SoundHandle handle, float volume)
+        bool sound_manager::set_sound_volume(sound_handle handle, float volume)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_sounds, handle, PropertyType::Volume, "setSoundVolume", volume);
+            return set_audio_property(m_active_sounds, handle, property_type::volume, "set_sound_volume", volume);
         }
 
-        bool sound_manager::setMusicVolume(MusicHandle handle, float volume)
+        bool sound_manager::set_music_volume(music_handle handle, float volume)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_music, handle, PropertyType::Volume, "setMusicVolume", volume);
+            return set_audio_property(m_active_music, handle, property_type::volume, "set_music_volume", volume);
         }
 
-        bool sound_manager::setSoundPitch(SoundHandle handle, float pitch)
+        bool sound_manager::set_sound_pitch(sound_handle handle, float pitch)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_sounds, handle, PropertyType::Pitch, "setSoundPitch", pitch);
+            return set_audio_property(m_active_sounds, handle, property_type::pitch, "set_sound_pitch", pitch);
         }
 
-        bool sound_manager::setMusicPitch(MusicHandle handle, float pitch)
+        bool sound_manager::set_music_pitch(music_handle handle, float pitch)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_music, handle, PropertyType::Pitch, "setMusicPitch", pitch);
+            return set_audio_property(m_active_music, handle, property_type::pitch, "set_music_pitch", pitch);
         }
 
-        bool sound_manager::setSoundPosition(SoundHandle handle, const Vec3 &position)
+        bool sound_manager::set_sound_position(sound_handle handle, const vec3 &position)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_sounds, handle, PropertyType::Position, "setSoundPosition",
+            return set_audio_property(m_active_sounds, handle, property_type::position, "set_sound_position",
                                     position.x, position.y, position.z);
         }
 
-        bool sound_manager::setSoundVelocity(SoundHandle handle, const Vec3 &velocity)
+        bool sound_manager::set_sound_velocity(sound_handle handle, const vec3 &velocity)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_audio_property(m_active_sounds, handle, PropertyType::Velocity, "setSoundVelocity",
+            return set_audio_property(m_active_sounds, handle, property_type::velocity, "set_sound_velocity",
                                     velocity.x, velocity.y, velocity.z);
         }
 
-        bool sound_manager::isSoundPlaying(SoundHandle handle)
+        bool sound_manager::is_sound_playing(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_sounds, handle, SoundState::Playing, "isSoundPlaying");
+            return check_audio_state(m_active_sounds, handle, sound_state::playing, "is_sound_playing");
         }
 
-        bool sound_manager::isMusicPlaying(MusicHandle handle)
+        bool sound_manager::is_music_playing(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_music, handle, SoundState::Playing, "isMusicPlaying");
+            return check_audio_state(m_active_music, handle, sound_state::playing, "is_music_playing");
         }
 
-        bool sound_manager::isSoundPaused(SoundHandle handle)
+        bool sound_manager::is_sound_paused(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_sounds, handle, SoundState::Paused, "isSoundPaused");
+            return check_audio_state(m_active_sounds, handle, sound_state::paused, "is_sound_paused");
         }
 
-        bool sound_manager::isMusicPaused(MusicHandle handle)
+        bool sound_manager::is_music_paused(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_music, handle, SoundState::Paused, "isMusicPaused");
+            return check_audio_state(m_active_music, handle, sound_state::paused, "is_music_paused");
         }
 
-        bool sound_manager::isSoundStopped(SoundHandle handle)
+        bool sound_manager::is_sound_stopped(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_sounds, handle, SoundState::Stopped, "isSoundStopped");
+            return check_audio_state(m_active_sounds, handle, sound_state::stopped, "is_sound_stopped");
         }
 
-        bool sound_manager::isMusicStopped(MusicHandle handle)
+        bool sound_manager::is_music_stopped(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return check_audio_state(m_active_music, handle, SoundState::Stopped, "isMusicStopped");
+            return check_audio_state(m_active_music, handle, sound_state::stopped, "is_music_stopped");
         }
 
-        size_t sound_manager::getActiveSoundsCount() const
+        size_t sound_manager::get_active_sounds_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_active_sounds.size();
         }
 
-        size_t sound_manager::getActiveMusicCount() const
+        size_t sound_manager::get_active_music_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_active_music.size();
         }
 
-        SoundHandle sound_manager::fadeInSound(const std::string &filename, float duration,
-                                              float volume, float pitch, bool loop, SoundPriority priority)
+        sound_handle sound_manager::fade_in_sound(const std::string &filename, float duration,
+                                              float volume, float pitch, bool loop, sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            SoundHandle handle = play(m_active_sounds, m_sound_subdir + filename, 0.0f, pitch, loop, priority, m_next_sound_handle, "fadeInSound",
+            sound_handle handle = play(m_active_sounds, m_sound_subdir + filename, 0.0f, pitch, loop, priority, m_next_sound_handle, "fade_in_sound",
                                       m_master_sounds_volume, m_master_sounds_pitch);
 
             if (!is_handle_valid(handle))
@@ -875,19 +875,19 @@ namespace soundcoe
             active_audio &sound = m_active_sounds[handle];
             sound.m_base_volume = volume;
 
-            if (fade(m_active_sounds, handle, true, duration, "fadeInSound"))
+            if (fade(m_active_sounds, handle, true, duration, "fade_in_sound"))
                 return handle;
 
-            stopSound(handle);
+            stop_sound(handle);
             return INVALID_SOUND_HANDLE;
         }
 
-        MusicHandle sound_manager::fadeInMusic(const std::string &filename, float duration,
-                                              float volume, float pitch, bool loop, SoundPriority priority)
+        music_handle sound_manager::fade_in_music(const std::string &filename, float duration,
+                                              float volume, float pitch, bool loop, sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            MusicHandle handle = play(m_active_music, m_music_subdir + filename, 0.0f, pitch, loop, priority, m_next_music_handle, "fadeInMusic",
+            music_handle handle = play(m_active_music, m_music_subdir + filename, 0.0f, pitch, loop, priority, m_next_music_handle, "fade_in_music",
                                       m_master_music_volume, m_master_music_pitch);
             if (!is_handle_valid(handle))
                 return INVALID_MUSIC_HANDLE;
@@ -895,42 +895,42 @@ namespace soundcoe
             active_audio &music = m_active_music[handle];
             music.m_base_volume = volume;
 
-            if (fade(m_active_music, handle, true, duration, "fadeInMusic"))
+            if (fade(m_active_music, handle, true, duration, "fade_in_music"))
                 return handle;
 
-            stopMusic(handle);
+            stop_music(handle);
             return INVALID_MUSIC_HANDLE;
         }
 
-        bool sound_manager::fadeOutSound(SoundHandle handle, float duration)
+        bool sound_manager::fade_out_sound(sound_handle handle, float duration)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return fade(m_active_sounds, handle, false, duration, "fadeOutSound");
+            return fade(m_active_sounds, handle, false, duration, "fade_out_sound");
         }
 
-        bool sound_manager::fadeOutMusic(MusicHandle handle, float duration)
+        bool sound_manager::fade_out_music(music_handle handle, float duration)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return fade(m_active_music, handle, false, duration, "fadeOutMusic");
+            return fade(m_active_music, handle, false, duration, "fade_out_music");
         }
 
-        bool sound_manager::fadeToVolumeSound(SoundHandle handle, float targetVolume, float duration)
+        bool sound_manager::fade_to_volume_sound(sound_handle handle, float target_volume, float duration)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return fade_to_volume(m_active_sounds, handle, targetVolume, duration, "fadeToVolumeSound");
+            return fade_to_volume(m_active_sounds, handle, target_volume, duration, "fade_to_volume_sound");
         }
 
-        bool sound_manager::fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration)
+        bool sound_manager::fade_to_volume_music(music_handle handle, float target_volume, float duration)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return fade_to_volume(m_active_music, handle, targetVolume, duration, "fadeToVolumeMusic");
+            return fade_to_volume(m_active_music, handle, target_volume, duration, "fade_to_volume_music");
         }
 
-        bool sound_manager::setMasterVolume(float volume)
+        bool sound_manager::set_master_volume(float volume)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -940,7 +940,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::setMasterSoundsVolume(float volume)
+        bool sound_manager::set_master_sounds_volume(float volume)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -950,7 +950,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::setMasterMusicVolume(float volume)
+        bool sound_manager::set_master_music_volume(float volume)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -960,7 +960,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::setMasterPitch(float pitch)
+        bool sound_manager::set_master_pitch(float pitch)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -970,7 +970,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::setMasterSoundsPitch(float pitch)
+        bool sound_manager::set_master_sounds_pitch(float pitch)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -980,7 +980,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::setMasterMusicPitch(float pitch)
+        bool sound_manager::set_master_music_pitch(float pitch)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -990,49 +990,49 @@ namespace soundcoe
             return true;
         }
 
-        float sound_manager::getMasterVolume() const
+        float sound_manager::get_master_volume() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_volume;
         }
 
-        float sound_manager::getMasterSoundsVolume() const
+        float sound_manager::get_master_sounds_volume() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_sounds_volume;
         }
 
-        float sound_manager::getMasterMusicVolume() const
+        float sound_manager::get_master_music_volume() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_music_volume;
         }
 
-        float sound_manager::getMasterPitch() const
+        float sound_manager::get_master_pitch() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_pitch;
         }
 
-        float sound_manager::getMasterSoundsPitch() const
+        float sound_manager::get_master_sounds_pitch() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_sounds_pitch;
         }
 
-        float sound_manager::getMasterMusicPitch() const
+        float sound_manager::get_master_music_pitch() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_master_music_pitch;
         }
 
-        bool sound_manager::muteAllSounds()
+        bool sound_manager::mute_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1042,7 +1042,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::muteAllMusic()
+        bool sound_manager::mute_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1052,7 +1052,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::muteAll()
+        bool sound_manager::mute_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1062,7 +1062,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::unmuteAllSounds()
+        bool sound_manager::unmute_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1072,7 +1072,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::unmuteAllMusic()
+        bool sound_manager::unmute_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1082,7 +1082,7 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::unmuteAll()
+        bool sound_manager::unmute_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1093,28 +1093,28 @@ namespace soundcoe
             return true;
         }
 
-        bool sound_manager::isMuted() const
+        bool sound_manager::is_muted() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_mute;
         }
 
-        bool sound_manager::isSoundsMuted() const
+        bool sound_manager::is_sounds_muted() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_sounds_mute;
         }
 
-        bool sound_manager::isMusicMuted() const
+        bool sound_manager::is_music_muted() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_music_mute;
         }
 
-        bool sound_manager::updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up)
+        bool sound_manager::update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -1123,63 +1123,63 @@ namespace soundcoe
                    set_listener_orientation_impl(forward, up);
         }
 
-        bool sound_manager::setListenerPosition(const Vec3 &position)
+        bool sound_manager::set_listener_position(const vec3 &position)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return set_listener_position_impl(position);
         }
 
-        bool sound_manager::setListenerVelocity(const Vec3 &velocity)
+        bool sound_manager::set_listener_velocity(const vec3 &velocity)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return set_listener_velocity_impl(velocity);
         }
 
-        bool sound_manager::setListenerForward(const Vec3 &forward)
+        bool sound_manager::set_listener_forward(const vec3 &forward)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return set_listener_orientation_impl(forward, m_listener_up);
         }
 
-        bool sound_manager::setListenerUp(const Vec3 &up)
+        bool sound_manager::set_listener_up(const vec3 &up)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return set_listener_orientation_impl(m_listener_forward, up);
         }
 
-        Vec3 sound_manager::getListenerPosition()
+        vec3 sound_manager::get_listener_position()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_listener_position;
         }
 
-        Vec3 sound_manager::getListenerVelocity()
+        vec3 sound_manager::get_listener_velocity()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_listener_velocity;
         }
 
-        Vec3 sound_manager::getListenerForward()
+        vec3 sound_manager::get_listener_forward()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_listener_forward;
         }
 
-        Vec3 sound_manager::getListenerUp()
+        vec3 sound_manager::get_listener_up()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return m_listener_up;
         }
 
-        const std::string sound_manager::getError()
+        const std::string sound_manager::get_error()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             std::string error(m_last_error);
@@ -1188,7 +1188,7 @@ namespace soundcoe
             return error;
         }
 
-        void sound_manager::clearError()
+        void sound_manager::clear_error()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_last_error = "";
