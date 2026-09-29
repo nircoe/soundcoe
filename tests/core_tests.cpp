@@ -57,23 +57,23 @@ TEST_F(AudioContextTests, MultipleShutdownCalls)
 
 TEST_F(AudioContextTests, ThreadSafety)
 {
-    const int numThreads = 4;
+    const int num_threads = 4;
     std::vector<std::future<bool>> futures;
     
-    for (int i = 0; i < numThreads; ++i)
+    for (int i = 0; i < num_threads; ++i)
     {
         futures.push_back(std::async(std::launch::async, [&]() {
-            bool allSucceeded = true;
+            bool all_succeeded = true;
             
             for (int j = 0; j < 10; ++j)
             {
-                allSucceeded &= m_audio_context.is_initialized();
-                allSucceeded &= (m_audio_context.get_device() != nullptr);
-                allSucceeded &= (m_audio_context.get_context() != nullptr);
+                all_succeeded &= m_audio_context.is_initialized();
+                all_succeeded &= (m_audio_context.get_device() != nullptr);
+                all_succeeded &= (m_audio_context.get_context() != nullptr);
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             
-            return allSucceeded;
+            return all_succeeded;
         }));
     }
     
@@ -136,18 +136,18 @@ TEST_F(ErrorHandlerTests, CheckErrorFunctions)
 TEST_F(ErrorHandlerTests, ClearErrorFunctions)
 {
     alSourcei(999999, AL_BUFFER, 0);
-    ALenum alError = error_handler::clear_openal_error();
-    EXPECT_EQ(alError, AL_INVALID_NAME);
+    ALenum al_error = error_handler::clear_openal_error();
+    EXPECT_EQ(al_error, AL_INVALID_NAME);
     
-    ALenum secondAlCall = error_handler::clear_openal_error();
-    EXPECT_EQ(secondAlCall, AL_NO_ERROR);
+    ALenum second_al_call = error_handler::clear_openal_error();
+    EXPECT_EQ(second_al_call, AL_NO_ERROR);
     
     alcGetIntegerv(m_audio_context.get_device(), 999999, 1, nullptr);
-    ALCenum alcError = error_handler::clear_alc_error(m_audio_context.get_device());
-    EXPECT_EQ(alcError, ALC_INVALID_VALUE);
+    ALCenum alc_error = error_handler::clear_alc_error(m_audio_context.get_device());
+    EXPECT_EQ(alc_error, ALC_INVALID_VALUE);
 
-    ALCenum secondAlcCall = error_handler::clear_alc_error(m_audio_context.get_device());
-    EXPECT_EQ(secondAlcCall, ALC_NO_ERROR);
+    ALCenum second_alc_call = error_handler::clear_alc_error(m_audio_context.get_device());
+    EXPECT_EQ(second_alc_call, ALC_NO_ERROR);
 }
 
 //==============================================================================
@@ -260,10 +260,10 @@ TEST(Vec3Tests, Normalization)
     EXPECT_FLOAT_EQ(normalized.z, 0.0f);
 
     vec3 zero = vec3::zero();
-    vec3 normalizedZero = zero.normalized();
-    EXPECT_EQ(normalizedZero.x, 0.0f);
-    EXPECT_EQ(normalizedZero.y, 0.0f);
-    EXPECT_EQ(normalizedZero.z, 0.0f);
+    vec3 normalized_zero = zero.normalized();
+    EXPECT_EQ(normalized_zero.x, 0.0f);
+    EXPECT_EQ(normalized_zero.y, 0.0f);
+    EXPECT_EQ(normalized_zero.z, 0.0f);
 }
 
 TEST(Vec3Tests, NormalizeInPlace)
@@ -311,8 +311,8 @@ TEST(Vec3Tests, CrossProduct)
 
     vec3 parallel1(1.0f, 2.0f, 3.0f);
     vec3 parallel2(2.0f, 4.0f, 6.0f);
-    vec3 crossParallel = parallel1.cross(parallel2);
-    EXPECT_FLOAT_EQ(crossParallel.length(), 0.0f);
+    vec3 cross_parallel = parallel1.cross(parallel2);
+    EXPECT_FLOAT_EQ(cross_parallel.length(), 0.0f);
 }
 
 TEST(Vec3Tests, Lerp)
@@ -330,11 +330,11 @@ TEST(Vec3Tests, Lerp)
     EXPECT_FLOAT_EQ(half.y, 10.0f);
     EXPECT_FLOAT_EQ(half.z, 15.0f);
 
-    vec3 atStart = start.lerp(end, 0.0f);
-    EXPECT_TRUE(atStart == start);
+    vec3 at_start = start.lerp(end, 0.0f);
+    EXPECT_TRUE(at_start == start);
 
-    vec3 atEnd = start.lerp(end, 1.0f);
-    EXPECT_TRUE(atEnd == end);
+    vec3 at_end = start.lerp(end, 1.0f);
+    EXPECT_TRUE(at_end == end);
 }
 
 TEST(Vec3Tests, AngleTo)
@@ -347,8 +347,8 @@ TEST(Vec3Tests, AngleTo)
 
     vec3 same1(1.0f, 1.0f, 1.0f);
     vec3 same2(2.0f, 2.0f, 2.0f);
-    float sameAngle = same1.angle(same2);
-    EXPECT_NEAR(sameAngle, 0.0f, 0.001f);
+    float same_angle = same1.angle(same2);
+    EXPECT_NEAR(same_angle, 0.0f, 0.001f);
 }
 
 TEST(Vec3Tests, StaticMethods)
@@ -356,19 +356,19 @@ TEST(Vec3Tests, StaticMethods)
     vec3 v1(1.0f, 2.0f, 3.0f);
     vec3 v2(4.0f, 5.0f, 6.0f);
 
-    float staticDot = vec3::dot(v1, v2);
-    float instanceDot = v1.dot(v2);
-    EXPECT_FLOAT_EQ(staticDot, instanceDot);
+    float static_dot = vec3::dot(v1, v2);
+    float instance_dot = v1.dot(v2);
+    EXPECT_FLOAT_EQ(static_dot, instance_dot);
 
-    vec3 staticCross = vec3::cross(v1, v2);
-    vec3 instanceCross = v1.cross(v2);
-    EXPECT_TRUE(staticCross == instanceCross);
+    vec3 static_cross = vec3::cross(v1, v2);
+    vec3 instance_cross = v1.cross(v2);
+    EXPECT_TRUE(static_cross == instance_cross);
 
-    float staticDistance = vec3::distance(v1, v2);
-    float instanceDistance = v1.distance(v2);
-    EXPECT_FLOAT_EQ(staticDistance, instanceDistance);
+    float static_distance = vec3::distance(v1, v2);
+    float instance_distance = v1.distance(v2);
+    EXPECT_FLOAT_EQ(static_distance, instance_distance);
 
-    vec3 staticLerp = vec3::lerp(v1, v2, 0.5f);
-    vec3 instanceLerp = v1.lerp(v2, 0.5f);
-    EXPECT_TRUE(staticLerp == instanceLerp);
+    vec3 static_lerp = vec3::lerp(v1, v2, 0.5f);
+    vec3 instance_lerp = v1.lerp(v2, 0.5f);
+    EXPECT_TRUE(static_lerp == instance_lerp);
 }

@@ -17,7 +17,7 @@ using namespace soundcoe::internal;
 class SoundManagerTests : public ::testing::Test
 {
 protected:
-    sound_manager m_soundManager;
+    sound_manager m_sound_manager;
 
     void SetUp() override
     {
@@ -28,7 +28,7 @@ protected:
     {
         try
         {
-            m_soundManager.shutdown();
+            m_sound_manager.shutdown();
         }
         catch (...)
         {
@@ -36,19 +36,19 @@ protected:
         test_audio_files::cleanup();
     }
 
-    void initializeSoundManager()
+    void initialize_sound_manager()
     {
-        ASSERT_TRUE(m_soundManager.initialize(test_audio_files::s_test_root_dir.string(), 8, 32));
+        ASSERT_TRUE(m_sound_manager.initialize(test_audio_files::s_test_root_dir.string(), 8, 32));
     }
 
-    void waitForFade(float duration)
+    void wait_for_fade(float duration)
     {
         auto start = std::chrono::steady_clock::now();
         auto targetDuration = std::chrono::duration<float>(duration + 0.1f); // Small buffer
 
         while (std::chrono::steady_clock::now() - start < targetDuration)
         {
-            m_soundManager.update();
+            m_sound_manager.update();
             std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60 FPS
         }
     }
@@ -56,14 +56,14 @@ protected:
 
 TEST_F(SoundManagerTests, InitializationAndShutdown)
 {
-    initializeSoundManager();
-    EXPECT_TRUE(m_soundManager.is_initialized());
+    initialize_sound_manager();
+    EXPECT_TRUE(m_sound_manager.is_initialized());
 
-    m_soundManager.shutdown();
-    EXPECT_FALSE(m_soundManager.is_initialized());
+    m_sound_manager.shutdown();
+    EXPECT_FALSE(m_sound_manager.is_initialized());
 
-    EXPECT_TRUE(m_soundManager.initialize(test_audio_files::s_test_root_dir.string()));
-    EXPECT_TRUE(m_soundManager.is_initialized());
+    EXPECT_TRUE(m_sound_manager.initialize(test_audio_files::s_test_root_dir.string()));
+    EXPECT_TRUE(m_sound_manager.is_initialized());
 }
 
 TEST_F(SoundManagerTests, InvalidInitialization)
@@ -76,338 +76,338 @@ TEST_F(SoundManagerTests, InvalidInitialization)
 
 TEST_F(SoundManagerTests, PlaySoundBasic)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("beep.wav");
+    auto handle = m_sound_manager.play_sound("beep.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
     EXPECT_TRUE(sound_manager::is_handle_valid(handle));
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
-    EXPECT_EQ(m_soundManager.get_active_sounds_count(), 1);
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
+    EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 1);
 }
 
 TEST_F(SoundManagerTests, PlayMusicBasic)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_music("background.wav");
+    auto handle = m_sound_manager.play_music("background.wav");
     EXPECT_NE(handle, INVALID_MUSIC_HANDLE);
     EXPECT_TRUE(sound_manager::is_handle_valid(handle));
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_music_playing(handle));
-    EXPECT_EQ(m_soundManager.get_active_music_count(), 1);
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_music_playing(handle));
+    EXPECT_EQ(m_sound_manager.get_active_music_count(), 1);
 }
 
 TEST_F(SoundManagerTests, PlaySound3D)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
     vec3 position(1.0f, 2.0f, 3.0f);
     vec3 velocity(0.1f, 0.2f, 0.3f);
 
-    auto handle = m_soundManager.play_sound3d("beep.wav", position, velocity);
+    auto handle = m_sound_manager.play_sound3d("beep.wav", position, velocity);
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 }
 
 TEST_F(SoundManagerTests, InvalidFileHandling)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("nonexistent/file.wav");
+    auto handle = m_sound_manager.play_sound("nonexistent/file.wav");
     EXPECT_EQ(handle, INVALID_SOUND_HANDLE);
     EXPECT_FALSE(sound_manager::is_handle_valid(handle));
 
-    auto music_handle_ = m_soundManager.play_music("");
+    auto music_handle_ = m_sound_manager.play_music("");
     EXPECT_EQ(music_handle_, INVALID_MUSIC_HANDLE);
 }
 
 TEST_F(SoundManagerTests, PlaybackControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("beep.wav");
+    auto handle = m_sound_manager.play_sound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 
-    EXPECT_TRUE(m_soundManager.pause_sound(handle));
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_paused(handle));
+    EXPECT_TRUE(m_sound_manager.pause_sound(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_paused(handle));
 
-    EXPECT_TRUE(m_soundManager.resume_sound(handle));
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    EXPECT_TRUE(m_sound_manager.resume_sound(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 
-    EXPECT_TRUE(m_soundManager.stop_sound(handle));
-    m_soundManager.update();
-    EXPECT_EQ(m_soundManager.get_active_sounds_count(), 0);
+    EXPECT_TRUE(m_sound_manager.stop_sound(handle));
+    m_sound_manager.update();
+    EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 0);
 }
 
 TEST_F(SoundManagerTests, VolumeAndPitchControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("beep.wav", 0.5f, 1.2f);
+    auto handle = m_sound_manager.play_sound("beep.wav", 0.5f, 1.2f);
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
+    m_sound_manager.update();
 
-    EXPECT_TRUE(m_soundManager.set_sound_volume(handle, 0.8f));
-    EXPECT_TRUE(m_soundManager.set_sound_pitch(handle, 0.9f));
+    EXPECT_TRUE(m_sound_manager.set_sound_volume(handle, 0.8f));
+    EXPECT_TRUE(m_sound_manager.set_sound_pitch(handle, 0.9f));
 
-    vec3 newPos(5.0f, 6.0f, 7.0f);
-    EXPECT_TRUE(m_soundManager.set_sound_position(handle, newPos));
+    vec3 new_pos(5.0f, 6.0f, 7.0f);
+    EXPECT_TRUE(m_sound_manager.set_sound_position(handle, new_pos));
 
-    vec3 newVel(0.5f, 0.6f, 0.7f);
-    EXPECT_TRUE(m_soundManager.set_sound_velocity(handle, newVel));
+    vec3 new_vel(0.5f, 0.6f, 0.7f);
+    EXPECT_TRUE(m_sound_manager.set_sound_velocity(handle, new_vel));
 }
 
 TEST_F(SoundManagerTests, MasterVolumeControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_TRUE(m_soundManager.set_master_volume(0.8f));
-    EXPECT_EQ(m_soundManager.get_master_volume(), 0.8f);
+    EXPECT_TRUE(m_sound_manager.set_master_volume(0.8f));
+    EXPECT_EQ(m_sound_manager.get_master_volume(), 0.8f);
 
-    EXPECT_TRUE(m_soundManager.set_master_sounds_volume(0.6f));
-    EXPECT_EQ(m_soundManager.get_master_sounds_volume(), 0.6f);
+    EXPECT_TRUE(m_sound_manager.set_master_sounds_volume(0.6f));
+    EXPECT_EQ(m_sound_manager.get_master_sounds_volume(), 0.6f);
 
-    EXPECT_TRUE(m_soundManager.set_master_music_volume(0.4f));
-    EXPECT_EQ(m_soundManager.get_master_music_volume(), 0.4f);
+    EXPECT_TRUE(m_sound_manager.set_master_music_volume(0.4f));
+    EXPECT_EQ(m_sound_manager.get_master_music_volume(), 0.4f);
 }
 
 TEST_F(SoundManagerTests, MasterPitchControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_TRUE(m_soundManager.set_master_pitch(1.2f));
-    EXPECT_EQ(m_soundManager.get_master_pitch(), 1.2f);
+    EXPECT_TRUE(m_sound_manager.set_master_pitch(1.2f));
+    EXPECT_EQ(m_sound_manager.get_master_pitch(), 1.2f);
 
-    EXPECT_TRUE(m_soundManager.set_master_sounds_pitch(0.9f));
-    EXPECT_EQ(m_soundManager.get_master_sounds_pitch(), 0.9f);
+    EXPECT_TRUE(m_sound_manager.set_master_sounds_pitch(0.9f));
+    EXPECT_EQ(m_sound_manager.get_master_sounds_pitch(), 0.9f);
 
-    EXPECT_TRUE(m_soundManager.set_master_music_pitch(1.1f));
-    EXPECT_EQ(m_soundManager.get_master_music_pitch(), 1.1f);
+    EXPECT_TRUE(m_sound_manager.set_master_music_pitch(1.1f));
+    EXPECT_EQ(m_sound_manager.get_master_music_pitch(), 1.1f);
 }
 
 TEST_F(SoundManagerTests, MuteControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_FALSE(m_soundManager.is_muted());
-    EXPECT_FALSE(m_soundManager.is_sounds_muted());
-    EXPECT_FALSE(m_soundManager.is_music_muted());
+    EXPECT_FALSE(m_sound_manager.is_muted());
+    EXPECT_FALSE(m_sound_manager.is_sounds_muted());
+    EXPECT_FALSE(m_sound_manager.is_music_muted());
 
-    EXPECT_TRUE(m_soundManager.mute_all_sounds());
-    EXPECT_TRUE(m_soundManager.is_sounds_muted());
+    EXPECT_TRUE(m_sound_manager.mute_all_sounds());
+    EXPECT_TRUE(m_sound_manager.is_sounds_muted());
 
-    EXPECT_TRUE(m_soundManager.mute_all_music());
-    EXPECT_TRUE(m_soundManager.is_music_muted());
+    EXPECT_TRUE(m_sound_manager.mute_all_music());
+    EXPECT_TRUE(m_sound_manager.is_music_muted());
 
-    EXPECT_TRUE(m_soundManager.mute_all());
-    EXPECT_TRUE(m_soundManager.is_muted());
+    EXPECT_TRUE(m_sound_manager.mute_all());
+    EXPECT_TRUE(m_sound_manager.is_muted());
 
-    EXPECT_TRUE(m_soundManager.unmute_all());
-    EXPECT_FALSE(m_soundManager.is_muted());
-    EXPECT_FALSE(m_soundManager.is_sounds_muted());
-    EXPECT_FALSE(m_soundManager.is_music_muted());
+    EXPECT_TRUE(m_sound_manager.unmute_all());
+    EXPECT_FALSE(m_sound_manager.is_muted());
+    EXPECT_FALSE(m_sound_manager.is_sounds_muted());
+    EXPECT_FALSE(m_sound_manager.is_music_muted());
 }
 
 TEST_F(SoundManagerTests, ListenerControls)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
     vec3 position(1.0f, 2.0f, 3.0f);
     vec3 velocity(0.1f, 0.2f, 0.3f);
     vec3 forward(0.0f, 0.0f, -1.0f);
     vec3 up(0.0f, 1.0f, 0.0f);
 
-    EXPECT_TRUE(m_soundManager.update_listener(position, velocity, forward, up));
+    EXPECT_TRUE(m_sound_manager.update_listener(position, velocity, forward, up));
 
-    EXPECT_EQ(m_soundManager.get_listener_position(), position);
-    EXPECT_EQ(m_soundManager.get_listener_velocity(), velocity);
-    EXPECT_EQ(m_soundManager.get_listener_forward(), forward);
-    EXPECT_EQ(m_soundManager.get_listener_up(), up);
+    EXPECT_EQ(m_sound_manager.get_listener_position(), position);
+    EXPECT_EQ(m_sound_manager.get_listener_velocity(), velocity);
+    EXPECT_EQ(m_sound_manager.get_listener_forward(), forward);
+    EXPECT_EQ(m_sound_manager.get_listener_up(), up);
 
-    vec3 newPosition(4.0f, 5.0f, 6.0f);
-    EXPECT_TRUE(m_soundManager.set_listener_position(newPosition));
-    EXPECT_EQ(m_soundManager.get_listener_position(), newPosition);
+    vec3 new_position(4.0f, 5.0f, 6.0f);
+    EXPECT_TRUE(m_sound_manager.set_listener_position(new_position));
+    EXPECT_EQ(m_sound_manager.get_listener_position(), new_position);
 }
 
 TEST_F(SoundManagerTests, FadeInSound)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.fade_in_sound("beep.wav", 0.1f, 1.0f);
+    auto handle = m_sound_manager.fade_in_sound("beep.wav", 0.1f, 1.0f);
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 
-    waitForFade(0.1f);
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    wait_for_fade(0.1f);
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 }
 
 TEST_F(SoundManagerTests, FadeInMusic)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.fade_in_music("background.wav", 0.1f, 0.8f);
+    auto handle = m_sound_manager.fade_in_music("background.wav", 0.1f, 0.8f);
     EXPECT_NE(handle, INVALID_MUSIC_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_music_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_music_playing(handle));
 
-    waitForFade(0.1f);
-    EXPECT_TRUE(m_soundManager.is_music_playing(handle));
+    wait_for_fade(0.1f);
+    EXPECT_TRUE(m_sound_manager.is_music_playing(handle));
 }
 
 TEST_F(SoundManagerTests, FadeOutSound)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("beep.wav");
+    auto handle = m_sound_manager.play_sound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_sound_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(handle));
 
-    EXPECT_TRUE(m_soundManager.fade_out_sound(handle, 0.1f));
-    waitForFade(1.0f);
+    EXPECT_TRUE(m_sound_manager.fade_out_sound(handle, 0.1f));
+    wait_for_fade(1.0f);
 
-    EXPECT_EQ(m_soundManager.get_active_sounds_count(), 0);
+    EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 0);
 }
 
 TEST_F(SoundManagerTests, FadeOutMusic)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_music("background.wav");
+    auto handle = m_sound_manager.play_music("background.wav");
     ASSERT_NE(handle, INVALID_MUSIC_HANDLE);
 
-    m_soundManager.update();
-    EXPECT_TRUE(m_soundManager.is_music_playing(handle));
+    m_sound_manager.update();
+    EXPECT_TRUE(m_sound_manager.is_music_playing(handle));
 
-    EXPECT_TRUE(m_soundManager.fade_out_music(handle, 0.1f));
-    waitForFade(1.0f);
+    EXPECT_TRUE(m_sound_manager.fade_out_music(handle, 0.1f));
+    wait_for_fade(1.0f);
 
-    EXPECT_EQ(m_soundManager.get_active_music_count(), 0);
+    EXPECT_EQ(m_sound_manager.get_active_music_count(), 0);
 }
 
 TEST_F(SoundManagerTests, FadeToVolume)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto sound_handle_ = m_soundManager.play_sound("beep.wav", 1.0f);
+    auto sound_handle_ = m_sound_manager.play_sound("beep.wav", 1.0f);
     ASSERT_NE(sound_handle_, INVALID_SOUND_HANDLE);
 
-    auto music_handle_ = m_soundManager.play_music("background.wav", 0.5f);
+    auto music_handle_ = m_sound_manager.play_music("background.wav", 0.5f);
     ASSERT_NE(music_handle_, INVALID_MUSIC_HANDLE);
 
-    m_soundManager.update();
+    m_sound_manager.update();
 
-    EXPECT_TRUE(m_soundManager.fade_to_volume_sound(sound_handle_, 0.3f, 0.1f));
-    EXPECT_TRUE(m_soundManager.fade_to_volume_music(music_handle_, 0.8f, 0.1f));
+    EXPECT_TRUE(m_sound_manager.fade_to_volume_sound(sound_handle_, 0.3f, 0.1f));
+    EXPECT_TRUE(m_sound_manager.fade_to_volume_music(music_handle_, 0.8f, 0.1f));
 
-    waitForFade(0.1f);
+    wait_for_fade(0.1f);
 
-    EXPECT_TRUE(m_soundManager.is_sound_playing(sound_handle_));
-    EXPECT_TRUE(m_soundManager.is_music_playing(music_handle_));
+    EXPECT_TRUE(m_sound_manager.is_sound_playing(sound_handle_));
+    EXPECT_TRUE(m_sound_manager.is_music_playing(music_handle_));
 }
 
 TEST_F(SoundManagerTests, SceneManagement)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_TRUE(m_soundManager.is_scene_loaded("general"));
+    EXPECT_TRUE(m_sound_manager.is_scene_loaded("general"));
 
-    EXPECT_TRUE(m_soundManager.preload_scene("scene1"));
-    EXPECT_TRUE(m_soundManager.is_scene_loaded("scene1"));
+    EXPECT_TRUE(m_sound_manager.preload_scene("scene1"));
+    EXPECT_TRUE(m_sound_manager.is_scene_loaded("scene1"));
 
-    auto handle = m_soundManager.play_sound("explosion.wav");
+    auto handle = m_sound_manager.play_sound("explosion.wav");
     EXPECT_NE(handle, INVALID_SOUND_HANDLE);
 
-    EXPECT_TRUE(m_soundManager.unload_scene("scene1"));
-    EXPECT_FALSE(m_soundManager.is_scene_loaded("scene1"));
+    EXPECT_TRUE(m_sound_manager.unload_scene("scene1"));
+    EXPECT_FALSE(m_sound_manager.is_scene_loaded("scene1"));
 }
 
 TEST_F(SoundManagerTests, InvalidSceneOperations)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_FALSE(m_soundManager.preload_scene(""));
-    EXPECT_FALSE(m_soundManager.preload_scene("nonexistent"));
-    EXPECT_FALSE(m_soundManager.is_scene_loaded(""));
-    EXPECT_FALSE(m_soundManager.is_scene_loaded("nonexistent"));
+    EXPECT_FALSE(m_sound_manager.preload_scene(""));
+    EXPECT_FALSE(m_sound_manager.preload_scene("nonexistent"));
+    EXPECT_FALSE(m_sound_manager.is_scene_loaded(""));
+    EXPECT_FALSE(m_sound_manager.is_scene_loaded("nonexistent"));
 }
 
 TEST_F(SoundManagerTests, MultipleSoundsAndMusic)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
     std::vector<sound_handle> sound_handles;
     std::vector<music_handle> music_handles;
 
     for (int i = 0; i < 3; ++i)
     {
-        auto sound_handle_ = m_soundManager.play_sound("beep.wav");
+        auto sound_handle_ = m_sound_manager.play_sound("beep.wav");
         EXPECT_NE(sound_handle_, INVALID_SOUND_HANDLE);
         sound_handles.push_back(sound_handle_);
 
-        auto music_handle_ = m_soundManager.play_music("background.wav");
+        auto music_handle_ = m_sound_manager.play_music("background.wav");
         EXPECT_NE(music_handle_, INVALID_MUSIC_HANDLE);
         music_handles.push_back(music_handle_);
     }
 
-    m_soundManager.update();
-    EXPECT_EQ(m_soundManager.get_active_sounds_count(), 3);
-    EXPECT_EQ(m_soundManager.get_active_music_count(), 3);
+    m_sound_manager.update();
+    EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 3);
+    EXPECT_EQ(m_sound_manager.get_active_music_count(), 3);
 
-    EXPECT_TRUE(m_soundManager.pause_all_sounds());
-    EXPECT_TRUE(m_soundManager.pause_all_music());
+    EXPECT_TRUE(m_sound_manager.pause_all_sounds());
+    EXPECT_TRUE(m_sound_manager.pause_all_music());
 
-    m_soundManager.update();
+    m_sound_manager.update();
     for (auto handle : sound_handles)
     {
-        EXPECT_TRUE(m_soundManager.is_sound_paused(handle));
+        EXPECT_TRUE(m_sound_manager.is_sound_paused(handle));
     }
     for (auto handle : music_handles)
     {
-        EXPECT_TRUE(m_soundManager.is_music_paused(handle));
+        EXPECT_TRUE(m_sound_manager.is_music_paused(handle));
     }
 
-    EXPECT_TRUE(m_soundManager.stop_all());
-    m_soundManager.update();
-    EXPECT_EQ(m_soundManager.get_active_sounds_count(), 0);
-    EXPECT_EQ(m_soundManager.get_active_music_count(), 0);
+    EXPECT_TRUE(m_sound_manager.stop_all());
+    m_sound_manager.update();
+    EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 0);
+    EXPECT_EQ(m_sound_manager.get_active_music_count(), 0);
 }
 
 TEST_F(SoundManagerTests, ErrorHandling)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    m_soundManager.clear_error();
-    EXPECT_EQ(m_soundManager.get_error(), "");
+    m_sound_manager.clear_error();
+    EXPECT_EQ(m_sound_manager.get_error(), "");
 
-    EXPECT_FALSE(m_soundManager.pause_sound(INVALID_SOUND_HANDLE));
-    EXPECT_NE(m_soundManager.get_error(), "");
+    EXPECT_FALSE(m_sound_manager.pause_sound(INVALID_SOUND_HANDLE));
+    EXPECT_NE(m_sound_manager.get_error(), "");
 
-    m_soundManager.clear_error();
-    EXPECT_EQ(m_soundManager.get_error(), "");
+    m_sound_manager.clear_error();
+    EXPECT_EQ(m_sound_manager.get_error(), "");
 
-    EXPECT_FALSE(m_soundManager.resume_music(INVALID_MUSIC_HANDLE));
-    EXPECT_NE(m_soundManager.get_error(), "");
+    EXPECT_FALSE(m_sound_manager.resume_music(INVALID_MUSIC_HANDLE));
+    EXPECT_NE(m_sound_manager.get_error(), "");
 }
 
 TEST_F(SoundManagerTests, ConcurrentAccess)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
     std::vector<std::future<void>> futures;
     std::atomic<int> successCount{0};
@@ -417,11 +417,11 @@ TEST_F(SoundManagerTests, ConcurrentAccess)
         futures.emplace_back(std::async(std::launch::async, [this, &successCount]()
                                         {
             for (int j = 0; j < 10; ++j) {
-                auto handle = m_soundManager.play_sound("beep.wav");
+                auto handle = m_sound_manager.play_sound("beep.wav");
                 if (handle != INVALID_SOUND_HANDLE) {
                     successCount++;
-                    m_soundManager.update();
-                    m_soundManager.stop_sound(handle);
+                    m_sound_manager.update();
+                    m_sound_manager.stop_sound(handle);
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             } }));
@@ -437,31 +437,31 @@ TEST_F(SoundManagerTests, ConcurrentAccess)
 
 TEST_F(SoundManagerTests, FadeValidation)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    auto handle = m_soundManager.play_sound("beep.wav");
+    auto handle = m_sound_manager.play_sound("beep.wav");
     ASSERT_NE(handle, INVALID_SOUND_HANDLE);
 
-    m_soundManager.update();
+    m_sound_manager.update();
 
-    EXPECT_FALSE(m_soundManager.fade_out_sound(handle, 0.0f));
-    EXPECT_FALSE(m_soundManager.fade_out_sound(handle, -1.0f));
-    EXPECT_FALSE(m_soundManager.fade_to_volume_sound(handle, -0.5f, 1.0f));
-    EXPECT_FALSE(m_soundManager.fade_to_volume_sound(handle, 1.0f, 0.0f));
+    EXPECT_FALSE(m_sound_manager.fade_out_sound(handle, 0.0f));
+    EXPECT_FALSE(m_sound_manager.fade_out_sound(handle, -1.0f));
+    EXPECT_FALSE(m_sound_manager.fade_to_volume_sound(handle, -0.5f, 1.0f));
+    EXPECT_FALSE(m_sound_manager.fade_to_volume_sound(handle, 1.0f, 0.0f));
 
-    EXPECT_NE(m_soundManager.get_error(), "");
+    EXPECT_NE(m_sound_manager.get_error(), "");
 }
 
 TEST_F(SoundManagerTests, InvalidHandleOperations)
 {
-    initializeSoundManager();
+    initialize_sound_manager();
 
-    EXPECT_FALSE(m_soundManager.is_sound_playing(INVALID_SOUND_HANDLE));
-    EXPECT_FALSE(m_soundManager.is_music_playing(INVALID_MUSIC_HANDLE));
-    EXPECT_FALSE(m_soundManager.set_sound_volume(999, 0.5f));
-    EXPECT_FALSE(m_soundManager.set_music_pitch(999, 1.2f));
-    EXPECT_FALSE(m_soundManager.fade_out_sound(999, 1.0f));
-    EXPECT_FALSE(m_soundManager.fade_out_music(999, 1.0f));
+    EXPECT_FALSE(m_sound_manager.is_sound_playing(INVALID_SOUND_HANDLE));
+    EXPECT_FALSE(m_sound_manager.is_music_playing(INVALID_MUSIC_HANDLE));
+    EXPECT_FALSE(m_sound_manager.set_sound_volume(999, 0.5f));
+    EXPECT_FALSE(m_sound_manager.set_music_pitch(999, 1.2f));
+    EXPECT_FALSE(m_sound_manager.fade_out_sound(999, 1.0f));
+    EXPECT_FALSE(m_sound_manager.fade_out_music(999, 1.0f));
 
-    EXPECT_NE(m_soundManager.get_error(), "");
+    EXPECT_NE(m_sound_manager.get_error(), "");
 }
