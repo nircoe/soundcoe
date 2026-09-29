@@ -10,73 +10,73 @@ namespace soundcoe
 {
     namespace math
     {
-        float distance(const Vec3 &a, const Vec3 &b)
+        float distance(const vec3 &a, const vec3 &b)
         {
             return a.distance(b);
         }
 
-        float distanceSquared(const Vec3 &a, const Vec3 &b)
+        float distance_squared(const vec3 &a, const vec3 &b)
         {
-            return a.distanceSquared(b);
+            return a.distance_squared(b);
         }
 
-        Vec3 normalized(const Vec3 &v)
+        vec3 normalized(const vec3 &v)
         {
             return v.normalized();
         }
 
-        float length(const Vec3 &v)
+        float length(const vec3 &v)
         {
             return v.length();
         }
 
-        float lengthSquared(const Vec3 &v)
+        float length_squared(const vec3 &v)
         {
-            return v.lengthSquared();
+            return v.length_squared();
         }
 
-        float dot(const Vec3 &a, const Vec3 &b)
+        float dot(const vec3 &a, const vec3 &b)
         {
             return a.dot(b);
         }
 
-        Vec3 cross(const Vec3 &a, const Vec3 &b)
+        vec3 cross(const vec3 &a, const vec3 &b)
         {
             return a.cross(b);
         }
 
-        float dbToLinear(float db)
+        float db_to_linear(float db)
         {
             return powf(10.0f, db / 20.0f);
         }
 
-        float linearToDb(float linear)
+        float linear_to_db(float linear)
         {
             if(linear <= 0.0f) return -std::numeric_limits<float>::infinity();
             return 20.0f * log10f(linear);
         }
 
-        float dbToGain(float db)
+        float db_to_gain(float db)
         {
             return powf(10.0f, db / 10.0f);
         }
 
-        float gainToDb(float gain)
+        float gain_to_db(float gain)
         {
             if(gain <= 0.0f) return -std::numeric_limits<float>::infinity();
             return 10.0f * log10f(gain);
         }
 
-        float samplesToTime(unsigned int samples, unsigned int sampleRate)
+        float samples_to_time(unsigned int samples, unsigned int sample_rate)
         {
-            if(sampleRate == 0) return 0.0f;
-            return static_cast<float>(samples) / static_cast<float>(sampleRate);
+            if(sample_rate == 0) return 0.0f;
+            return static_cast<float>(samples) / static_cast<float>(sample_rate);
         }
 
-        int timeToSamples(float seconds, unsigned int sampleRate)
+        int time_to_samples(float seconds, unsigned int sample_rate)
         {
             if(seconds < 0.0f) return 0;
-            return static_cast<int>(lroundf(seconds * static_cast<float>(sampleRate)));
+            return static_cast<int>(lroundf(seconds * static_cast<float>(sample_rate)));
         }
 
         float lerp(float a, float b, float t)
@@ -97,36 +97,36 @@ namespace soundcoe
             return t * t * (3.0f - (2.0f * t));
         }
 
-        float exponentialFade(float t, float curve)
+        float exponential_fade(float t, float curve)
         {
             return powf(clamp(t), curve);
         }
 
-        float calculateVolumeByDistance(float distance, float maxDistance, float rolloffFactor)
+        float calculate_volume_by_distance(float distance, float max_distance, float rolloff_factor)
         {
-            if(maxDistance <= 0.0f)     return 0.0f;
+            if(max_distance <= 0.0f)     return 0.0f;
             distance = fabsf(distance);
-            if(distance >= maxDistance) return 0.0f;
+            if(distance >= max_distance) return 0.0f;
             if(distance == 0.0f)        return 1.0f;
-            float volumeRatio = 1.0f - (distance / maxDistance);
-            return powf(volumeRatio, rolloffFactor);
+            float volume_ratio = 1.0f - (distance / max_distance);
+            return powf(volume_ratio, rolloff_factor);
         }
 
-        float calculatePan(const Vec3 &listenerPosition, const Vec3 &sourcePosition, const Vec3 &listenerForward)
+        float calculate_pan(const vec3 &listener_position, const vec3 &source_position, const vec3 &listener_forward)
         {
-            Vec3 direction = sourcePosition - listenerPosition;
-            Vec3 listenerRight = listenerForward.cross(Vec3::up());
-            float dotRight = direction.normalized().dot(listenerRight.normalized());
-            float angle = asinf(dotRight) * (180.0f / static_cast<float>(M_PI));
+            vec3 direction = source_position - listener_position;
+            vec3 listener_right = listener_forward.cross(vec3::up());
+            float dot_right = direction.normalized().dot(listener_right.normalized());
+            float angle = asinf(dot_right) * (180.0f / static_cast<float>(M_PI));
             return clamp(angle / 90.0f, -1.0f, 1.0f);
         }
 
-        float semitonesToRatio(float semitones)
+        float semitones_to_ratio(float semitones)
         {
             return powf(2.0f, semitones / 12.0f);
         }
 
-        float ratioToSemitones(float ratio)
+        float ratio_to_semitones(float ratio)
         {
             if(ratio <= 0.0f) return 0.0f;
             return 12.0f * log2f(ratio);

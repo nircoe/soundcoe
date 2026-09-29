@@ -13,194 +13,194 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        void SoundBuffer::loadFromAudioData(AudioData &&audioData)
+        void sound_buffer::load_from_audio_data(audio_data &&audio_data_)
         {
-            const void *data = audioData.getPcmData();
-            m_format = audioData.getOpenALFormat();
-            m_size = audioData.getPcmDataSize();
-            m_sampleRate = audioData.getSampleRate();
-            m_duration = audioData.getDuration();
+            const void *data = audio_data_.get_pcm_data();
+            m_format = audio_data_.get_openal_format();
+            m_size = audio_data_.get_pcm_data_size();
+            m_sample_rate = audio_data_.get_sample_rate();
+            m_duration = audio_data_.get_duration();
 
-            generateBuffer(data);
+            generate_buffer(data);
 
             m_loaded = true;
         }
 
-        void SoundBuffer::generateBuffer(const void* data)
+        void sound_buffer::generate_buffer(const void* data)
         {
-            alGenBuffers(1, &m_bufferId);
-            ErrorHandler::throwOnOpenALError("Generate buffer");
+            alGenBuffers(1, &m_buffer_id);
+            error_handler::throw_on_openal_error("Generate buffer");
 
-            alBufferData(m_bufferId, m_format, data, m_size, m_sampleRate);
-            try { ErrorHandler::throwOnOpenALError("Buffer Data"); }
+            alBufferData(m_buffer_id, m_format, data, m_size, m_sample_rate);
+            try { error_handler::throw_on_openal_error("Buffer Data"); }
             catch(const std::runtime_error&)
             {
-                alDeleteBuffers(1, &m_bufferId);
-                m_bufferId = 0;
+                alDeleteBuffers(1, &m_buffer_id);
+                m_buffer_id = 0;
                 throw;
             }
         }
 
-        SoundBuffer::SoundBuffer() { }
+        sound_buffer::sound_buffer() { }
 
-        SoundBuffer::SoundBuffer(const std::string &filename) : SoundBuffer()
+        sound_buffer::sound_buffer(const std::string &filename) : sound_buffer()
         {
-            loadFromFile(filename);
+            load_from_file(filename);
         }
 
-        SoundBuffer::SoundBuffer(const void *data, ALenum format, ALsizei size, ALsizei sampleRate) : SoundBuffer()
+        sound_buffer::sound_buffer(const void *data, ALenum format, ALsizei size, ALsizei sample_rate) : sound_buffer()
         {
-            loadFromMemory(data, format, size, sampleRate);
+            load_from_memory(data, format, size, sample_rate);
         }
 
-        SoundBuffer::~SoundBuffer()
+        sound_buffer::~sound_buffer()
         {
             unload();
         }
 
-        SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept : m_bufferId(other.m_bufferId),
+        sound_buffer::sound_buffer(sound_buffer &&other) noexcept : m_buffer_id(other.m_buffer_id),
                                                                 m_format(other.m_format),
                                                                 m_size(other.m_size),
-                                                                m_sampleRate(other.m_sampleRate),
+                                                                m_sample_rate(other.m_sample_rate),
                                                                 m_duration(other.m_duration),
                                                                 m_loaded(other.m_loaded),
                                                                 m_filename(std::move(other.m_filename))
         {
-            other.m_bufferId = 0;
+            other.m_buffer_id = 0;
             other.m_loaded = false;
             other.m_format = AL_NONE;
             other.m_size = 0;
-            other.m_sampleRate = 0;
+            other.m_sample_rate = 0;
             other.m_duration = 0.0f;
         }
 
-        SoundBuffer &SoundBuffer::operator=(SoundBuffer &&other) noexcept
+        sound_buffer &sound_buffer::operator=(sound_buffer &&other) noexcept
         {
             if (this == &other) return *this;
 
             unload();
 
-            m_bufferId = other.m_bufferId;
+            m_buffer_id = other.m_buffer_id;
             m_filename = std::move(other.m_filename);
             m_loaded = other.m_loaded;
             m_format = other.m_format;
             m_size = other.m_size;
-            m_sampleRate = other.m_sampleRate;
+            m_sample_rate = other.m_sample_rate;
             m_duration = other.m_duration;
 
-            other.m_bufferId = 0;
+            other.m_buffer_id = 0;
             other.m_loaded = false;
             other.m_format = AL_NONE;
             other.m_size = 0;
-            other.m_sampleRate = 0;
+            other.m_sample_rate = 0;
             other.m_duration = 0.0f;
 
             return *this;
         }
 
-        void SoundBuffer::loadFromFile(const std::string &filename)
+        void sound_buffer::load_from_file(const std::string &filename)
         {
             unload();
 
-            std::filesystem::path filePath(filename);
-            if(!std::filesystem::exists(filePath))
+            std::filesystem::path file_path(filename);
+            if(!std::filesystem::exists(file_path))
             {
-                std::string message = "SoundBuffer::loadFromFile: File does not exist: \"" + filename + "\"";
+                std::string message = "sound_buffer::load_from_file: File does not exist: \"" + filename + "\"";
                 logcoe::error(message);
                 throw std::runtime_error(message);
             }
-            
-            if(!std::filesystem::is_regular_file(filePath))
+
+            if(!std::filesystem::is_regular_file(file_path))
             {
-                std::string message = "SoundBuffer::loadFromFile: Not a regular file: \"" + filename + "\"";
+                std::string message = "sound_buffer::load_from_file: Not a regular file: \"" + filename + "\"";
                 logcoe::error(message);
                 throw std::runtime_error(message);
             }
 
             m_filename = filename;
 
-            AudioFormat format = AudioData::detectFormat(filename);
+            audio_format format = audio_data::detect_format(filename);
             switch(format)
             {
-                case AudioFormat::Wav:
-                    loadFromAudioData(AudioData::loadFromWav(filename));
+                case audio_format::wav:
+                    load_from_audio_data(audio_data::load_from_wav(filename));
                     break;
-                case AudioFormat::Mp3:
-                    loadFromAudioData(AudioData::loadFromMp3(filename));
+                case audio_format::mp3:
+                    load_from_audio_data(audio_data::load_from_mp3(filename));
                     break;
-                case AudioFormat::Ogg:
-                    loadFromAudioData(AudioData::loadFromOgg(filename));
+                case audio_format::ogg:
+                    load_from_audio_data(audio_data::load_from_ogg(filename));
                     break;
                 default:
-                    std::string message = "SoundBuffer::loadFromFile: Unsupported audio format: " + filename;
+                    std::string message = "sound_buffer::load_from_file: Unsupported audio format: " + filename;
                     logcoe::error(message);
                     throw std::runtime_error(message);
             }
-            logcoe::info("SoundBuffer::loadFromFile: SoundBuffer loaded successfully");
+            logcoe::info("sound_buffer::load_from_file: sound_buffer loaded successfully");
         }
 
-        void SoundBuffer::loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate)
+        void sound_buffer::load_from_memory(const void *data, ALenum format, ALsizei size, ALsizei sample_rate)
         {
             unload();
 
             m_format = format;
             m_size = size;
-            m_sampleRate = sampleRate;
+            m_sample_rate = sample_rate;
 
-            float bytesPerSample;
+            float bytes_per_sample;
             switch (m_format)
             {
             case AL_FORMAT_MONO8:
-                bytesPerSample = 1.0f;
+                bytes_per_sample = 1.0f;
                 break;
             case AL_FORMAT_MONO16:
-                bytesPerSample = 2.0f;
+                bytes_per_sample = 2.0f;
                 break;
             case AL_FORMAT_STEREO8:
-                bytesPerSample = 2.0f;
+                bytes_per_sample = 2.0f;
                 break;
             case AL_FORMAT_STEREO16:
-                bytesPerSample = 4.0f;
+                bytes_per_sample = 4.0f;
                 break;
             default:
-                bytesPerSample = 0.0f;
+                bytes_per_sample = 0.0f;
                 break;
             }
-            assert(bytesPerSample != 0.0f);
-            m_duration = m_size / (bytesPerSample * m_sampleRate);
+            assert(bytes_per_sample != 0.0f);
+            m_duration = m_size / (bytes_per_sample * m_sample_rate);
 
-            generateBuffer(data);
+            generate_buffer(data);
 
             m_loaded = true;
-            logcoe::info("SoundBuffer::loadFromMemory: SoundBuffer loaded successfully");
+            logcoe::info("sound_buffer::load_from_memory: sound_buffer loaded successfully");
         }
 
-        void SoundBuffer::unload()
+        void sound_buffer::unload()
         {
-            if (!m_loaded || !m_bufferId)
+            if (!m_loaded || !m_buffer_id)
                 return;
 
-            alDeleteBuffers(1, &m_bufferId);
-            m_bufferId = 0;
+            alDeleteBuffers(1, &m_buffer_id);
+            m_buffer_id = 0;
             m_loaded = false;
         }
 
-        ALuint SoundBuffer::getBufferId() const { return m_bufferId; }
+        ALuint sound_buffer::get_buffer_id() const { return m_buffer_id; }
 
-        ALenum SoundBuffer::getFormat() const { return m_format; }
+        ALenum sound_buffer::get_format() const { return m_format; }
 
-        ALsizei SoundBuffer::getSize() const { return m_size; }
+        ALsizei sound_buffer::get_size() const { return m_size; }
 
-        ALsizei SoundBuffer::getSampleRate() const { return m_sampleRate; }
+        ALsizei sound_buffer::get_sample_rate() const { return m_sample_rate; }
 
-        ALfloat SoundBuffer::getDuration() const { return m_duration; }
+        ALfloat sound_buffer::get_duration() const { return m_duration; }
 
-        bool SoundBuffer::isLoaded() const { return m_loaded; }
+        bool sound_buffer::is_loaded() const { return m_loaded; }
 
-        bool SoundBuffer::isStreaming() const { return m_stream; }
+        bool sound_buffer::is_streaming() const { return m_stream; }
 
-        const std::string &SoundBuffer::getFileName() const { return m_filename; }
-    } // namespace detail
+        const std::string &sound_buffer::get_filename() const { return m_filename; }
+    } // namespace internal
 } // namespace soundcoe

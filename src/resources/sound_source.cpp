@@ -8,36 +8,36 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        SoundSource::SoundSource() : m_position(Vec3::zero()), m_velocity(Vec3::zero()) { }
+        sound_source::sound_source() : m_position(vec3::zero()), m_velocity(vec3::zero()) { }
 
-        SoundSource::SoundSource(const SoundBuffer &buffer)
+        sound_source::sound_source(const sound_buffer &buffer)
         {
             create();
-            attachBuffer(buffer);
+            attach_buffer(buffer);
         }
 
-        SoundSource::SoundSource(SoundSource &&other) noexcept :
-            m_sourceId(other.m_sourceId), m_volume(other.m_volume), m_pitch(other.m_pitch), m_position(other.m_position),
+        sound_source::sound_source(sound_source &&other) noexcept :
+            m_source_id(other.m_source_id), m_volume(other.m_volume), m_pitch(other.m_pitch), m_position(other.m_position),
             m_velocity(other.m_velocity), m_looping(other.m_looping), m_created(other.m_created)
         {
-            other.m_sourceId = 0;
+            other.m_source_id = 0;
             other.m_volume = 1.0f;
             other.m_pitch = 1.0f;
-            other.m_position = Vec3::zero();
-            other.m_velocity = Vec3::zero();
+            other.m_position = vec3::zero();
+            other.m_velocity = vec3::zero();
             other.m_looping = AL_FALSE;
             other.m_created = false;
         }
 
-        SoundSource &SoundSource::operator=(SoundSource &&other) noexcept
+        sound_source &sound_source::operator=(sound_source &&other) noexcept
         {
             if(this == &other) return *this;
 
             destroy();
 
-            m_sourceId = other.m_sourceId;
+            m_source_id = other.m_source_id;
             m_volume = other.m_volume;
             m_pitch = other.m_pitch;
             m_position = other.m_position;
@@ -45,280 +45,280 @@ namespace soundcoe
             m_looping = other.m_looping;
             m_created = other.m_created;
 
-            other.m_sourceId = 0;
+            other.m_source_id = 0;
             other.m_volume = 1.0f;
             other.m_pitch = 1.0f;
-            other.m_position = Vec3::zero();
-            other.m_velocity = Vec3::zero();
+            other.m_position = vec3::zero();
+            other.m_velocity = vec3::zero();
             other.m_looping = AL_FALSE;
             other.m_created = false;
             return *this;
         }
 
-        SoundSource::~SoundSource() { destroy(); }
+        sound_source::~sound_source() { destroy(); }
 
-        void SoundSource::create()
+        void sound_source::create()
         {
             if(m_created)
             {
-                logcoe::info("SoundSource::create: SoundSource is already created");
+                logcoe::info("sound_source::create: sound_source is already created");
                 return;
             }
 
-            alGenSources(1, &m_sourceId);
-            ErrorHandler::throwOnOpenALError("Generate Source");
+            alGenSources(1, &m_source_id);
+            error_handler::throw_on_openal_error("Generate Source");
 
             m_created = true;
-            
-            setVolume(1.0f);
-            setPitch(1.0f);
-            setLooping(false);
 
-            logcoe::info("SoundSource::create: SoundSource created successfully");
+            set_volume(1.0f);
+            set_pitch(1.0f);
+            set_looping(false);
+
+            logcoe::info("sound_source::create: sound_source created successfully");
         }
 
-        void SoundSource::destroy()
+        void sound_source::destroy()
         {
             if(!m_created) return;
 
-            if(isPlaying() || isPaused()) stop();
+            if(is_playing() || is_paused()) stop();
 
-            try { detachBuffer(); }
+            try { detach_buffer(); }
             catch(...) { }
 
-            alDeleteSources(1, &m_sourceId);
-            ErrorHandler::throwOnOpenALError("Delete Source");
+            alDeleteSources(1, &m_source_id);
+            error_handler::throw_on_openal_error("Delete Source");
 
-            m_sourceId = 0;
+            m_source_id = 0;
             m_created = false;
         }
 
-        bool SoundSource::isCreated() const
+        bool sound_source::is_created() const
         {
             return m_created;
         }
 
-        void SoundSource::attachBuffer(const SoundBuffer &buffer)
-        {   
+        void sound_source::attach_buffer(const sound_buffer &buffer)
+        {
             if(!m_created) create();
 
-            ALint bufferId;
-            alGetSourcei(m_sourceId, AL_BUFFER, &bufferId);
-            if (bufferId != 0) detachBuffer();
-            
-            alSourcei(m_sourceId, AL_BUFFER, static_cast<ALint>(buffer.getBufferId()));
-            ErrorHandler::throwOnOpenALError("Attach Buffer to Source");
+            ALint buffer_id;
+            alGetSourcei(m_source_id, AL_BUFFER, &buffer_id);
+            if (buffer_id != 0) detach_buffer();
+
+            alSourcei(m_source_id, AL_BUFFER, static_cast<ALint>(buffer.get_buffer_id()));
+            error_handler::throw_on_openal_error("Attach Buffer to Source");
         }
 
-        void SoundSource::detachBuffer()
+        void sound_source::detach_buffer()
         {
             if(!m_created) return;
 
-            if(isPlaying() || isPaused()) stop();
+            if(is_playing() || is_paused()) stop();
 
-            alSourcei(m_sourceId, AL_BUFFER, 0);
-            ErrorHandler::throwOnOpenALError("Detach Buffer from Source");
+            alSourcei(m_source_id, AL_BUFFER, 0);
+            error_handler::throw_on_openal_error("Detach Buffer from Source");
         }
 
-        bool SoundSource::play()
+        bool sound_source::play()
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::play: SoundSource not created");
+                logcoe::warning("sound_source::play: sound_source not created");
                 return false;
             }
 
-            if(isPlaying())
+            if(is_playing())
             {
-                logcoe::debug("SoundSource::play: SoundSource is already playing");
+                logcoe::debug("sound_source::play: sound_source is already playing");
                 return true;
             }
 
-            alSourcePlay(m_sourceId);
-            if(ErrorHandler::checkOpenALError("Play Source"))
+            alSourcePlay(m_source_id);
+            if(error_handler::check_openal_error("Play Source"))
                 return false;
-            
+
             return true;
         }
 
-        bool SoundSource::pause()
+        bool sound_source::pause()
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::pause: SoundSource not created");
+                logcoe::warning("sound_source::pause: sound_source not created");
                 return false;
             }
 
-            if(isPaused())
+            if(is_paused())
             {
-                logcoe::debug("SoundSource::pause: SoundSource is already paused");
+                logcoe::debug("sound_source::pause: sound_source is already paused");
                 return true;
             }
 
-            alSourcePause(m_sourceId);
-            if(ErrorHandler::checkOpenALError("Pause Source"))
+            alSourcePause(m_source_id);
+            if(error_handler::check_openal_error("Pause Source"))
                 return false;
 
             return true;
         }
 
-        bool SoundSource::stop()
+        bool sound_source::stop()
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::stop: SoundSource not created");
+                logcoe::warning("sound_source::stop: sound_source not created");
                 return false;
             }
 
-            if(!(isPlaying() || isPaused()))
+            if(!(is_playing() || is_paused()))
             {
-                logcoe::debug("SoundSource::stop: SoundSource is already stopped or in initial state");
+                logcoe::debug("sound_source::stop: sound_source is already stopped or in initial state");
                 return true;
             }
 
-            alSourceStop(m_sourceId);
-            if(ErrorHandler::checkOpenALError("Stop Source"))
+            alSourceStop(m_source_id);
+            if(error_handler::check_openal_error("Stop Source"))
                 return false;
 
             return true;
         }
 
-        bool SoundSource::setVolume(float volume)
+        bool sound_source::set_volume(float volume)
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::setVolume: SoundSource not created");
+                logcoe::warning("sound_source::set_volume: sound_source not created");
                 return false;
             }
-            ALfloat ALvolume = static_cast<ALfloat>(volume);
-            alSourcef(m_sourceId, AL_GAIN, ALvolume);
-            if (ErrorHandler::checkOpenALError("Set Volume"))
+            ALfloat al_volume = static_cast<ALfloat>(volume);
+            alSourcef(m_source_id, AL_GAIN, al_volume);
+            if (error_handler::check_openal_error("Set Volume"))
                 return false;
 
-            m_volume = ALvolume;
+            m_volume = al_volume;
             return true;
         }
 
-        bool SoundSource::setPitch(float pitch)
+        bool sound_source::set_pitch(float pitch)
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::setPitch: SoundSource not created");
+                logcoe::warning("sound_source::set_pitch: sound_source not created");
                 return false;
             }
-            ALfloat ALpitch = static_cast<ALfloat>(pitch);
-            alSourcef(m_sourceId, AL_PITCH, ALpitch);
-            if (ErrorHandler::checkOpenALError("Set Pitch"))
+            ALfloat al_pitch = static_cast<ALfloat>(pitch);
+            alSourcef(m_source_id, AL_PITCH, al_pitch);
+            if (error_handler::check_openal_error("Set Pitch"))
                 return false;
 
-            m_pitch = ALpitch;
+            m_pitch = al_pitch;
             return true;
         }
 
-        bool SoundSource::setPosition(const Vec3 &position)
+        bool sound_source::set_position(const vec3 &position)
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::setPosition: SoundSource not created");
+                logcoe::warning("sound_source::set_position: sound_source not created");
                 return false;
             }
-            alSource3f(m_sourceId, AL_POSITION,
+            alSource3f(m_source_id, AL_POSITION,
                     static_cast<ALfloat>(position.x), static_cast<ALfloat>(position.y), static_cast<ALfloat>(position.z));
-            if (ErrorHandler::checkOpenALError("Set Position"))
+            if (error_handler::check_openal_error("Set Position"))
                 return false;
 
             m_position = position;
             return true;
         }
 
-        bool SoundSource::setVelocity(const Vec3 &velocity)
+        bool sound_source::set_velocity(const vec3 &velocity)
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::setVelocity: SoundSource not created");
+                logcoe::warning("sound_source::set_velocity: sound_source not created");
                 return false;
             }
-            alSource3f(m_sourceId, AL_VELOCITY,
+            alSource3f(m_source_id, AL_VELOCITY,
                     static_cast<ALfloat>(velocity.x), static_cast<ALfloat>(velocity.y), static_cast<ALfloat>(velocity.z));
-            if (ErrorHandler::checkOpenALError("Set Velocity"))
+            if (error_handler::check_openal_error("Set Velocity"))
                 return false;
 
             m_velocity = velocity;
             return true;
         }
 
-        bool SoundSource::setLooping(bool looping)
+        bool sound_source::set_looping(bool looping)
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::setLooping: SoundSource not created");
+                logcoe::warning("sound_source::set_looping: sound_source not created");
                 return false;
             }
-            ALboolean ALlooping = looping ? AL_TRUE : AL_FALSE;
-            alSourcei(m_sourceId, AL_LOOPING, ALlooping);
-            if (ErrorHandler::checkOpenALError("Set Looping"))
+            ALboolean al_looping = looping ? AL_TRUE : AL_FALSE;
+            alSourcei(m_source_id, AL_LOOPING, al_looping);
+            if (error_handler::check_openal_error("Set Looping"))
                 return false;
 
-            m_looping = ALlooping;
+            m_looping = al_looping;
             return true;
         }
 
-        float SoundSource::getVolume() const { return static_cast<float>(m_volume); }
+        float sound_source::get_volume() const { return static_cast<float>(m_volume); }
 
-        float SoundSource::getPitch() const { return static_cast<float>(m_pitch); }
+        float sound_source::get_pitch() const { return static_cast<float>(m_pitch); }
 
-        const Vec3 &SoundSource::getPosition() const { return m_position; }
+        const vec3 &sound_source::get_position() const { return m_position; }
 
-        const Vec3 &SoundSource::getVelocity() const { return m_velocity; }
+        const vec3 &sound_source::get_velocity() const { return m_velocity; }
 
-        bool SoundSource::isLooping() const { return static_cast<bool>(m_looping); }
+        bool sound_source::is_looping() const { return static_cast<bool>(m_looping); }
 
-        SoundState SoundSource::getState() const 
-        { 
-            if(!m_created) 
-            {
-                logcoe::warning("SoundSource::getState: SoundSource not created");
-                return SoundState::Initial;
-            }
-
-            ALint state;
-            alGetSourcei(m_sourceId, AL_SOURCE_STATE, &state);
-            if(ErrorHandler::checkOpenALError("Get Source State"))
-                return SoundState::Initial;
-
-            switch(state)
-            {
-                case AL_INITIAL: return SoundState::Initial;
-                case AL_PLAYING: return SoundState::Playing;
-                case AL_PAUSED: return SoundState::Paused;
-                case AL_STOPPED: return SoundState::Stopped;
-            }
-
-            return SoundState::Initial;
-        }
-
-        bool SoundSource::isPlaying() const { return getState() == SoundState::Playing; }
-
-        bool SoundSource::isPaused() const { return getState() == SoundState::Paused; }
-
-        bool SoundSource::isStopped() const { return getState() == SoundState::Stopped; }
-
-        ALuint SoundSource::getSourceId() const { return m_sourceId; }
-
-        ALuint SoundSource::getBufferId() const
+        sound_state sound_source::get_state() const
         {
             if(!m_created)
             {
-                logcoe::warning("SoundSource::getBufferId: SoundSource not created");
+                logcoe::warning("sound_source::get_state: sound_source not created");
+                return sound_state::initial;
+            }
+
+            ALint state;
+            alGetSourcei(m_source_id, AL_SOURCE_STATE, &state);
+            if(error_handler::check_openal_error("Get Source State"))
+                return sound_state::initial;
+
+            switch(state)
+            {
+                case AL_INITIAL: return sound_state::initial;
+                case AL_PLAYING: return sound_state::playing;
+                case AL_PAUSED: return sound_state::paused;
+                case AL_STOPPED: return sound_state::stopped;
+            }
+
+            return sound_state::initial;
+        }
+
+        bool sound_source::is_playing() const { return get_state() == sound_state::playing; }
+
+        bool sound_source::is_paused() const { return get_state() == sound_state::paused; }
+
+        bool sound_source::is_stopped() const { return get_state() == sound_state::stopped; }
+
+        ALuint sound_source::get_source_id() const { return m_source_id; }
+
+        ALuint sound_source::get_buffer_id() const
+        {
+            if(!m_created)
+            {
+                logcoe::warning("sound_source::get_buffer_id: sound_source not created");
                 return 0;
             }
 
-            ALint bufferId;
-            alGetSourcei(m_sourceId, AL_BUFFER, &bufferId);
-            if (ErrorHandler::checkOpenALError("Get Buffer Id"))
+            ALint buffer_id;
+            alGetSourcei(m_source_id, AL_BUFFER, &buffer_id);
+            if (error_handler::check_openal_error("Get Buffer Id"))
                 return 0;
 
-            return static_cast<ALuint>(bufferId);
+            return static_cast<ALuint>(buffer_id);
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

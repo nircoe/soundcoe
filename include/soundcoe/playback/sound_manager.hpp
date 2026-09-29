@@ -10,234 +10,234 @@
 
 namespace soundcoe
 {
-    constexpr SoundHandle INVALID_SOUND_HANDLE = 0;
-    constexpr MusicHandle INVALID_MUSIC_HANDLE = 0;
+    constexpr sound_handle INVALID_SOUND_HANDLE = 0;
+    constexpr music_handle INVALID_MUSIC_HANDLE = 0;
 
-    namespace detail
+    namespace internal
     {
-        struct ActiveAudio
+        struct active_audio
         {
-            size_t m_sourceIndex;
+            size_t m_source_index;
             std::string m_filename;
-            float m_baseVolume;
-            float m_basePitch;
+            float m_base_volume;
+            float m_base_pitch;
             bool m_loop;
 
             bool m_stream = false;
-            size_t m_streamBufferSize = 0;
-            float m_streamPosition = 0.0f;
-            bool m_streamNeedsRefill = false;
+            size_t m_stream_buffer_size = 0;
+            float m_stream_position = 0.0f;
+            bool m_stream_needs_refill = false;
 
-            bool m_isFading = false;
-            float m_fadeDuration = 0.0f;
-            float m_fadeElapsed = 0.0f;
-            float m_fadeStartVolume = 0.0f;
-            float m_fadeTargetVolume = 0.0f;
+            bool m_is_fading = false;
+            float m_fade_duration = 0.0f;
+            float m_fade_elapsed = 0.0f;
+            float m_fade_start_volume = 0.0f;
+            float m_fade_target_volume = 0.0f;
         };
 
-        class SoundManager
+        class sound_manager
         {
             bool m_initialized = false;
 
-            ResourceManager m_resourceManager;
-            std::string m_soundSubdir;
-            std::string m_musicSubdir;
+            resource_manager m_resource_manager;
+            std::string m_sound_subdir;
+            std::string m_music_subdir;
 
-            std::atomic<size_t> m_nextSoundHandle;
-            std::atomic<size_t> m_nextMusicHandle;
+            std::atomic<size_t> m_next_sound_handle;
+            std::atomic<size_t> m_next_music_handle;
 
             mutable std::mutex m_mutex;
-            std::unordered_map<SoundHandle, ActiveAudio> m_activeSounds;
-            std::unordered_map<MusicHandle, ActiveAudio> m_activeMusic;
+            std::unordered_map<sound_handle, active_audio> m_active_sounds;
+            std::unordered_map<music_handle, active_audio> m_active_music;
 
-            float m_masterVolume = 1.0f;
-            float m_masterSoundsVolume = 1.0f;
-            float m_masterMusicVolume = 1.0f;
-            float m_masterPitch = 1.0f;
-            float m_masterSoundsPitch = 1.0f;
-            float m_masterMusicPitch = 1.0f;
+            float m_master_volume = 1.0f;
+            float m_master_sounds_volume = 1.0f;
+            float m_master_music_volume = 1.0f;
+            float m_master_pitch = 1.0f;
+            float m_master_sounds_pitch = 1.0f;
+            float m_master_music_pitch = 1.0f;
 
             bool m_mute = false;
-            bool m_soundsMute = false;
-            bool m_musicMute = false;
+            bool m_sounds_mute = false;
+            bool m_music_mute = false;
 
-            Vec3 m_listenerPosition;
-            Vec3 m_listenerVelocity;
-            Vec3 m_listenerForward;
-            Vec3 m_listenerUp;
+            vec3 m_listener_position;
+            vec3 m_listener_velocity;
+            vec3 m_listener_forward;
+            vec3 m_listener_up;
 
-            std::chrono::steady_clock::time_point m_lastUpdate;
-            bool m_firstUpdate = true;
+            std::chrono::steady_clock::time_point m_last_update;
+            bool m_first_update = true;
 
-            std::string m_lastError = "";
-            bool m_hasError = false;
+            std::string m_last_error = "";
+            bool m_has_error = false;
 
             template <typename Setter, typename Getter>
-            void updateAllAudioProperty(std::unordered_map<size_t, ActiveAudio> &activeAudio,
-                                        Setter setProperty, Getter getBaseProperty,
-                                        float masterMultiplier, float categoryMultiplier)
+            void update_all_audio_property(std::unordered_map<size_t, active_audio> &active_audio_,
+                                        Setter set_property, Getter get_base_property,
+                                        float master_multiplier, float category_multiplier)
             {
-                for (auto it = activeAudio.begin(); it != activeAudio.end();)
+                for (auto it = active_audio_.begin(); it != active_audio_.end();)
                 {
-                    auto sourceAllocation = m_resourceManager.getSourceAllocation(it->second.m_sourceIndex);
-                    if (!(sourceAllocation.has_value()) || !(sourceAllocation.value().get().m_active))
+                    auto source_allocation = m_resource_manager.get_source_allocation(it->second.m_source_index);
+                    if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
                     {
-                        it = activeAudio.erase(it);
+                        it = active_audio_.erase(it);
                         continue;
                     }
 
-                    float finalValue = getBaseProperty(it->second) * masterMultiplier * categoryMultiplier;
-                    setProperty(sourceAllocation.value().get().m_source, finalValue);
+                    float final_value = get_base_property(it->second) * master_multiplier * category_multiplier;
+                    set_property(source_allocation.value().get().m_source, final_value);
                     ++it;
                 }
             }
 
-            void updateAllSoundsVolume();
-            void updateAllMusicVolume();
-            void updateAllVolume();
-            void updateAllSoundsPitch();
-            void updateAllMusicPitch();
-            void updateAllPitch();
+            void update_all_sounds_volume();
+            void update_all_music_volume();
+            void update_all_volume();
+            void update_all_sounds_pitch();
+            void update_all_music_pitch();
+            void update_all_pitch();
 
-            bool setListenerPositionImpl(const Vec3 &position);
-            bool setListenerVelocityImpl(const Vec3 &velocity);
-            bool setListenerOrientationImpl(const Vec3 &forward, const Vec3 &up);
+            bool set_listener_position_impl(const vec3 &position);
+            bool set_listener_velocity_impl(const vec3 &velocity);
+            bool set_listener_orientation_impl(const vec3 &forward, const vec3 &up);
 
-            bool setError(const std::string &error);
+            bool set_error(const std::string &error);
 
-            bool fadeToVolume(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                            float targetVolume, float duration, const std::string &method);
-            bool fade(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                    bool fadeIn, float duration, const std::string &method);
+            bool fade_to_volume(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
+                            float target_volume, float duration, const std::string &method);
+            bool fade(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
+                    bool fade_in, float duration, const std::string &method);
 
-            bool checkAudioState(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                                SoundState state, const std::string &method);
+            bool check_audio_state(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
+                                sound_state state, const std::string &method);
 
-            bool setAudioProperty(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                                PropertyType type, const std::string &method,
+            bool set_audio_property(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
+                                property_type type, const std::string &method,
                                 float value, float y = 0.0f, float z = 0.0f);
 
-            bool audioOperation(std::unordered_map<size_t, ActiveAudio> &activeAudio, size_t handle,
-                                SoundState operation, const std::string &method);
-            bool audioOperationAll(std::unordered_map<size_t, ActiveAudio> &activeAudio, SoundState operation,
+            bool audio_operation(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
+                                sound_state operation, const std::string &method);
+            bool audio_operation_all(std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
                                 const std::string &method);
 
-            size_t play(std::unordered_map<size_t, ActiveAudio> &activeAudio, const std::string &filename,
-                        float volume, float pitch, bool loop, SoundPriority priority,
-                        std::atomic<size_t> &nextHandle, const std::string &method,
-                        float masterCategoryVolume, float masterCategoryPitch,
-                        bool is3D = false, const Vec3 &position = Vec3::zero(), const Vec3 &velocity = Vec3::zero());
+            size_t play(std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename,
+                        float volume, float pitch, bool loop, sound_priority priority,
+                        std::atomic<size_t> &next_handle, const std::string &method,
+                        float master_category_volume, float master_category_pitch,
+                        bool is_3d = false, const vec3 &position = vec3::zero(), const vec3 &velocity = vec3::zero());
 
-            void handleStreamingAudio();
-            void handleFadeEffects(std::unordered_map<size_t, ActiveAudio> &activeAudio, 
-                                float categoryMultiplier, float deltaTime);
-            void handleInactiveAudio(std::unordered_map<size_t, ActiveAudio> &activeAudio);
+            void handle_streaming_audio();
+            void handle_fade_effects(std::unordered_map<size_t, active_audio> &active_audio_,
+                                float category_multiplier, float delta_time);
+            void handle_inactive_audio(std::unordered_map<size_t, active_audio> &active_audio_);
 
         public:
-            SoundManager();
-            ~SoundManager();
+            sound_manager();
+            ~sound_manager();
 
-            bool initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
-                            size_t maxCacheSizeMB = UNLIMITED_CACHE, const std::string &soundSubdir = "sfx",
-                            const std::string &musicSubdir = "music", LogLevel level = LogLevel::DEBUG);
+            bool initialize(const std::string &audio_root_directory, size_t max_sources = 64,
+                            size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+                            const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
             void shutdown();
-            bool isInitialized() const;
+            bool is_initialized() const;
 
-            bool preloadScene(const std::string &sceneName);
-            bool unloadScene(const std::string &sceneName);
-            bool isSceneLoaded(const std::string &sceneName) const;
+            bool preload_scene(const std::string &scene_name);
+            bool unload_scene(const std::string &scene_name);
+            bool is_scene_loaded(const std::string &scene_name) const;
 
             void update();
 
-            SoundHandle playSound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                SoundPriority priority = SoundPriority::Medium);
-            SoundHandle playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity = Vec3::zero(),
+            sound_handle play_sound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+                                sound_priority priority = sound_priority::medium);
+            sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    SoundPriority priority = SoundPriority::Medium);
-            MusicHandle playMusic(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                SoundPriority priority = SoundPriority::Critical);
+                                    sound_priority priority = sound_priority::medium);
+            music_handle play_music(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+                                sound_priority priority = sound_priority::critical);
 
-            bool pauseSound(SoundHandle handle);
-            bool pauseMusic(MusicHandle handle);
-            bool pauseAllSounds();
-            bool pauseAllMusic();
-            bool pauseAll();
-            bool resumeSound(SoundHandle handle);
-            bool resumeMusic(MusicHandle handle);
-            bool resumeAllSounds();
-            bool resumeAllMusic();
-            bool resumeAll();
-            bool stopSound(SoundHandle handle);
-            bool stopMusic(MusicHandle handle);
-            bool stopAllSounds();
-            bool stopAllMusic();
-            bool stopAll();
-            bool setSoundVolume(SoundHandle handle, float volume);
-            bool setMusicVolume(MusicHandle handle, float volume);
-            bool setSoundPitch(SoundHandle handle, float pitch);
-            bool setMusicPitch(MusicHandle handle, float pitch);
-            bool setSoundPosition(SoundHandle handle, const Vec3 &position);
-            bool setSoundVelocity(SoundHandle handle, const Vec3 &velocity);
+            bool pause_sound(sound_handle handle);
+            bool pause_music(music_handle handle);
+            bool pause_all_sounds();
+            bool pause_all_music();
+            bool pause_all();
+            bool resume_sound(sound_handle handle);
+            bool resume_music(music_handle handle);
+            bool resume_all_sounds();
+            bool resume_all_music();
+            bool resume_all();
+            bool stop_sound(sound_handle handle);
+            bool stop_music(music_handle handle);
+            bool stop_all_sounds();
+            bool stop_all_music();
+            bool stop_all();
+            bool set_sound_volume(sound_handle handle, float volume);
+            bool set_music_volume(music_handle handle, float volume);
+            bool set_sound_pitch(sound_handle handle, float pitch);
+            bool set_music_pitch(music_handle handle, float pitch);
+            bool set_sound_position(sound_handle handle, const vec3 &position);
+            bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
-            bool isSoundPlaying(SoundHandle handle);
-            bool isMusicPlaying(MusicHandle handle);
-            bool isSoundPaused(SoundHandle handle);
-            bool isMusicPaused(MusicHandle handle);
-            bool isSoundStopped(SoundHandle handle);
-            bool isMusicStopped(MusicHandle handle);
+            bool is_sound_playing(sound_handle handle);
+            bool is_music_playing(music_handle handle);
+            bool is_sound_paused(sound_handle handle);
+            bool is_music_paused(music_handle handle);
+            bool is_sound_stopped(sound_handle handle);
+            bool is_music_stopped(music_handle handle);
 
-            size_t getActiveSoundsCount() const;
-            size_t getActiveMusicCount() const;
+            size_t get_active_sounds_count() const;
+            size_t get_active_music_count() const;
 
-            SoundHandle fadeInSound(const std::string &filename, float duration,
+            sound_handle fade_in_sound(const std::string &filename, float duration,
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    SoundPriority priority = SoundPriority::Medium);
-            MusicHandle fadeInMusic(const std::string &filename, float duration,
+                                    sound_priority priority = sound_priority::medium);
+            music_handle fade_in_music(const std::string &filename, float duration,
                                     float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                    SoundPriority priority = SoundPriority::Critical);
-            bool fadeOutSound(SoundHandle handle, float duration);
-            bool fadeOutMusic(MusicHandle handle, float duration);
-            bool fadeToVolumeSound(SoundHandle handle, float targetVolume, float duration);
-            bool fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration);
+                                    sound_priority priority = sound_priority::critical);
+            bool fade_out_sound(sound_handle handle, float duration);
+            bool fade_out_music(music_handle handle, float duration);
+            bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration);
+            bool fade_to_volume_music(music_handle handle, float target_volume, float duration);
 
-            bool setMasterVolume(float volume);
-            bool setMasterSoundsVolume(float volume);
-            bool setMasterMusicVolume(float volume);
-            bool setMasterPitch(float pitch);
-            bool setMasterSoundsPitch(float pitch);
-            bool setMasterMusicPitch(float pitch);
-            float getMasterVolume() const;
-            float getMasterSoundsVolume() const;
-            float getMasterMusicVolume() const;
-            float getMasterPitch() const;
-            float getMasterSoundsPitch() const;
-            float getMasterMusicPitch() const;
+            bool set_master_volume(float volume);
+            bool set_master_sounds_volume(float volume);
+            bool set_master_music_volume(float volume);
+            bool set_master_pitch(float pitch);
+            bool set_master_sounds_pitch(float pitch);
+            bool set_master_music_pitch(float pitch);
+            float get_master_volume() const;
+            float get_master_sounds_volume() const;
+            float get_master_music_volume() const;
+            float get_master_pitch() const;
+            float get_master_sounds_pitch() const;
+            float get_master_music_pitch() const;
 
-            bool muteAllSounds();
-            bool muteAllMusic();
-            bool muteAll();
-            bool unmuteAllSounds();
-            bool unmuteAllMusic();
-            bool unmuteAll();
-            bool isMuted() const;
-            bool isSoundsMuted() const;
-            bool isMusicMuted() const;
+            bool mute_all_sounds();
+            bool mute_all_music();
+            bool mute_all();
+            bool unmute_all_sounds();
+            bool unmute_all_music();
+            bool unmute_all();
+            bool is_muted() const;
+            bool is_sounds_muted() const;
+            bool is_music_muted() const;
 
-            bool updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up = Vec3::up());
-            bool setListenerPosition(const Vec3 &position);
-            bool setListenerVelocity(const Vec3 &velocity);
-            bool setListenerForward(const Vec3 &forward);
-            bool setListenerUp(const Vec3 &up = Vec3::up());
+            bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
+            bool set_listener_position(const vec3 &position);
+            bool set_listener_velocity(const vec3 &velocity);
+            bool set_listener_forward(const vec3 &forward);
+            bool set_listener_up(const vec3 &up = vec3::up());
 
-            Vec3 getListenerPosition();
-            Vec3 getListenerVelocity();
-            Vec3 getListenerForward();
-            Vec3 getListenerUp();
+            vec3 get_listener_position();
+            vec3 get_listener_velocity();
+            vec3 get_listener_forward();
+            vec3 get_listener_up();
 
-            const std::string getError();
-            void clearError();
+            const std::string get_error();
+            void clear_error();
 
-            static bool isHandleValid(size_t handle);
+            static bool is_handle_valid(size_t handle);
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

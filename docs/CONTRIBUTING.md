@@ -21,9 +21,9 @@ soundcoe/
 │   ├── soundcoe.hpp                # Public black box API
 │   └── soundcoe/
 │       ├── core/                   # AudioContext, ErrorHandler, Types
-│       ├── resources/              # ResourceManager, SoundBuffer, SoundSource
+│       ├── resources/              # resource_manager, sound_buffer, sound_source
 │       ├── utils/                  # Math utilities
-│       └── playback/               # SoundManager singleton
+│       └── playback/               # sound_manager singleton
 ├── src/                            # Implementation files
 ├── cmake/                          # Modular CMake configuration (openal_soft.cmake, etc.)
 ├── external/                       # Third-party libraries (dr_libs, stb)
@@ -46,11 +46,18 @@ The null backend has no audible output, so verify playback locally.
 - Indent with 4 spaces (a Tab key that inserts 4 spaces is fine)
 - Follow existing naming conventions:
   - File names: `snake_case`
-  - Classes: `PascalCase`  
-  - Functions/locals: `camelCase`
-  - Members: `m_camelCase`
-  - Statics: `s_camelCase`
-  - Globals: `g_camelCase`
+  - Classes/structs/enums (types and enumerators): `snake_case`
+  - Functions/locals/parameters: `snake_case`
+  - Members: `m_snake_case`
+  - Statics: `s_snake_case`
+  - Globals: `g_snake_case`
+
+  Sometimes a parameter's natural name collides with its own type name under this all-snake_case
+  scheme, like a `vec3` parameter that would naturally be called `vec3`. In that case, add a
+  trailing underscore to the parameter name (`vec3_`), never a leading one (those are reserved for
+  the compiler) and never an `m_`/`s_`/`g_` prefix (those already mean something else). This
+  convention change lines soundcoe up with gamecoe's style, since gamecoe is soundcoe's main
+  consumer.
 - Keep lines under 120 characters
 
 ### Testing Guidelines
@@ -101,7 +108,7 @@ Examples:
 When modifying soundcoe:
 
 1. Lock the class mutex in every public method that touches shared state.
-2. Keep the lock nesting direction: SoundManager, then ResourceManager, then AudioContext. Never call back up.
+2. Keep the lock nesting direction: sound_manager, then resource_manager, then audio_context. Never call back up.
 
 ## Questions?
 

@@ -7,45 +7,45 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        class SoundBuffer
+        class sound_buffer
         {
-            ALuint m_bufferId       = 0;
+            ALuint m_buffer_id       = 0;
             ALenum m_format         = 0;
             ALsizei m_size          = 0;
-            ALsizei m_sampleRate    = 0;
+            ALsizei m_sample_rate    = 0;
             ALfloat m_duration      = 0.0f;
             bool m_loaded           = false;
             bool m_stream           = false;
             std::string m_filename = "";
 
-            void loadFromAudioData(AudioData &&audioData);
-            void generateBuffer(const void* data);
+            void load_from_audio_data(audio_data &&audio_data_);
+            void generate_buffer(const void* data);
 
         public:
-            SoundBuffer();
-            SoundBuffer(const std::string &filename);
-            SoundBuffer(const void *data, ALenum format, ALsizei size, ALsizei sampleRate);
-            ~SoundBuffer();
+            sound_buffer();
+            sound_buffer(const std::string &filename);
+            sound_buffer(const void *data, ALenum format, ALsizei size, ALsizei sample_rate);
+            ~sound_buffer();
 
-            SoundBuffer(const SoundBuffer &) = delete;
-            SoundBuffer &operator=(const SoundBuffer &) = delete;
-            SoundBuffer(SoundBuffer &&other) noexcept;
-            SoundBuffer &operator=(SoundBuffer &&other) noexcept;
+            sound_buffer(const sound_buffer &) = delete;
+            sound_buffer &operator=(const sound_buffer &) = delete;
+            sound_buffer(sound_buffer &&other) noexcept;
+            sound_buffer &operator=(sound_buffer &&other) noexcept;
 
-            void loadFromFile(const std::string &filename);
-            void loadFromMemory(const void *data, ALenum format, ALsizei size, ALsizei sampleRate);
+            void load_from_file(const std::string &filename);
+            void load_from_memory(const void *data, ALenum format, ALsizei size, ALsizei sample_rate);
             void unload();
 
-            ALuint getBufferId() const;
-            ALenum getFormat() const;
-            ALsizei getSize() const;
-            ALsizei getSampleRate() const;
-            ALfloat getDuration() const;
-            bool isLoaded() const;
-            bool isStreaming() const;
-            const std::string &getFileName() const;
+            ALuint get_buffer_id() const;
+            ALenum get_format() const;
+            ALsizei get_size() const;
+            ALsizei get_sample_rate() const;
+            ALfloat get_duration() const;
+            bool is_loaded() const;
+            bool is_streaming() const;
+            const std::string &get_filename() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

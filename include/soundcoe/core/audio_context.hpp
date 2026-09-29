@@ -9,30 +9,30 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        class AudioContext
+        class audio_context
         {
             ALCdevice *m_device     = nullptr;
             ALCcontext *m_context   = nullptr;
             bool m_initialized      = false;
             mutable std::mutex m_mutex;
 
-            AudioContext(const AudioContext &) = delete;
-            AudioContext &operator=(const AudioContext &) = delete;
-            AudioContext(AudioContext &&) = delete;
-            AudioContext &operator=(AudioContext &&) = delete;
+            audio_context(const audio_context &) = delete;
+            audio_context &operator=(const audio_context &) = delete;
+            audio_context(audio_context &&) = delete;
+            audio_context &operator=(audio_context &&) = delete;
 
         public:
-            AudioContext();
-            ~AudioContext();
+            audio_context();
+            ~audio_context();
 
-            void initialize(const std::string &deviceName = "");
+            void initialize(const std::string &device_name = "");
             void shutdown();
 
-            bool isInitialized() const;
-            ALCdevice *getDevice() const;
-            ALCcontext *getContext() const;
+            bool is_initialized() const;
+            ALCdevice *get_device() const;
+            ALCcontext *get_context() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

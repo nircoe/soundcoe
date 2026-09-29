@@ -16,79 +16,79 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        struct SourceAllocation
+        struct source_allocation
         {
-            std::unique_ptr<SoundSource> m_source;
-            SoundPriority m_priority;
-            std::chrono::steady_clock::time_point m_allocatedTime;
+            std::unique_ptr<sound_source> m_source;
+            sound_priority m_priority;
+            std::chrono::steady_clock::time_point m_allocated_time;
             bool m_active;
         };
 
-        struct BufferCacheEntry
+        struct buffer_cache_entry
         {
-            std::unique_ptr<SoundBuffer> m_buffer;
-            size_t m_referenceCount;
-            std::chrono::steady_clock::time_point m_lastAccessed;
+            std::unique_ptr<sound_buffer> m_buffer;
+            size_t m_reference_count;
+            std::chrono::steady_clock::time_point m_last_accessed;
         };
 
-        class ResourceManager
+        class resource_manager
         {
-            AudioContext m_audioContext;
+            audio_context m_audio_context;
             bool m_initialized = false;
-            std::filesystem::path m_audioRootDirectory;
-            size_t m_maxSources = 64;
+            std::filesystem::path m_audio_root_directory;
+            size_t m_max_sources = 64;
             mutable std::mutex m_mutex;
 
-            std::vector<SourceAllocation> m_sourcePool;
-            std::deque<size_t> m_freeSourceIndices;
+            std::vector<source_allocation> m_source_pool;
+            std::deque<size_t> m_free_source_indices;
 
-            std::unordered_map<std::string, BufferCacheEntry> m_bufferCache;
-            size_t m_maxCacheSize = 64 * 1024 * 1024; // 64MB
-            size_t m_currentCacheSize = 0;
+            std::unordered_map<std::string, buffer_cache_entry> m_buffer_cache;
+            size_t m_max_cache_size = 64 * 1024 * 1024; // 64MB
+            size_t m_current_cache_size = 0;
 
-            std::vector<std::filesystem::path> m_loadedDirectories;
+            std::vector<std::filesystem::path> m_loaded_directories;
 
-            void createSourcePool();
-            bool findSourceToReplace(SoundPriority newPriority, size_t &replaceIndex);
-            void freeBuffers();
-            std::filesystem::path normalizePath(const std::string &path) const;
-            bool scanDirectoryForFiles(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
-            bool preloadFileImpl(const std::filesystem::path &filePath);
-            bool unloadFileImpl(const std::filesystem::path &filePath);
-            bool isDirectoryLoadedImpl(const std::string &subdirectory) const;
-            SoundPriority getHighestPriorityForBuffer(ALuint bufferId) const;
-            bool releaseBufferImpl(const std::string &filename);
-            std::filesystem::path findFileInLoadedDirectories(const std::string &filename) const;
+            void create_source_pool();
+            bool find_source_to_replace(sound_priority new_priority, size_t &replace_index);
+            void free_buffers();
+            std::filesystem::path normalize_path(const std::string &path) const;
+            bool scan_directory_for_files(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
+            bool preload_file_impl(const std::filesystem::path &file_path);
+            bool unload_file_impl(const std::filesystem::path &file_path);
+            bool is_directory_loaded_impl(const std::string &subdirectory) const;
+            sound_priority get_highest_priority_for_buffer(ALuint buffer_id) const;
+            bool release_buffer_impl(const std::string &filename);
+            std::filesystem::path find_file_in_loaded_directories(const std::string &filename) const;
 
         public:
-            ResourceManager();
-            ~ResourceManager();
+            resource_manager();
+            ~resource_manager();
 
-            void initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
-                            size_t maxCacheSizeMB = UNLIMITED_CACHE);
+            void initialize(const std::string &audio_root_directory, size_t max_sources = 64,
+                            size_t max_cache_size_mb = UNLIMITED_CACHE);
             void shutdown();
-            bool isInitialized() const;
+            bool is_initialized() const;
 
-            bool preloadDirectory(const std::string &subdirectory);
-            bool unloadDirectory(const std::string &subdirectory);
+            bool preload_directory(const std::string &subdirectory);
+            bool unload_directory(const std::string &subdirectory);
 
-            std::optional<std::reference_wrapper<SoundSource>> acquireSource(size_t &poolIndex, SoundPriority priority = SoundPriority::Medium);
-            std::optional<std::reference_wrapper<SoundBuffer>> getBuffer(const std::string &filename);
-            bool releaseSource(std::reference_wrapper<SoundSource> source);
-            bool releaseBuffer(std::reference_wrapper<SoundBuffer> buffer);
-            bool releaseBuffer(const std::string &filename);
+            std::optional<std::reference_wrapper<sound_source>> acquire_source(size_t &pool_index, sound_priority priority = sound_priority::medium);
+            std::optional<std::reference_wrapper<sound_buffer>> get_buffer(const std::string &filename);
+            bool release_source(std::reference_wrapper<sound_source> source);
+            bool release_buffer(std::reference_wrapper<sound_buffer> buffer);
+            bool release_buffer(const std::string &filename);
 
-            size_t getActiveSourceCount() const;
-            size_t getTotalSourceCount() const;
-            size_t getCachedBufferCount() const;
-            size_t getCacheSizeBytes() const;
-            std::vector<std::filesystem::path> getLoadedDirectories() const;
-            bool isDirectoryLoaded(const std::string &subdirectory) const;
-            size_t cleanupUnusedBuffers();
+            size_t get_active_source_count() const;
+            size_t get_total_source_count() const;
+            size_t get_cached_buffer_count() const;
+            size_t get_cache_size_bytes() const;
+            std::vector<std::filesystem::path> get_loaded_directories() const;
+            bool is_directory_loaded(const std::string &subdirectory) const;
+            size_t cleanup_unused_buffers();
 
-            std::optional<std::reference_wrapper<SourceAllocation>> getSourceAllocation(size_t index);
+            std::optional<std::reference_wrapper<source_allocation>> get_source_allocation(size_t index);
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

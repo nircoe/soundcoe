@@ -9,16 +9,16 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        std::string createErrorMessage(const std::string& errorType, const std::string& operation, const std::string& error)
+        std::string create_error_message(const std::string& error_type, const std::string& operation, const std::string& error)
         {
             std::stringstream message;
-            message << errorType << operation << " - " << error;
+            message << error_type << operation << " - " << error;
             return message.str();
         }
 
-        std::string ErrorHandler::getOpenALErrorAsString(ALenum error)
+        std::string error_handler::get_openal_error_as_string(ALenum error)
         {
             switch(error)
             {
@@ -34,38 +34,38 @@ namespace soundcoe
                     return "AL_INVALID_OPERATION";
                 case AL_OUT_OF_MEMORY:
                     return "AL_OUT_OF_MEMORY";
-                default: 
+                default:
                     return "UNKNOWN ERROR";
             }
         }
 
-        bool ErrorHandler::checkOpenALError(const std::string &operation)
+        bool error_handler::check_openal_error(const std::string &operation)
         {
             ALenum error = alGetError();
             if(error == AL_NO_ERROR)
                 return false;
 
-            std::string message = createErrorMessage("OpenAL Error: ", operation, getOpenALErrorAsString(error));
+            std::string message = create_error_message("OpenAL Error: ", operation, get_openal_error_as_string(error));
             logcoe::error(message);
             return true;
         }
 
-        void ErrorHandler::throwOnOpenALError(const std::string &operation)
+        void error_handler::throw_on_openal_error(const std::string &operation)
         {
             ALenum error = alGetError();
             if (error == AL_NO_ERROR) return;
 
-            std::string message = createErrorMessage("OpenAL Error: ", operation, getOpenALErrorAsString(error));
+            std::string message = create_error_message("OpenAL Error: ", operation, get_openal_error_as_string(error));
             logcoe::error(message);
             throw std::runtime_error(message);
         }
 
-        ALenum ErrorHandler::clearOpenALError()
+        ALenum error_handler::clear_openal_error()
         {
             return alGetError();
         }
 
-        std::string ErrorHandler::getALCErrorAsString(ALCenum error)
+        std::string error_handler::get_alc_error_as_string(ALCenum error)
         {
             switch(error)
             {
@@ -86,39 +86,39 @@ namespace soundcoe
             }
         }
 
-        bool ErrorHandler::checkALCError(ALCdevice *device, const std::string &operation)
+        bool error_handler::check_alc_error(ALCdevice *device, const std::string &operation)
         {
             ALCenum error = alcGetError(device);
             if(error == ALC_NO_ERROR)
                 return false;
 
-            std::string message = createErrorMessage("ALC Error: ", operation, getALCErrorAsString(error));
+            std::string message = create_error_message("ALC Error: ", operation, get_alc_error_as_string(error));
             logcoe::error(message);
             return true;
         }
 
-        void ErrorHandler::throwOnALCError(ALCdevice *device, const std::string &operation)
+        void error_handler::throw_on_alc_error(ALCdevice *device, const std::string &operation)
         {
             ALCenum error = alcGetError(device);
             if (error == ALC_NO_ERROR) return;
 
-            std::string message = createErrorMessage("ALC Error: ", operation, getALCErrorAsString(error));
+            std::string message = create_error_message("ALC Error: ", operation, get_alc_error_as_string(error));
             logcoe::error(message);
             throw std::runtime_error(message);
         }
 
-        ALCenum ErrorHandler::clearALCError(ALCdevice *device)
+        ALCenum error_handler::clear_alc_error(ALCdevice *device)
         {
             return alcGetError(device);
         }
 
-        void ErrorHandler::throwOnAudioError(const std::string &filename, AudioFormat format, AudioDecoderOperation operation)
+        void error_handler::throw_on_audio_error(const std::string &filename, audio_format format, audio_decoder_operation operation)
         {
             std::ostringstream oss;
-            oss << "Audio Decoder Error: " << filename << " - " << toString(format) << " - " << toString(operation);
+            oss << "Audio Decoder Error: " << filename << " - " << to_string(format) << " - " << to_string(operation);
             std::string message = oss.str();
             logcoe::error(message);
             throw std::runtime_error(message);
         }
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

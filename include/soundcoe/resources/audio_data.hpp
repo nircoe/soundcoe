@@ -6,55 +6,55 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        class AudioData
+        class audio_data
         {
-            ALvoid *m_pcmData;
-            ALsizei m_pcmDataSize;
+            ALvoid *m_pcm_data;
+            ALsizei m_pcm_data_size;
 
             ALsizei m_channels;
-            ALsizei m_bitsPerSample;
-            ALsizei m_sampleRate;
+            ALsizei m_bits_per_sample;
+            ALsizei m_sample_rate;
             ALfloat m_duration;
 
-            ALenum m_openALFormat;
-            AudioFormat m_sourceFormat;
+            ALenum m_openal_format;
+            audio_format m_source_format;
 
-            AudioData(ALvoid *pcmData, ALsizei pcmDataSize, ALsizei channels, ALsizei bitsPerSample, ALsizei sampleRate, 
-                AudioFormat sourceFormat);
+            audio_data(ALvoid *pcm_data, ALsizei pcm_data_size, ALsizei channels, ALsizei bits_per_sample, ALsizei sample_rate,
+                audio_format source_format);
 
             void cleanup();
 
-            ALenum calculateOpenALFormat(ALsizei channels, ALsizei bitsPerSample);
+            ALenum calculate_openal_format(ALsizei channels, ALsizei bits_per_sample);
 
-            static bool isValidWav(const std::string &filename);
-            static bool isValidMp3(const std::string &filename);
-            static bool isValidOgg(const std::string &filename);
+            static bool is_valid_wav(const std::string &filename);
+            static bool is_valid_mp3(const std::string &filename);
+            static bool is_valid_ogg(const std::string &filename);
 
         public:
-            AudioData();
-            AudioData(const AudioData &) = delete;
-            AudioData &operator=(const AudioData &) = delete;
-            AudioData(AudioData &&other) noexcept;
-            AudioData &operator=(AudioData &&other) noexcept;
-            ~AudioData();
+            audio_data();
+            audio_data(const audio_data &) = delete;
+            audio_data &operator=(const audio_data &) = delete;
+            audio_data(audio_data &&other) noexcept;
+            audio_data &operator=(audio_data &&other) noexcept;
+            ~audio_data();
 
-            static AudioData loadFromWav(const std::string &filename);
-            static AudioData loadFromOgg(const std::string &filename);
-            static AudioData loadFromMp3(const std::string &filename);
-            static AudioFormat detectFormat(const std::string &filename);
+            static audio_data load_from_wav(const std::string &filename);
+            static audio_data load_from_ogg(const std::string &filename);
+            static audio_data load_from_mp3(const std::string &filename);
+            static audio_format detect_format(const std::string &filename);
 
-            ALvoid *getPcmData() const;
-            ALsizei getPcmDataSize() const;
-            ALsizei getChannels() const;
-            ALsizei getBitsPerSample() const;
-            ALsizei getSampleRate() const;
-            ALfloat getDuration() const;
-            ALenum getOpenALFormat() const;
-            AudioFormat getSourceFormat() const;
+            ALvoid *get_pcm_data() const;
+            ALsizei get_pcm_data_size() const;
+            ALsizei get_channels() const;
+            ALsizei get_bits_per_sample() const;
+            ALsizei get_sample_rate() const;
+            ALfloat get_duration() const;
+            ALenum get_openal_format() const;
+            audio_format get_source_format() const;
 
-            ALboolean isValid() const;
+            ALboolean is_valid() const;
         };
-    } // namespace detail
+    } // namespace internal
 } // namespace soundcoe

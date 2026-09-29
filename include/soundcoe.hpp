@@ -5,11 +5,11 @@
 
 namespace soundcoe
 {
-    namespace detail
+    namespace internal
     {
-        class SoundManager;
+        class sound_manager;
 
-        SoundManager& getSoundManagerInstance();
+        sound_manager& get_sound_manager_instance();
     }
 }
 
@@ -22,11 +22,11 @@ namespace soundcoe
      */
     struct init_config
     {
-        std::string audioRootDirectory = "assets/audio";
-        std::string soundSubdir = "sfx";
-        std::string musicSubdir = "music";
-        size_t maxSources = 64;
-        size_t maxCacheSizeMB = UNLIMITED_CACHE;
+        std::string audio_root_directory = "assets/audio";
+        std::string sound_subdir = "sfx";
+        std::string music_subdir = "music";
+        size_t max_sources = 64;
+        size_t max_cache_size_mb = UNLIMITED_CACHE;
         LogLevel level = LogLevel::DEBUG;
     };
 
@@ -36,19 +36,19 @@ namespace soundcoe
      * Sets up an audio context, resource management, and loads the "general" audio directory if it exists.
      * This function must be called before using any other soundcoe functionality.
      *
-     * @param audioRootDirectory Path to the root audio directory (relative to executable). The
+     * @param audio_root_directory Path to the root audio directory (relative to executable). The
      *                          "general" subdirectory is optional and will be automatically loaded
      *                          during initialization if exists, and will be loaded till soundcoe::shutdown() will be called.
-     * @param maxSources Maximum number of concurrent audio sources that can be played simultaneously.
+     * @param max_sources Maximum number of concurrent audio sources that can be played simultaneously.
      *                   Higher values allow more concurrent audio but consume more system resources.
      *                   Default is 64.
-     * @param maxCacheSizeMB Maximum size in megabytes for the audio buffer cache. Larger values keep
+     * @param max_cache_size_mb Maximum size in megabytes for the audio buffer cache. Larger values keep
      *                       more audio files in memory for faster playback but consume more RAM.
      *                       Default is soundcoe::UNLIMITED_CACHE, so nothing evicts during development;
      *                       set a real budget once you've profiled actual usage for shipping.
-     * @param soundSubdir Name of the subdirectory within each audio directory (general, scenes) that
+     * @param sound_subdir Name of the subdirectory within each audio directory (general, scenes) that
      *                    contains sound effects. Default is "sfx".
-     * @param musicSubdir Name of the subdirectory within each audio directory (general, scenes) that
+     * @param music_subdir Name of the subdirectory within each audio directory (general, scenes) that
      *                    contains music files. Default is "music".
      * @param level Logging level for soundcoe operations. Controls the verbosity of log output.
      *              Default is LogLevel::DEBUG.
@@ -62,7 +62,7 @@ namespace soundcoe
      * @example
      * // Basic initialization - will load ./audio/general/sfx/ and ./audio/general/music/ if they exist
      * if (!soundcoe::initialize("./audio")) {
-     *     std::cerr << "Failed to initialize audio: " << soundcoe::getError() << std::endl;
+     *     std::cerr << "Failed to initialize audio: " << soundcoe::get_error() << std::endl;
      * }
      *
      * @example
@@ -71,9 +71,9 @@ namespace soundcoe
      *     // Handle initialization failure
      * }
      */
-    bool initialize(const std::string &audioRootDirectory, size_t maxSources = 64,
-                           size_t maxCacheSizeMB = UNLIMITED_CACHE, const std::string &soundSubdir = "sfx",
-                           const std::string &musicSubdir = "music", LogLevel level = LogLevel::DEBUG);
+    bool initialize(const std::string &audio_root_directory, size_t max_sources = 64,
+                           size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+                           const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
 
     /**
      * @brief Initializes soundcoe from an init_config bundle. Forwards to the flat-parameter
@@ -96,36 +96,36 @@ namespace soundcoe
      * 
      * @return true if soundcoe has been successfully initialized, false otherwise.
      */
-    bool isInitialized();
+    bool is_initialized();
 
     /**
      * @brief Preloads all audio files from a scene directory.
      * 
-     * Loads audio files from audioRootDirectory/{sceneName}/{soundSubdir}/ and 
-     * audioRootDirectory/{sceneName}/{musicSubdir}/ into memory for faster playback.
+     * Loads audio files from audio_root_directory/{scene_name}/{sound_subdir}/ and 
+     * audio_root_directory/{scene_name}/{music_subdir}/ into memory for faster playback.
      * 
-     * @param sceneName Name of the scene directory to preload.
+     * @param scene_name Name of the scene directory to preload.
      * @return true if scene was loaded successfully, false if directory doesn't exist or loading failed.
      */
-    bool preloadScene(const std::string &sceneName);
+    bool preload_scene(const std::string &scene_name);
 
     /**
      * @brief Unloads a previously loaded scene and frees its audio resources.
      * 
-     * @param sceneName Name of the scene directory to unload.
+     * @param scene_name Name of the scene directory to unload.
      * @return true if scene was unloaded successfully, false if scene wasn't loaded.
      */
-    bool unloadScene(const std::string &sceneName);
+    bool unload_scene(const std::string &scene_name);
 
     /**
      * @brief Checks if a scene is currently loaded.
      * 
-     * @param sceneName Name of the scene to check.
+     * @param scene_name Name of the scene to check.
      * @return true if the scene is loaded, false otherwise.
      */
-    bool isSceneLoaded(const std::string &sceneName);
+    bool is_scene_loaded(const std::string &scene_name);
 
-    // in the future: bool preloadScene/unloadScene/isSceneLoaded(const Scene &scene); with gamecoe::Scene object!
+    // in the future: bool preload_scene/unload_scene/is_scene_loaded(const Scene &scene); with gamecoe::Scene object!
 
     /**
      * @brief Updates soundcoe internal systems (fade effects, cleanup).
@@ -138,44 +138,44 @@ namespace soundcoe
     /**
      * @brief Plays a sound file with specified properties.
      *
-     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{soundSubdir}/ subdirectory).
+     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{sound_subdir}/ subdirectory).
      * @param volume Volume level. Default is 1.0.
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return SoundHandle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
      */
-    SoundHandle playSound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                 SoundPriority priority = SoundPriority::Medium);
+    sound_handle play_sound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+                                 sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays a 3D positioned sound with spatial audio properties.
      *
-     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{soundSubdir}/ subdirectory).
+     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{sound_subdir}/ subdirectory).
      * @param position 3D world position of the sound source.
      * @param velocity 3D velocity vector for doppler effect. Default is zero.
      * @param volume Volume level. Default is 1.0.
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return SoundHandle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
      */
-    SoundHandle playSound3D(const std::string &filename, const Vec3 &position, const Vec3 &velocity = Vec3::zero(),
+    sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
                                    float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                   SoundPriority priority = SoundPriority::Medium);
+                                   sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays a music file with specified properties.
      *
-     * @param filename Name of the music file to play (should be in a loaded <general or scene>/{musicSubdir}/ subdirectory).
+     * @param filename Name of the music file to play (should be in a loaded <general or scene>/{music_subdir}/ subdirectory).
      * @param volume Volume level. Default is 1.0.
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the music. Default is true.
      * @param priority Music priority for resource allocation. Default is Critical.
-     * @return MusicHandle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
+     * @return music_handle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
      */
-    MusicHandle playMusic(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                 SoundPriority priority = SoundPriority::Critical);
+    music_handle play_music(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+                                 sound_priority priority = sound_priority::critical);
 
     /**
      * @brief Pauses a specific sound.
@@ -183,7 +183,7 @@ namespace soundcoe
      * @param handle Handle of the sound to pause.
      * @return true if successfully paused, false if handle is invalid or sound not playing.
      */
-    bool pauseSound(SoundHandle handle);
+    bool pause_sound(sound_handle handle);
 
     /**
      * @brief Pauses a specific music track.
@@ -191,22 +191,22 @@ namespace soundcoe
      * @param handle Handle of the music to pause.
      * @return true if successfully paused, false if handle is invalid or music not playing.
      */
-    bool pauseMusic(MusicHandle handle);
+    bool pause_music(music_handle handle);
 
     /**
      * @brief Pauses all currently playing sounds.
      */
-    void pauseAllSounds();
+    void pause_all_sounds();
 
     /**
      * @brief Pauses all currently playing music tracks.
      */
-    void pauseAllMusic();
+    void pause_all_music();
 
     /**
      * @brief Pauses all currently playing sounds and music.
      */
-    void pauseAll();
+    void pause_all();
 
     /**
      * @brief Resumes a paused sound.
@@ -214,7 +214,7 @@ namespace soundcoe
      * @param handle Handle of the sound to resume.
      * @return true if successfully resumed, false if handle is invalid or sound not paused.
      */
-    bool resumeSound(SoundHandle handle);
+    bool resume_sound(sound_handle handle);
 
     /**
      * @brief Resumes a paused music track.
@@ -222,22 +222,22 @@ namespace soundcoe
      * @param handle Handle of the music to resume.
      * @return true if successfully resumed, false if handle is invalid or music not paused.
      */
-    bool resumeMusic(MusicHandle handle);
+    bool resume_music(music_handle handle);
 
     /**
      * @brief Resumes all paused sounds.
      */
-    void resumeAllSounds();
+    void resume_all_sounds();
 
     /**
      * @brief Resumes all paused music tracks.
      */
-    void resumeAllMusic();
+    void resume_all_music();
 
     /**
      * @brief Resumes all paused sounds and music.
      */
-    void resumeAll();
+    void resume_all();
 
     /**
      * @brief Stops a playing or paused sound.
@@ -245,7 +245,7 @@ namespace soundcoe
      * @param handle Handle of the sound to stop.
      * @return true if successfully stopped, false if handle is invalid.
      */
-    bool stopSound(SoundHandle handle);
+    bool stop_sound(sound_handle handle);
 
     /**
      * @brief Stops a playing or paused music track.
@@ -253,22 +253,22 @@ namespace soundcoe
      * @param handle Handle of the music to stop.
      * @return true if successfully stopped, false if handle is invalid.
      */
-    bool stopMusic(MusicHandle handle);
+    bool stop_music(music_handle handle);
 
     /**
      * @brief Stops all currently active sounds.
      */
-    void stopAllSounds();
+    void stop_all_sounds();
 
     /**
      * @brief Stops all currently active music tracks.
      */
-    void stopAllMusic();
+    void stop_all_music();
 
     /**
      * @brief Stops all currently active sounds and music.
      */
-    void stopAll();
+    void stop_all();
 
     /**
      * @brief Sets the volume of a specific sound.
@@ -277,7 +277,7 @@ namespace soundcoe
      * @param volume New volume level.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setSoundVolume(SoundHandle handle, float volume);
+    bool set_sound_volume(sound_handle handle, float volume);
 
     /**
      * @brief Sets the volume of a specific music track.
@@ -286,7 +286,7 @@ namespace soundcoe
      * @param volume New volume level.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setMusicVolume(MusicHandle handle, float volume);
+    bool set_music_volume(music_handle handle, float volume);
 
     /**
      * @brief Sets the pitch of a specific sound.
@@ -295,7 +295,7 @@ namespace soundcoe
      * @param pitch New pitch multiplier.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setSoundPitch(SoundHandle handle, float pitch);
+    bool set_sound_pitch(sound_handle handle, float pitch);
 
     /**
      * @brief Sets the pitch of a specific music track.
@@ -304,7 +304,7 @@ namespace soundcoe
      * @param pitch New pitch multiplier.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setMusicPitch(MusicHandle handle, float pitch);
+    bool set_music_pitch(music_handle handle, float pitch);
 
     /**
      * @brief Sets the 3D position of a sound source.
@@ -313,7 +313,7 @@ namespace soundcoe
      * @param position New 3D world position.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setSoundPosition(SoundHandle handle, const Vec3 &position);
+    bool set_sound_position(sound_handle handle, const vec3 &position);
 
     /**
      * @brief Sets the 3D velocity of a sound source for doppler effect.
@@ -322,7 +322,7 @@ namespace soundcoe
      * @param velocity New 3D velocity vector.
      * @return true if successfully set, false if handle is invalid.
      */
-    bool setSoundVelocity(SoundHandle handle, const Vec3 &velocity);
+    bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
     /**
      * @brief Checks if a sound is currently playing.
@@ -330,7 +330,7 @@ namespace soundcoe
      * @param handle Handle of the sound to check.
      * @return true if sound is playing, false if paused, stopped, or handle is invalid.
      */
-    bool isSoundPlaying(SoundHandle handle);
+    bool is_sound_playing(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently playing.
@@ -338,7 +338,7 @@ namespace soundcoe
      * @param handle Handle of the music to check.
      * @return true if music is playing, false if paused, stopped, or handle is invalid.
      */
-    bool isMusicPlaying(MusicHandle handle);
+    bool is_music_playing(music_handle handle);
 
     /**
      * @brief Checks if a sound is currently paused.
@@ -346,7 +346,7 @@ namespace soundcoe
      * @param handle Handle of the sound to check.
      * @return true if sound is paused, false if playing, stopped, or handle is invalid.
      */
-    bool isSoundPaused(SoundHandle handle);
+    bool is_sound_paused(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently paused.
@@ -354,7 +354,7 @@ namespace soundcoe
      * @param handle Handle of the music to check.
      * @return true if music is paused, false if playing, stopped, or handle is invalid.
      */
-    bool isMusicPaused(MusicHandle handle);
+    bool is_music_paused(music_handle handle);
 
     /**
      * @brief Checks if a sound is currently stopped.
@@ -362,7 +362,7 @@ namespace soundcoe
      * @param handle Handle of the sound to check.
      * @return true if sound is stopped, false if playing, paused, or handle is invalid.
      */
-    bool isSoundStopped(SoundHandle handle);
+    bool is_sound_stopped(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently stopped.
@@ -370,21 +370,21 @@ namespace soundcoe
      * @param handle Handle of the music to check.
      * @return true if music is stopped, false if playing, paused, or handle is invalid.
      */
-    bool isMusicStopped(MusicHandle handle);
+    bool is_music_stopped(music_handle handle);
 
     /**
      * @brief Gets the number of currently active sound sources.
      * 
      * @return Number of sounds that are active.
      */
-    size_t getActiveSoundsCount();
+    size_t get_active_sounds_count();
 
     /**
      * @brief Gets the number of currently active music tracks.
      * 
      * @return Number of music tracks that are active.
      */
-    size_t getActiveMusicCount();
+    size_t get_active_music_count();
 
     /**
      * @brief Plays a sound with a fade-in effect from silence to target volume.
@@ -395,11 +395,11 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return SoundHandle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
      */
-    SoundHandle fadeInSound(const std::string &filename, float duration,
+    sound_handle fade_in_sound(const std::string &filename, float duration,
                                    float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                   SoundPriority priority = SoundPriority::Medium);
+                                   sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays music with a fade-in effect from silence to target volume.
@@ -410,11 +410,11 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the music. Default is true.
      * @param priority Music priority for resource allocation. Default is Critical.
-     * @return MusicHandle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
+     * @return music_handle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
      */
-    MusicHandle fadeInMusic(const std::string &filename, float duration,
+    music_handle fade_in_music(const std::string &filename, float duration,
                                    float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                   SoundPriority priority = SoundPriority::Critical);
+                                   sound_priority priority = sound_priority::critical);
 
     /**
      * @brief Fades out a sound from current volume to silence, then stops it.
@@ -423,7 +423,7 @@ namespace soundcoe
      * @param duration Fade-out duration in seconds.
      * @return true if fade started successfully, false if handle is invalid.
      */
-    bool fadeOutSound(SoundHandle handle, float duration);
+    bool fade_out_sound(sound_handle handle, float duration);
 
     /**
      * @brief Fades out music from current volume to silence, then stops it.
@@ -432,27 +432,27 @@ namespace soundcoe
      * @param duration Fade-out duration in seconds.
      * @return true if fade started successfully, false if handle is invalid.
      */
-    bool fadeOutMusic(MusicHandle handle, float duration);
+    bool fade_out_music(music_handle handle, float duration);
 
     /**
      * @brief Fades a sound from current volume to a target volume over time.
      * 
      * @param handle Handle of the sound to fade.
-     * @param targetVolume Target volume level.
+     * @param target_volume Target volume level.
      * @param duration Fade duration in seconds.
      * @return true if fade started successfully, false if handle is invalid.
      */
-    bool fadeToVolumeSound(SoundHandle handle, float targetVolume, float duration);
+    bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration);
 
     /**
      * @brief Fades music from current volume to a target volume over time.
      * 
      * @param handle Handle of the music to fade.
-     * @param targetVolume Target volume level.
+     * @param target_volume Target volume level.
      * @param duration Fade duration in seconds.
      * @return true if fade started successfully, false if handle is invalid.
      */
-    bool fadeToVolumeMusic(MusicHandle handle, float targetVolume, float duration);
+    bool fade_to_volume_music(music_handle handle, float target_volume, float duration);
 
     /**
      * @brief Sets the master volume multiplier for all audio (sounds and music).
@@ -460,7 +460,7 @@ namespace soundcoe
      * @param volume Master volume multiplier level.
      * @return true if successfully set, false on error.
      */
-    bool setMasterVolume(float volume);
+    bool set_master_volume(float volume);
 
     /**
      * @brief Sets the master volume multiplier for all sound effects.
@@ -468,7 +468,7 @@ namespace soundcoe
      * @param volume Sounds master volume level multiplier.
      * @return true if successfully set, false on error.
      */
-    bool setMasterSoundsVolume(float volume);
+    bool set_master_sounds_volume(float volume);
 
     /**
      * @brief Sets the master volume multiplier for all music tracks.
@@ -476,7 +476,7 @@ namespace soundcoe
      * @param volume Music master volume level multiplier.
      * @return true if successfully set, false on error.
      */
-    bool setMasterMusicVolume(float volume);
+    bool set_master_music_volume(float volume);
 
     /**
      * @brief Sets the master pitch multiplier for all audio (sounds and music).
@@ -484,7 +484,7 @@ namespace soundcoe
      * @param pitch Master pitch multiplier.
      * @return true if successfully set, false on error.
      */
-    bool setMasterPitch(float pitch);
+    bool set_master_pitch(float pitch);
 
     /**
      * @brief Sets the master pitch multiplier for all sounds effects.
@@ -492,7 +492,7 @@ namespace soundcoe
      * @param pitch Sounds master pitch multiplier.
      * @return true if successfully set, false on error.
      */
-    bool setMasterSoundsPitch(float pitch);
+    bool set_master_sounds_pitch(float pitch);
 
     /**
      * @brief Sets the master pitch multiplier for all music tracks.
@@ -500,100 +500,100 @@ namespace soundcoe
      * @param pitch Music master pitch multiplier.
      * @return true if successfully set, false on error.
      */
-    bool setMasterMusicPitch(float pitch);
+    bool set_master_music_pitch(float pitch);
 
     /**
      * @brief Gets the current master volume multiplier for all audio.
      *
      * @return Current master volume level multiplier.
      */
-    float getMasterVolume();
+    float get_master_volume();
 
     /**
      * @brief Gets the current master volume multiplier for sound effects.
      *
      * @return Current sounds master volume level multiplier.
      */
-    float getMasterSoundsVolume();
+    float get_master_sounds_volume();
 
     /**
      * @brief Gets the current master volume multiplier for music tracks.
      *
      * @return Current music master volume level multiplier.
      */
-    float getMasterMusicVolume();
+    float get_master_music_volume();
 
     /**
      * @brief Gets the current master pitch multiplier for all audio.
      *
      * @return Current master pitch multiplier.
      */
-    float getMasterPitch();
+    float get_master_pitch();
 
     /**
      * @brief Gets the current master pitch multiplier for sound effects.
      *
      * @return Current sounds master pitch multiplier.
      */
-    float getMasterSoundsPitch();
+    float get_master_sounds_pitch();
 
     /**
      * @brief Gets the current master pitch multiplier for music tracks.
      *
      * @return Current music master pitch multiplier.
      */
-    float getMasterMusicPitch();
+    float get_master_music_pitch();
 
     /**
      * @brief Mutes all sound effects while preserving their volume settings.
      */
-    void muteAllSounds();
+    void mute_all_sounds();
 
     /**
      * @brief Mutes all music tracks while preserving their volume settings.
      */
-    void muteAllMusic();
+    void mute_all_music();
 
     /**
      * @brief Mutes all audio (sounds and music) while preserving volume settings.
      */
-    void muteAll();
+    void mute_all();
 
     /**
      * @brief Unmutes all sound effects, restoring their previous volume settings.
      */
-    void unmuteAllSounds();
+    void unmute_all_sounds();
 
     /**
      * @brief Unmutes all music, restoring their previous volume settings.
      */
-    void unmuteAllMusic();
+    void unmute_all_music();
 
     /**
      * @brief Unmutes all audio (sounds and music), restoring previous volume settings.
      */
-    void unmuteAll();
+    void unmute_all();
 
     /**
      * @brief Checks if all audio is currently muted.
      * 
      * @return true if all audio is muted, false otherwise.
      */
-    bool isMuted();
+    bool is_muted();
 
     /**
      * @brief Checks if all sound effects are currently muted.
      * 
      * @return true if sounds are muted, false otherwise.
      */
-    bool isSoundsMuted();
+    bool is_sounds_muted();
 
     /**
      * @brief Checks if all music tracks are currently muted.
      * 
      * @return true if music is muted, false otherwise.
      */
-    bool isMusicMuted();
+    bool is_music_muted();
 
     /**
      * @brief Updates all 3D audio listener properties at once.
@@ -601,10 +601,10 @@ namespace soundcoe
      * @param position 3D world position of the listener.
      * @param velocity 3D velocity vector for doppler effect.
      * @param forward Forward direction vector (must be normalized).
-     * @param up Up direction vector (must be normalized). Default is Vec3::up().
+     * @param up Up direction vector (must be normalized). Default is vec3::up().
      * @return true if successfully updated, false on error.
      */
-    bool updateListener(const Vec3 &position, const Vec3 &velocity, const Vec3 &forward, const Vec3 &up = Vec3::up());
+    bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
 
     /**
      * @brief Sets the 3D position of the audio listener.
@@ -612,7 +612,7 @@ namespace soundcoe
      * @param position 3D world position of the listener.
      * @return true if successfully set, false on error.
      */
-    bool setListenerPosition(const Vec3 &position);
+    bool set_listener_position(const vec3 &position);
 
     /**
      * @brief Sets the velocity of the audio listener for doppler effect.
@@ -620,7 +620,7 @@ namespace soundcoe
      * @param velocity 3D velocity vector of the listener.
      * @return true if successfully set, false on error.
      */
-    bool setListenerVelocity(const Vec3 &velocity);
+    bool set_listener_velocity(const vec3 &velocity);
 
     /**
      * @brief Sets the forward direction of the audio listener.
@@ -628,7 +628,7 @@ namespace soundcoe
      * @param forward Forward direction vector (must be normalized).
      * @return true if successfully set, false on error.
      */
-    bool setListenerForward(const Vec3 &forward);
+    bool set_listener_forward(const vec3 &forward);
 
     /**
      * @brief Sets the up direction of the audio listener.
@@ -636,47 +636,47 @@ namespace soundcoe
      * @param up Up direction vector (must be normalized).
      * @return true if successfully set, false on error.
      */
-    bool setListenerUp(const Vec3 &up);
+    bool set_listener_up(const vec3 &up);
 
     /**
      * @brief Gets the current 3D position of the audio listener.
      * 
      * @return Current listener position.
      */
-    Vec3 getListenerPosition();
+    vec3 get_listener_position();
 
     /**
      * @brief Gets the current velocity of the audio listener.
      * 
      * @return Current listener velocity vector.
      */
-    Vec3 getListenerVelocity();
+    vec3 get_listener_velocity();
 
     /**
      * @brief Gets the current forward direction of the audio listener.
      * 
      * @return Current listener forward direction vector.
      */
-    Vec3 getListenerForward();
+    vec3 get_listener_forward();
 
     /**
      * @brief Gets the current up direction of the audio listener.
      * 
      * @return Current listener up direction vector.
      */
-    Vec3 getListenerUp();
+    vec3 get_listener_up();
 
     /**
      * @brief Gets the last error message and clears the error state.
      * 
      * @return Last error message, or empty string if no error occurred.
      */
-    const std::string getError();
+    const std::string get_error();
 
     /**
      * @brief Clears the current error state without returning the message.
      */
-    void clearError();
+    void clear_error();
 
     /**
      * @brief Checks if a handle (sound or music) is valid and active.
@@ -684,5 +684,5 @@ namespace soundcoe
      * @param handle Handle to validate.
      * @return true if handle is valid and represents active audio, false otherwise.
      */
-    bool isHandleValid(size_t handle);
+    bool is_handle_valid(size_t handle);
 } // namespace soundcoe
