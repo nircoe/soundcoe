@@ -16,14 +16,14 @@ namespace soundcoe
         void sound_manager::update_all_sounds_volume()
         {
             update_all_audio_property(m_active_sounds, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { audio->set_volume(value); }, [&](const active_audio &audio)
+                                   { static_cast<void>(audio->set_volume(value)); }, [&](const active_audio &audio)
                                    { return (m_sounds_mute || m_mute) ? 0.0f : audio.m_base_volume; }, m_master_volume, m_master_sounds_volume);
         }
 
         void sound_manager::update_all_music_volume()
         {
             update_all_audio_property(m_active_music, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { audio->set_volume(value); }, [&](const active_audio &audio)
+                                   { static_cast<void>(audio->set_volume(value)); }, [&](const active_audio &audio)
                                    { return (m_music_mute || m_mute) ? 0.0f : audio.m_base_volume; }, m_master_volume, m_master_music_volume);
         }
 
@@ -36,14 +36,14 @@ namespace soundcoe
         void sound_manager::update_all_sounds_pitch()
         {
             update_all_audio_property(m_active_sounds, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { audio->set_pitch(value); }, [](const active_audio &audio)
+                                   { static_cast<void>(audio->set_pitch(value)); }, [](const active_audio &audio)
                                    { return audio.m_base_pitch; }, m_master_pitch, m_master_sounds_pitch);
         }
 
         void sound_manager::update_all_music_pitch()
         {
             update_all_audio_property(m_active_music, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { audio->set_pitch(value); }, [](const active_audio &audio)
+                                   { static_cast<void>(audio->set_pitch(value)); }, [](const active_audio &audio)
                                    { return audio.m_base_pitch; }, m_master_pitch, m_master_music_pitch);
         }
 
@@ -53,36 +53,36 @@ namespace soundcoe
             update_all_music_pitch();
         }
 
-        bool sound_manager::set_listener_position_impl(const vec3 &position)
+        std::expected<void, error> sound_manager::set_listener_position_impl(const vec3 &position)
         {
             ALfloat pos[3] = {position.x, position.y, position.z};
             alListenerfv(AL_POSITION, pos);
-            if (error_handler::check_openal_error("Set Listener Position"))
-                return false;
+            if (auto r = error_handler::check_openal_error("Set Listener Position"); !r)
+                return r;
             m_listener_position = position;
-            return true;
+            return {};
         }
 
-        bool sound_manager::set_listener_velocity_impl(const vec3 &velocity)
+        std::expected<void, error> sound_manager::set_listener_velocity_impl(const vec3 &velocity)
         {
             ALfloat vel[3] = {velocity.x, velocity.y, velocity.z};
             alListenerfv(AL_VELOCITY, vel);
-            if (error_handler::check_openal_error("Set Listener Velocity"))
-                return false;
+            if (auto r = error_handler::check_openal_error("Set Listener Velocity"); !r)
+                return r;
             m_listener_velocity = velocity;
-            return true;
+            return {};
         }
 
-        bool sound_manager::set_listener_orientation_impl(const vec3 &forward, const vec3 &up)
+        std::expected<void, error> sound_manager::set_listener_orientation_impl(const vec3 &forward, const vec3 &up)
         {
             ALfloat orientation[6] = {forward.x, forward.y, forward.z,
                                       up.x, up.y, up.z};
             alListenerfv(AL_ORIENTATION, orientation);
-            if (error_handler::check_openal_error("Set Listener Forward and Up Vectors"))
-                return false;
+            if (auto r = error_handler::check_openal_error("Set Listener Forward and Up Vectors"); !r)
+                return r;
             m_listener_forward = forward;
             m_listener_up = up;
-            return true;
+            return {};
         }
 
         bool sound_manager::set_error(const std::string &error)
@@ -209,13 +209,13 @@ namespace soundcoe
                 vec = {value, y, z};
 
             if (type == property_type::volume)
-                return source->set_volume(value);
+                return source->set_volume(value).has_value();
             if (type == property_type::pitch)
-                return source->set_pitch(value);
+                return source->set_pitch(value).has_value();
             if (type == property_type::position)
-                return source->set_position(vec);
+                return source->set_position(vec).has_value();
             if (type == property_type::velocity)
-                return source->set_velocity(vec);
+                return source->set_velocity(vec).has_value();
 
             return set_error("sound_manager::" + method + ": Internal error - Invalid property_type");
         }
@@ -237,12 +237,12 @@ namespace soundcoe
 
             auto &source = source_allocation.value().get().m_source;
             if (operation == sound_state::playing)
-                return source->play();
+                return source->play().has_value();
             if (operation == sound_state::paused)
-                return source->pause();
+                return source->pause().has_value();
             if (operation == sound_state::stopped)
             {
-                bool succeed = source->stop();
+                bool succeed = source->stop().has_value();
                 if (succeed)
                 {
                     m_resource_manager.release_source(*source);
@@ -274,15 +274,15 @@ namespace soundcoe
                 if (operation == sound_state::playing)
                 {
                     if (source->is_paused())
-                        success = source->play();
+                        success = source->play().has_value();
                     else
                         logcoe::warning("sound_manager::" + method + ": handle " + std::to_string(it->first) + " is not paused");
                 }
                 else if (operation == sound_state::paused)
-                    success = source->pause();
+                    success = source->pause().has_value();
                 else if (operation == sound_state::stopped)
                 {
-                    success = source->stop();
+                    success = source->stop().has_value();
                     if (success)
                     {
                         m_resource_manager.release_source(*source);
@@ -325,13 +325,9 @@ namespace soundcoe
                 return INVALID_SOUND_HANDLE;
             }
 
-            try
+            if (auto r = source->get().attach_buffer(buffer->get()); !r)
             {
-                source->get().attach_buffer(buffer->get());
-            }
-            catch (const std::exception &e)
-            {
-                logcoe::error("sound_manager::" + method + ": Failed to attach buffer: " + std::string(e.what()));
+                logcoe::error("sound_manager::" + method + ": Failed to attach buffer: " + r.error().message);
                 m_resource_manager.release_source(source.value());
                 m_resource_manager.release_buffer(buffer.value());
                 return INVALID_SOUND_HANDLE;
@@ -1118,37 +1114,37 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_listener_position_impl(position) &&
-                   set_listener_velocity_impl(velocity) &&
-                   set_listener_orientation_impl(forward, up);
+            return set_listener_position_impl(position).has_value() &&
+                   set_listener_velocity_impl(velocity).has_value() &&
+                   set_listener_orientation_impl(forward, up).has_value();
         }
 
         bool sound_manager::set_listener_position(const vec3 &position)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_listener_position_impl(position);
+            return set_listener_position_impl(position).has_value();
         }
 
         bool sound_manager::set_listener_velocity(const vec3 &velocity)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_listener_velocity_impl(velocity);
+            return set_listener_velocity_impl(velocity).has_value();
         }
 
         bool sound_manager::set_listener_forward(const vec3 &forward)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_listener_orientation_impl(forward, m_listener_up);
+            return set_listener_orientation_impl(forward, m_listener_up).has_value();
         }
 
         bool sound_manager::set_listener_up(const vec3 &up)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return set_listener_orientation_impl(m_listener_forward, up);
+            return set_listener_orientation_impl(m_listener_forward, up).has_value();
         }
 
         vec3 sound_manager::get_listener_position()
