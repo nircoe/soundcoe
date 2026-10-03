@@ -1,7 +1,9 @@
 #include <soundcoe/resources/resource_manager.hpp>
-#include <soundcoe/core/audio_context.hpp>
-#include <soundcoe/core/error_handler.hpp>
 #include <algorithm>
+#include <exception>
+#include <stdexcept>
+#include <iterator>
+#include <utility>
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
@@ -237,14 +239,8 @@ namespace soundcoe
                 if (!allocation.m_active || allocation.m_source->get_source_id() != source.get().get_source_id())
                     continue;
 
-                try
-                {
-                    allocation.m_source->detach_buffer();
-                }
-                catch (const std::exception &e)
-                {
-                    logcoe::warning("resource_manager::release_source: Failed to detach Buffer: " + std::string(e.what()));
-                }
+                if (auto r = allocation.m_source->detach_buffer(); !r)
+                    logcoe::warning("resource_manager::release_source: Failed to detach Buffer: " + r.error().message);
 
                 allocation.m_active = false;
                 m_free_source_indices.push_back(i);
@@ -424,7 +420,7 @@ namespace soundcoe
 
                 if (source_to_replace->m_active)
                 {
-                    source_to_replace->m_source->stop();
+                    static_cast<void>(source_to_replace->m_source->stop());
                     source_to_replace->m_active = false;
                 }
             }
@@ -461,14 +457,9 @@ namespace soundcoe
                     if (!allocation.m_active || allocation.m_source->get_buffer_id() != oldest_buffer_id)
                         continue;
 
-                    try
-                    {
-                        allocation.m_source->detach_buffer();
-                    }
-                    catch (const std::exception &e)
-                    {
-                        logcoe::warning("resource_manager::free_buffers: Failed to detach Buffer: " + std::string(e.what()));
-                    }
+                    if (auto r = allocation.m_source->detach_buffer(); !r)
+                        logcoe::warning("resource_manager::free_buffers: Failed to detach Buffer: " +
+                                        r.error().message);
 
                     allocation.m_active = false;
                     m_free_source_indices.push_back(i);
@@ -543,23 +534,14 @@ namespace soundcoe
             if (m_buffer_cache.find(cache_key) != m_buffer_cache.end())
                 return true;
 
-            try
-            {
-                buffer_cache_entry entry;
-
-                entry.m_buffer = std::make_unique<sound_buffer>(cache_key);
-                entry.m_reference_count = 0;
-                entry.m_last_accessed = std::chrono::steady_clock::now();
-
-                m_current_cache_size += entry.m_buffer->get_size();
-                m_buffer_cache[cache_key] = std::move(entry);
-            }
-            catch (const std::exception &e)
-            {
-                logcoe::error("resource_manager::preload_file_impl: Failed to create sound_buffer: " + std::string(e.what()));
-                m_buffer_cache.erase(cache_key);
+            buffer_cache_entry entry;
+            entry.m_buffer = std::make_unique<sound_buffer>();
+            if (!entry.m_buffer->load_from_file(cache_key))
                 return false;
-            }
+            entry.m_reference_count = 0;
+            entry.m_last_accessed = std::chrono::steady_clock::now();
+            m_current_cache_size += entry.m_buffer->get_size();
+            m_buffer_cache[cache_key] = std::move(entry);
 
             if (m_current_cache_size > m_max_cache_size)
                 free_buffers();
@@ -601,14 +583,9 @@ namespace soundcoe
                     if (!allocation.m_active || allocation.m_source->get_buffer_id() != buffer_id)
                         continue;
 
-                    try
-                    {
-                        allocation.m_source->detach_buffer();
-                    }
-                    catch (const std::exception &e)
-                    {
-                        logcoe::warning("resource_manager::unload_file_impl: Failed to detach Buffer: " + std::string(e.what()));
-                    }
+                    if (auto r = allocation.m_source->detach_buffer(); !r)
+                        logcoe::warning("resource_manager::unload_file_impl: Failed to detach Buffer: " +
+                                        r.error().message);
 
                     allocation.m_active = false;
                     m_free_source_indices.push_back(i);

@@ -6,6 +6,7 @@
 #include <chrono>
 #include <vector>
 #include <future>
+#include <atomic>
 
 using namespace soundcoe;
 using namespace soundcoe::internal;

@@ -1,6 +1,5 @@
 #include <soundcoe/resources/sound_source.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <exception>
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
@@ -11,12 +10,6 @@ namespace soundcoe
     namespace internal
     {
         sound_source::sound_source() : m_position(vec3::zero()), m_velocity(vec3::zero()) { }
-
-        sound_source::sound_source(const sound_buffer &buffer)
-        {
-            create();
-            attach_buffer(buffer);
-        }
 
         sound_source::sound_source(sound_source &&other) noexcept :
             m_source_id(other.m_source_id), m_volume(other.m_volume), m_pitch(other.m_pitch), m_position(other.m_position),
@@ -35,7 +28,7 @@ namespace soundcoe
         {
             if(this == &other) return *this;
 
-            destroy();
+            static_cast<void>(destroy());
 
             m_source_id = other.m_source_id;
             m_volume = other.m_volume;
@@ -55,42 +48,50 @@ namespace soundcoe
             return *this;
         }
 
-        sound_source::~sound_source() { destroy(); }
+        sound_source::~sound_source()
+        {
+            static_cast<void>(destroy());
+        }
 
-        void sound_source::create()
+        std::expected<void, error> sound_source::create()
         {
             if(m_created)
             {
                 logcoe::info("sound_source::create: sound_source is already created");
-                return;
+                return {};
             }
 
             alGenSources(1, &m_source_id);
-            error_handler::throw_on_openal_error("Generate Source");
+            if(auto r = error_handler::check_openal_error("Generate Source"); !r)
+                return r;
 
             m_created = true;
 
-            set_volume(1.0f);
-            set_pitch(1.0f);
-            set_looping(false);
+            if(auto r = set_volume(1.0f); !r)
+                return r;
+            if(auto r = set_pitch(1.0f); !r)
+                return r;
+            if(auto r = set_looping(false); !r)
+                return r;
 
             logcoe::info("sound_source::create: sound_source created successfully");
+            return {};
         }
 
-        void sound_source::destroy()
+        std::expected<void, error> sound_source::destroy()
         {
-            if(!m_created) return;
+            if(!m_created) return {};
 
-            if(is_playing() || is_paused()) stop();
-
-            try { detach_buffer(); }
-            catch(...) { }
+            if(is_playing() || is_paused()) static_cast<void>(stop());
+            static_cast<void>(detach_buffer());
 
             alDeleteSources(1, &m_source_id);
-            error_handler::throw_on_openal_error("Delete Source");
+            auto r = error_handler::check_openal_error("Delete Source");
 
+            // A failed delete can't be retried, so reset anyway
             m_source_id = 0;
             m_created = false;
+            return r;
         }
 
         bool sound_source::is_created() const
@@ -98,169 +99,157 @@ namespace soundcoe
             return m_created;
         }
 
-        void sound_source::attach_buffer(const sound_buffer &buffer)
-        {
-            if(!m_created) create();
-
-            ALint buffer_id;
-            alGetSourcei(m_source_id, AL_BUFFER, &buffer_id);
-            if (buffer_id != 0) detach_buffer();
-
-            alSourcei(m_source_id, AL_BUFFER, static_cast<ALint>(buffer.get_buffer_id()));
-            error_handler::throw_on_openal_error("Attach Buffer to Source");
-        }
-
-        void sound_source::detach_buffer()
-        {
-            if(!m_created) return;
-
-            if(is_playing() || is_paused()) stop();
-
-            alSourcei(m_source_id, AL_BUFFER, 0);
-            error_handler::throw_on_openal_error("Detach Buffer from Source");
-        }
-
-        bool sound_source::play()
+        std::expected<void, error> sound_source::attach_buffer(const sound_buffer &buffer)
         {
             if(!m_created)
             {
-                logcoe::warning("sound_source::play: sound_source not created");
-                return false;
+                if(auto r = create(); !r)
+                    return r;
             }
+
+            ALint buffer_id;
+            alGetSourcei(m_source_id, AL_BUFFER, &buffer_id);
+            if(buffer_id != 0)
+            {
+                if(auto r = detach_buffer(); !r)
+                    return r;
+            }
+
+            alSourcei(m_source_id, AL_BUFFER, static_cast<ALint>(buffer.get_buffer_id()));
+            return error_handler::check_openal_error("Attach Buffer to Source");
+        }
+
+        std::expected<void, error> sound_source::detach_buffer()
+        {
+            if(!m_created) return {};
+
+            if(is_playing() || is_paused()) static_cast<void>(stop());
+
+            alSourcei(m_source_id, AL_BUFFER, 0);
+            return error_handler::check_openal_error("Detach Buffer from Source");
+        }
+
+        std::expected<void, error> sound_source::play()
+        {
+            if(!m_created)
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::play: sound_source not created"));
 
             if(is_playing())
             {
                 logcoe::debug("sound_source::play: sound_source is already playing");
-                return true;
+                return {};
             }
 
             alSourcePlay(m_source_id);
-            if(error_handler::check_openal_error("Play Source"))
-                return false;
-
-            return true;
+            return error_handler::check_openal_error("Play Source");
         }
 
-        bool sound_source::pause()
+        std::expected<void, error> sound_source::pause()
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::pause: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::pause: sound_source not created"));
 
             if(is_paused())
             {
                 logcoe::debug("sound_source::pause: sound_source is already paused");
-                return true;
+                return {};
             }
 
             alSourcePause(m_source_id);
-            if(error_handler::check_openal_error("Pause Source"))
-                return false;
-
-            return true;
+            return error_handler::check_openal_error("Pause Source");
         }
 
-        bool sound_source::stop()
+        std::expected<void, error> sound_source::stop()
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::stop: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::stop: sound_source not created"));
 
             if(!(is_playing() || is_paused()))
             {
                 logcoe::debug("sound_source::stop: sound_source is already stopped or in initial state");
-                return true;
+                return {};
             }
 
             alSourceStop(m_source_id);
-            if(error_handler::check_openal_error("Stop Source"))
-                return false;
-
-            return true;
+            return error_handler::check_openal_error("Stop Source");
         }
 
-        bool sound_source::set_volume(float volume)
+        std::expected<void, error> sound_source::set_volume(float volume)
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::set_volume: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::set_volume: sound_source not created"));
+
             ALfloat al_volume = static_cast<ALfloat>(volume);
             alSourcef(m_source_id, AL_GAIN, al_volume);
-            if (error_handler::check_openal_error("Set Volume"))
-                return false;
+            if(auto r = error_handler::check_openal_error("Set Volume"); !r)
+                return r;
 
             m_volume = al_volume;
-            return true;
+            return {};
         }
 
-        bool sound_source::set_pitch(float pitch)
+        std::expected<void, error> sound_source::set_pitch(float pitch)
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::set_pitch: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::set_pitch: sound_source not created"));
+
             ALfloat al_pitch = static_cast<ALfloat>(pitch);
             alSourcef(m_source_id, AL_PITCH, al_pitch);
-            if (error_handler::check_openal_error("Set Pitch"))
-                return false;
+            if(auto r = error_handler::check_openal_error("Set Pitch"); !r)
+                return r;
 
             m_pitch = al_pitch;
-            return true;
+            return {};
         }
 
-        bool sound_source::set_position(const vec3 &position)
+        std::expected<void, error> sound_source::set_position(const vec3 &position)
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::set_position: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::set_position: sound_source not created"));
+
             alSource3f(m_source_id, AL_POSITION,
                     static_cast<ALfloat>(position.x), static_cast<ALfloat>(position.y), static_cast<ALfloat>(position.z));
-            if (error_handler::check_openal_error("Set Position"))
-                return false;
+            if(auto r = error_handler::check_openal_error("Set Position"); !r)
+                return r;
 
             m_position = position;
-            return true;
+            return {};
         }
 
-        bool sound_source::set_velocity(const vec3 &velocity)
+        std::expected<void, error> sound_source::set_velocity(const vec3 &velocity)
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::set_velocity: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::set_velocity: sound_source not created"));
+
             alSource3f(m_source_id, AL_VELOCITY,
                     static_cast<ALfloat>(velocity.x), static_cast<ALfloat>(velocity.y), static_cast<ALfloat>(velocity.z));
-            if (error_handler::check_openal_error("Set Velocity"))
-                return false;
+            if(auto r = error_handler::check_openal_error("Set Velocity"); !r)
+                return r;
 
             m_velocity = velocity;
-            return true;
+            return {};
         }
 
-        bool sound_source::set_looping(bool looping)
+        std::expected<void, error> sound_source::set_looping(bool looping)
         {
             if(!m_created)
-            {
-                logcoe::warning("sound_source::set_looping: sound_source not created");
-                return false;
-            }
+                return std::unexpected(error_handler::make_error(error_code::invalid_state,
+                    "sound_source::set_looping: sound_source not created"));
+
             ALboolean al_looping = looping ? AL_TRUE : AL_FALSE;
             alSourcei(m_source_id, AL_LOOPING, al_looping);
-            if (error_handler::check_openal_error("Set Looping"))
-                return false;
+            if(auto r = error_handler::check_openal_error("Set Looping"); !r)
+                return r;
 
             m_looping = al_looping;
-            return true;
+            return {};
         }
 
         float sound_source::get_volume() const { return static_cast<float>(m_volume); }
@@ -283,7 +272,7 @@ namespace soundcoe
 
             ALint state;
             alGetSourcei(m_source_id, AL_SOURCE_STATE, &state);
-            if(error_handler::check_openal_error("Get Source State"))
+            if(!error_handler::check_openal_error("Get Source State"))
                 return sound_state::initial;
 
             switch(state)
@@ -315,7 +304,7 @@ namespace soundcoe
 
             ALint buffer_id;
             alGetSourcei(m_source_id, AL_BUFFER, &buffer_id);
-            if (error_handler::check_openal_error("Get Buffer Id"))
+            if(!error_handler::check_openal_error("Get Buffer Id"))
                 return 0;
 
             return static_cast<ALuint>(buffer_id);

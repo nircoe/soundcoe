@@ -1,6 +1,6 @@
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <iostream>
+#include <stdexcept>
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>

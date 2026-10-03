@@ -1,12 +1,15 @@
 #pragma once
 
 #include <soundcoe/resources/resource_manager.hpp>
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <string>
+#include <expected>
 #include <mutex>
 #include <atomic>
 #include <unordered_map>
 #include <chrono>
+#include <cstddef>
 
 namespace soundcoe
 {
@@ -99,9 +102,9 @@ namespace soundcoe
             void update_all_music_pitch();
             void update_all_pitch();
 
-            bool set_listener_position_impl(const vec3 &position);
-            bool set_listener_velocity_impl(const vec3 &velocity);
-            bool set_listener_orientation_impl(const vec3 &forward, const vec3 &up);
+            [[nodiscard]] std::expected<void, error> set_listener_position_impl(const vec3 &position);
+            [[nodiscard]] std::expected<void, error> set_listener_velocity_impl(const vec3 &velocity);
+            [[nodiscard]] std::expected<void, error> set_listener_orientation_impl(const vec3 &forward, const vec3 &up);
 
             bool set_error(const std::string &error);
 

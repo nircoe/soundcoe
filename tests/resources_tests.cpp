@@ -2,11 +2,23 @@
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/resources/resource_manager.hpp>
 #include <soundcoe/core/types.hpp>
+#include <soundcoe/core/error.hpp>
+#include <soundcoe/resources/audio_data.hpp>
+#include <soundcoe/resources/sound_buffer.hpp>
+#include <soundcoe/resources/sound_source.hpp>
+#include <AL/al.h>
 #include "utils/test_audio_files.hpp"
 #include <thread>
 #include <chrono>
 #include <vector>
 #include <future>
+#include <expected>
+#include <string>
+#include <cstddef>
+#include <utility>
+#include <functional>
+#include <filesystem>
+#include <fstream>
 
 using namespace soundcoe;
 using namespace soundcoe::internal;
@@ -419,10 +431,11 @@ TEST_F(SoundBufferTests, DefaultConstruction)
     EXPECT_EQ(buffer.get_filename(), "");
 }
 
-TEST_F(SoundBufferTests, FileConstructionAndLoading)
+TEST_F(SoundBufferTests, FileLoading)
 {
     std::string filename = (test_audio_files::s_test_sub_dir1 / "test1.wav").string();
-    sound_buffer buffer(filename);
+    sound_buffer buffer;
+    ASSERT_TRUE(buffer.load_from_file(filename));
 
     EXPECT_TRUE(buffer.is_loaded());
     EXPECT_NE(buffer.get_buffer_id(), 0);
@@ -433,7 +446,8 @@ TEST_F(SoundBufferTests, FileConstructionAndLoading)
 TEST_F(SoundBufferTests, MoveSemantics)
 {
     std::string filename = (test_audio_files::s_test_sub_dir1 / "test1.wav").string();
-    sound_buffer buffer1(filename);
+    sound_buffer buffer1;
+    ASSERT_TRUE(buffer1.load_from_file(filename));
     ALuint original_id = buffer1.get_buffer_id();
 
     sound_buffer buffer2 = std::move(buffer1);
@@ -447,7 +461,7 @@ TEST_F(SoundBufferTests, LoadAndUnload)
     sound_buffer buffer;
     std::string filename = (test_audio_files::s_test_sub_dir1 / "test1.wav").string();
 
-    buffer.load_from_file(filename);
+    ASSERT_TRUE(buffer.load_from_file(filename));
     EXPECT_TRUE(buffer.is_loaded());
     EXPECT_NE(buffer.get_buffer_id(), 0);
 
@@ -459,12 +473,97 @@ TEST_F(SoundBufferTests, LoadAndUnload)
 TEST_F(SoundBufferTests, InvalidFileHandling)
 {
     sound_buffer buffer;
-    EXPECT_THROW(buffer.load_from_file("nonexistent.wav"), std::runtime_error);
+    auto missing = buffer.load_from_file("nonexistent.wav");
+    ASSERT_FALSE(missing);
+    EXPECT_EQ(missing.error().code, error_code::file_not_found);
     EXPECT_FALSE(buffer.is_loaded());
 
     std::string txt_file = (test_audio_files::s_test_sub_dir1 / "readme.txt").string();
-    EXPECT_THROW(buffer.load_from_file(txt_file), std::runtime_error);
+    auto unsupported = buffer.load_from_file(txt_file);
+    ASSERT_FALSE(unsupported);
+    EXPECT_EQ(unsupported.error().code, error_code::unsupported_format);
     EXPECT_FALSE(buffer.is_loaded());
+}
+
+TEST_F(SoundBufferTests, LoadFromMemory)
+{
+    // Test 1: invalid ALenum gives invalid_argument and nothing is loaded
+    {
+        sound_buffer buffer;
+        std::vector<char> data(64, 0);
+
+        auto r = buffer.load_from_memory(data.data(), AL_NONE, static_cast<ALsizei>(data.size()), 8000);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_argument);
+        EXPECT_FALSE(buffer.is_loaded());
+    }
+
+    // Test 2: valid mono16 data loads
+    {
+        sound_buffer buffer;
+        std::vector<char> data(64, 0);
+
+        ASSERT_TRUE(buffer.load_from_memory(data.data(), AL_FORMAT_MONO16, static_cast<ALsizei>(data.size()), 8000));
+        EXPECT_TRUE(buffer.is_loaded());
+        EXPECT_NE(buffer.get_buffer_id(), 0);
+    }
+}
+
+//==============================================================================
+//             AudioDataTests - audio_data decoder failure tests
+//==============================================================================
+
+class AudioDataTests : public ::testing::Test
+{
+protected:
+    static void SetUpTestSuite() { test_audio_files::create_test_files(); }
+    static void TearDownTestSuite() { test_audio_files::cleanup(); }
+};
+
+TEST_F(AudioDataTests, DecodeFailures)
+{
+    std::string filename = (test_audio_files::s_test_sub_dir1 / "readme.txt").string();
+
+    // Test 1: wav decoder fails on a text file
+    {
+        auto r = audio_data::load_from_wav(filename);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::audio_decode_failure);
+        EXPECT_NE(r.error().message.find(filename), std::string::npos);
+    }
+
+    // Test 2: ogg decoder fails on a text file
+    {
+        auto r = audio_data::load_from_ogg(filename);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::audio_decode_failure);
+        EXPECT_NE(r.error().message.find(filename), std::string::npos);
+    }
+
+    // Test 3: mp3 decoder fails on a text file
+    {
+        auto r = audio_data::load_from_mp3(filename);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::audio_decode_failure);
+        EXPECT_NE(r.error().message.find(filename), std::string::npos);
+    }
+
+    // Test 4: all decoders fail on a file that doesn't exist
+    {
+        std::string missing = "nonexistent_file";
+
+        auto wav = audio_data::load_from_wav(missing);
+        ASSERT_FALSE(wav);
+        EXPECT_EQ(wav.error().code, error_code::audio_decode_failure);
+
+        auto ogg = audio_data::load_from_ogg(missing);
+        ASSERT_FALSE(ogg);
+        EXPECT_EQ(ogg.error().code, error_code::audio_decode_failure);
+
+        auto mp3 = audio_data::load_from_mp3(missing);
+        ASSERT_FALSE(mp3);
+        EXPECT_EQ(mp3.error().code, error_code::audio_decode_failure);
+    }
 }
 
 class SoundSourceTests : public ::testing::Test
@@ -502,7 +601,7 @@ TEST_F(SoundSourceTests, DefaultConstruction)
 TEST_F(SoundSourceTests, PropertySettersAndGetters)
 {
     sound_source source;
-    source.create();
+    ASSERT_TRUE(source.create());
 
     EXPECT_TRUE(source.set_volume(0.5f));
     EXPECT_FLOAT_EQ(source.get_volume(), 0.5f);
@@ -523,10 +622,11 @@ TEST_F(SoundSourceTests, PropertySettersAndGetters)
 TEST_F(SoundSourceTests, BufferAttachmentAndPlayback)
 {
     std::string filename = (test_audio_files::s_test_sub_dir1 / "test1.wav").string();
-    sound_buffer buffer(filename);
+    sound_buffer buffer;
+    ASSERT_TRUE(buffer.load_from_file(filename));
     sound_source source;
 
-    EXPECT_NO_THROW(source.attach_buffer(buffer));
+    EXPECT_TRUE(source.attach_buffer(buffer));
     EXPECT_EQ(source.get_buffer_id(), buffer.get_buffer_id());
 
     EXPECT_TRUE(source.play());
@@ -534,26 +634,91 @@ TEST_F(SoundSourceTests, BufferAttachmentAndPlayback)
     EXPECT_TRUE(source.stop());
     EXPECT_TRUE(source.is_stopped());
 
-    source.detach_buffer();
+    EXPECT_TRUE(source.detach_buffer());
     EXPECT_EQ(source.get_buffer_id(), 0);
 }
 
 TEST_F(SoundSourceTests, StateManagement)
 {
     std::string filename = (test_audio_files::s_test_sub_dir1 / "test1.wav").string();
-    sound_buffer buffer(filename);
+    sound_buffer buffer;
+    ASSERT_TRUE(buffer.load_from_file(filename));
     sound_source source;
 
-    source.attach_buffer(buffer);
+    ASSERT_TRUE(source.attach_buffer(buffer));
     EXPECT_EQ(source.get_state(), sound_state::initial);
     EXPECT_FALSE(source.is_stopped());
 
-    source.play();
+    ASSERT_TRUE(source.play());
     sound_state state = source.get_state();
     EXPECT_TRUE(state == sound_state::playing || state == sound_state::stopped);
 
-    source.stop();
+    ASSERT_TRUE(source.stop());
     EXPECT_EQ(source.get_state(), sound_state::stopped);
+}
+
+TEST_F(SoundSourceTests, NotCreatedOperations)
+{
+    // Test 1: every operation on a source that was never created gives invalid_state
+    {
+        sound_source source;
+
+        std::vector<std::expected<void, error>> results;
+        results.push_back(source.play());
+        results.push_back(source.pause());
+        results.push_back(source.stop());
+        results.push_back(source.set_volume(0.5f));
+        results.push_back(source.set_pitch(1.5f));
+        results.push_back(source.set_position(vec3(1.0f, 2.0f, 3.0f)));
+        results.push_back(source.set_velocity(vec3(1.0f, 2.0f, 3.0f)));
+        results.push_back(source.set_looping(true));
+
+        for (const auto &r : results)
+        {
+            ASSERT_FALSE(r);
+            EXPECT_EQ(r.error().code, error_code::invalid_state);
+        }
+        EXPECT_FALSE(source.is_created());
+    }
+
+    // Test 2: the message names the operation
+    {
+        sound_source source;
+        auto r = source.play();
+        ASSERT_FALSE(r);
+        EXPECT_NE(r.error().message.find("sound_source::play"), std::string::npos);
+    }
+
+    // Test 3: destroy and detach_buffer on a source that was never created are a success
+    {
+        sound_source source;
+        EXPECT_TRUE(source.detach_buffer());
+        EXPECT_TRUE(source.destroy());
+    }
+}
+
+TEST_F(SoundSourceTests, CreateAndDestroy)
+{
+    sound_source source;
+
+    // Test 1: create works and a second create stays a success
+    {
+        ASSERT_TRUE(source.create());
+        EXPECT_TRUE(source.is_created());
+        EXPECT_NE(source.get_source_id(), 0);
+        EXPECT_TRUE(source.create());
+    }
+
+    // Test 2: destroy resets the source and operations fail again afterwards
+    {
+        ASSERT_TRUE(source.destroy());
+        EXPECT_FALSE(source.is_created());
+        EXPECT_EQ(source.get_source_id(), 0);
+
+        auto r = source.play();
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_state);
+    }
 }
 
 TEST_F(SoundSourceTests, MoveSemantics)
