@@ -5,7 +5,6 @@
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <AL/al.h>
-#include <AL/alc.h>
 
 namespace soundcoe
 {

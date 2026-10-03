@@ -1,7 +1,9 @@
 #pragma once
 
+#include <soundcoe/core/types.hpp>
 #include <soundcoe/utils/math.hpp>
 #include <string>
+#include <cstddef>
 
 namespace soundcoe
 {

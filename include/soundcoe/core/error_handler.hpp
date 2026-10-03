@@ -26,7 +26,8 @@ namespace soundcoe
             void throw_on_alc_error(ALCdevice *device, const std::string &operation);
             ALCenum clear_alc_error(ALCdevice *device);
 
-            void throw_on_audio_error(const std::string &filename, audio_format format, audio_decoder_operation operation);
+            [[nodiscard]] error make_audio_decode_error(const std::string &filename, audio_format format,
+                                                          audio_decoder_operation operation);
         } // namespace error_handler
     } // namespace internal
 } // namespace soundcoe

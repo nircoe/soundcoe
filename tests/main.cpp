@@ -1,6 +1,7 @@
 #include <testcoe.hpp>
 #include <iostream>
 #include <string>
+#include <cstddef>
 
 int printHelp()
 {
@@ -18,6 +19,7 @@ int printHelp()
     std::cout << "  Vec3Tests            - Vec3 math operations tests" << std::endl;
     std::cout << "  MathTests            - Math utility functions tests" << std::endl;
     std::cout << "  ResourceManagerTests - ResourceManager comprehensive functionality tests" << std::endl;
+    std::cout << "  AudioDataTests       - AudioData decoder failure tests" << std::endl;
     std::cout << "  SoundBufferTests     - SoundBuffer loading and management tests" << std::endl;
     std::cout << "  SoundSourceTests     - SoundSource playback and properties tests" << std::endl;
     std::cout << "  SoundManagerTests    - SoundManager high-level audio management tests" << std::endl;

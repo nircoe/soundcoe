@@ -13,6 +13,9 @@
 #include <filesystem>
 #include <optional>
 #include <functional>
+#include <chrono>
+#include <cstddef>
+#include <AL/al.h>
 
 namespace soundcoe
 {

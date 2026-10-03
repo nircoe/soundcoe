@@ -1,10 +1,7 @@
 #pragma once
 
 #include <string>
-#include <memory>
 #include <mutex>
-#include <utility>
-#include <AL/al.h>
 #include <AL/alc.h>
 
 namespace soundcoe

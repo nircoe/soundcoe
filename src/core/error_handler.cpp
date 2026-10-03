@@ -1,8 +1,6 @@
 #include <soundcoe/core/error_handler.hpp>
-#include <iostream>
-#include <sstream>
 #include <format>
-#include <exception>
+#include <stdexcept>
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
@@ -120,13 +118,12 @@ namespace soundcoe
                 return alcGetError(device);
             }
 
-            void throw_on_audio_error(const std::string &filename, audio_format format, audio_decoder_operation operation)
+            error make_audio_decode_error(const std::string &filename, audio_format format,
+                                          audio_decoder_operation operation)
             {
-                std::ostringstream oss;
-                oss << "Audio Decoder Error: " << filename << " - " << to_string(format) << " - " << to_string(operation);
-                std::string message = oss.str();
-                logcoe::error(message);
-                throw std::runtime_error(message);
+                return make_error(error_code::audio_decode_failure,
+                    std::format("Audio Decoder Error: {} - {} - {}", filename, to_string(format),
+                        to_string(operation)));
             }
         } // namespace error_handler
     } // namespace internal

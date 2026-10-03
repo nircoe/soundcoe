@@ -3,10 +3,14 @@
 #include <soundcoe/core/error.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe/core/types.hpp>
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <thread>
 #include <chrono>
 #include <future>
 #include <expected>
+#include <string>
+#include <vector>
 
 #define _USE_MATH_DEFINES
 #include <cmath>

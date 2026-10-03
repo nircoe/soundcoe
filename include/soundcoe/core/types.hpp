@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <string_view>
-#include <sstream>
 #include <limits>
 #include <utility>
 #include <soundcoe_config.hpp>

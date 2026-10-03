@@ -1,6 +1,7 @@
 #pragma once
 
 #include <soundcoe/resources/resource_manager.hpp>
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <string>
 #include <expected>
@@ -8,6 +9,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <chrono>
+#include <cstddef>
 
 namespace soundcoe
 {
