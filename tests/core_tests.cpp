@@ -33,14 +33,12 @@ protected:
 
     void SetUp() override
     {
-        try { m_audio_context.initialize(); }
-        catch(...) { }
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) { }
+        static_cast<void>(m_audio_context.shutdown());
     }
 };
 
@@ -54,9 +52,9 @@ TEST_F(AudioContextTests, AutoInitialization)
 
 TEST_F(AudioContextTests, MultipleShutdownCalls)
 {
-    EXPECT_NO_THROW(m_audio_context.shutdown());
-    EXPECT_NO_THROW(m_audio_context.shutdown());
-    EXPECT_NO_THROW(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
 
     EXPECT_FALSE(m_audio_context.is_initialized());
 }
@@ -100,14 +98,12 @@ protected:
 
     void SetUp() override
     {
-        try { m_audio_context.initialize(); }
-        catch(...) { }
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) { }
+        static_cast<void>(m_audio_context.shutdown());
     }
 };
 
@@ -131,12 +127,6 @@ TEST_F(ErrorHandlerTests, ALCErrorStringConversion)
     EXPECT_EQ(error_handler::get_alc_error_as_string(ALC_INVALID_VALUE), "ALC_INVALID_VALUE");
     EXPECT_EQ(error_handler::get_alc_error_as_string(ALC_OUT_OF_MEMORY), "ALC_OUT_OF_MEMORY");
     EXPECT_EQ(error_handler::get_alc_error_as_string(static_cast<ALCenum>(9999)), "UNKNOWN ERROR");
-}
-
-TEST_F(ErrorHandlerTests, CheckErrorFunctions)
-{
-    EXPECT_NO_THROW(error_handler::throw_on_openal_error("Test Operation"));
-    EXPECT_NO_THROW(error_handler::throw_on_alc_error(m_audio_context.get_device(), "Test Operation"));
 }
 
 TEST_F(ErrorHandlerTests, CheckOpenALError)

@@ -1,7 +1,7 @@
 #include <soundcoe/core/audio_context.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <stdexcept>
 #include <soundcoe_config.hpp>
+#include <format>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -10,11 +10,22 @@ namespace soundcoe
 {
     namespace internal
     {
+        namespace
+        {
+            [[nodiscard]] error alc_failure(ALCdevice *device, const std::string &operation)
+            {
+                if (auto r = error_handler::check_alc_error(device, operation); !r)
+                    return r.error();
+
+                return error_handler::make_error(error_code::alc_error, std::format("{} failed", operation));
+            }
+        } // namespace
+
         audio_context::audio_context() { }
 
-        audio_context::~audio_context() { shutdown(); }
+        audio_context::~audio_context() { static_cast<void>(shutdown()); }
 
-        void audio_context::initialize(const std::string &device_name)
+        std::expected<void, error> audio_context::initialize(const std::string &device_name)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -27,7 +38,7 @@ namespace soundcoe
                     if(m_context == current)
                     {
                         logcoe::info("audio_context::initialize: audio_context is already initialized");
-                        return;
+                        return {};
                     }
                     device_opened = true;
                     context_created = true;
@@ -44,70 +55,85 @@ namespace soundcoe
                 logcoe::debug("audio_context::initialize: Initializing ALCdevice: " + (device_name.empty() ? "default" : device_name));
                 m_device = alcOpenDevice(device_name.empty() ? nullptr : device_name.c_str());
                 if (!m_device)
-                    error_handler::throw_on_alc_error(nullptr, "Open Audio Device: \"" + (device_name.empty() ? "default" : device_name) + "\"");
+                    return std::unexpected(alc_failure(nullptr,
+                        "Open Audio Device: \"" + (device_name.empty() ? "default" : device_name) + "\""));
             }
 
             if(!context_created)
             {
                 logcoe::info("audio_context::initialize: Initializing audio_context");
                 m_context = alcCreateContext(m_device, nullptr);
-                if(!m_context)
+                if (!m_context)
                 {
-                    try { error_handler::throw_on_alc_error(m_device, "Create Audio Context"); }
-                    catch(const std::runtime_error &)
-                    {
-                        alcCloseDevice(m_device);
-                        m_device = nullptr;
-                        throw;
-                    }
+                    auto err = alc_failure(m_device, "Create Audio Context");
+                    alcCloseDevice(m_device);
+                    m_device = nullptr;
+                    return std::unexpected(err);
                 }
             }
 
             logcoe::debug("audio_context::initialize: Make audio_context current");
-            if(!alcMakeContextCurrent(m_context))
+            if (!alcMakeContextCurrent(m_context))
             {
-                try { error_handler::throw_on_alc_error(m_device, "Make Context Current"); }
-                catch(const std::runtime_error &)
-                {
-                    alcDestroyContext(m_context);
-                    alcCloseDevice(m_device);
-                    m_device = nullptr;
-                    m_context = nullptr;
-                    throw;
-                }
+                auto err = alc_failure(m_device, "Make Context Current");
+                alcDestroyContext(m_context);
+                alcCloseDevice(m_device);
+                m_device = nullptr;
+                m_context = nullptr;
+                return std::unexpected(err);
             }
 
             m_initialized = true;
             logcoe::info("audio_context::initialize: audio_context initialized successfully");
             error_handler::clear_alc_error(m_device);
+            return {};
         }
 
-        void audio_context::shutdown()
+        std::expected<void, error> audio_context::shutdown()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if(!m_initialized)
-                return;
+                return {};
 
             logcoe::info("audio_context::shutdown: Shutting down audio_context");
 
-            if(!alcMakeContextCurrent(nullptr))
-                error_handler::throw_on_alc_error(m_device, "Make Context Current NULL");
-            logcoe::debug("audio_context::shutdown: Make Context Current NULL succeed");
+            std::expected<void, error> result;
 
-            if(m_context)
+            if (!alcMakeContextCurrent(nullptr))
+                result = std::unexpected(alc_failure(m_device, "Make Context Current NULL"));
+            else
+                logcoe::debug("audio_context::shutdown: Make Context Current NULL succeed");
+
+            if (m_context)
             {
                 alcDestroyContext(m_context);
-                error_handler::throw_on_alc_error(m_device, "Destroy Context");
+                if (auto r = error_handler::check_alc_error(m_device, "Destroy Context"); !r)
+                {
+                    if (result)
+                        result = std::unexpected(r.error());
+                }
+                else
+                    logcoe::debug("audio_context::shutdown: Destroy Context succeed");
             }
-            logcoe::debug("audio_context::shutdown: Destroy Context succeed");
             m_context = nullptr;
 
-            if(m_device && !alcCloseDevice(m_device))
-                error_handler::throw_on_alc_error(m_device, "Close Device");
-            logcoe::debug("audio_context::shutdown: Close Device succeed");
+            if (m_device)
+            {
+                if (!alcCloseDevice(m_device))
+                {
+                    auto err = alc_failure(m_device, "Close Device");
+                    if (result)
+                        result = std::unexpected(err);
+                }
+                else
+                    logcoe::debug("audio_context::shutdown: Close Device succeed");
+            }
             m_device = nullptr;
             m_initialized = false;
-            logcoe::info("audio_context::shutdown: audio_context shutdown complete successfully");
+
+            if (result)
+                logcoe::info("audio_context::shutdown: audio_context shutdown complete successfully");
+            return result;
         }
 
         bool audio_context::is_initialized() const

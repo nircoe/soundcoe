@@ -1,13 +1,13 @@
 #include <soundcoe/playback/sound_manager.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe/resources/sound_source.hpp>
+#include <soundcoe_config.hpp>
 #include <AL/al.h>
 #include <filesystem>
 #include <algorithm>
-#include <exception>
 #include <memory>
+#include <system_error>
 #include <utility>
-#include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -490,20 +490,18 @@ namespace soundcoe
                 return false;
             }
 
-            if (!std::filesystem::exists(audio_root_directory) || !std::filesystem::is_directory(audio_root_directory))
+            std::error_code ec;
+            if (!std::filesystem::exists(audio_root_directory, ec) ||
+                !std::filesystem::is_directory(audio_root_directory, ec))
             {
                 logcoe::error("sound_manager::initialize: Audio root directory does not exist or is not a directory: " + audio_root_directory);
                 logcoe::shutdown();
                 return false;
             }
 
-            try
+            if (auto r = m_resource_manager.initialize(audio_root_directory, max_sources, max_cache_size_mb); !r)
             {
-                m_resource_manager.initialize(audio_root_directory, max_sources, max_cache_size_mb);
-            }
-            catch (const std::exception &e)
-            {
-                logcoe::error("sound_manager::initialize: Failed to create Resource Manager: " + std::string(e.what()));
+                logcoe::error("sound_manager::initialize: Failed to create Resource Manager: " + r.error().message);
                 logcoe::shutdown();
                 return false;
             }
@@ -515,11 +513,13 @@ namespace soundcoe
 
             std::filesystem::path root_directory(audio_root_directory);
             std::filesystem::path general_audio_directory(root_directory / "general");
-            if (std::filesystem::exists(general_audio_directory) && std::filesystem::is_directory(general_audio_directory))
+            if (std::filesystem::exists(general_audio_directory, ec) &&
+                std::filesystem::is_directory(general_audio_directory, ec))
             {
-                if (!m_resource_manager.preload_directory("general"))
+                if (auto r = m_resource_manager.preload_directory("general"); !r)
                 {
-                    logcoe::error("sound_manager::initialize: Failed to load general audio subdirectory");
+                    logcoe::error("sound_manager::initialize: Failed to load general audio subdirectory: " +
+                                  r.error().message);
                     m_resource_manager.shutdown();
                     logcoe::shutdown();
                     return false;
@@ -583,14 +583,14 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return m_resource_manager.preload_directory(scene_name);
+            return m_resource_manager.preload_directory(scene_name).has_value();
         }
 
         bool sound_manager::unload_scene(const std::string &scene_name)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return m_resource_manager.unload_directory(scene_name);
+            return m_resource_manager.unload_directory(scene_name).has_value();
         }
 
         bool sound_manager::is_scene_loaded(const std::string &scene_name) const

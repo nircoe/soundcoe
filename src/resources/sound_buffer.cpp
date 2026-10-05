@@ -1,9 +1,11 @@
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe/core/types.hpp>
-#include <filesystem>
-#include <utility>
 #include <soundcoe_config.hpp>
+#include <filesystem>
+#include <format>
+#include <system_error>
+#include <utility>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -96,11 +98,20 @@ namespace soundcoe
             unload();
 
             std::filesystem::path file_path(filename);
-            if(!std::filesystem::exists(file_path))
+            std::error_code ec;
+            bool exists = std::filesystem::exists(file_path, ec);
+            if (ec)
+                return std::unexpected(error_handler::make_error(error_code::filesystem_error,
+                    std::format("sound_buffer::load_from_file: Failed to check \"{}\": {}", filename, ec.message())));
+            if (!exists)
                 return std::unexpected(error_handler::make_error(error_code::file_not_found,
                     "sound_buffer::load_from_file: File does not exist: \"" + filename + "\""));
 
-            if(!std::filesystem::is_regular_file(file_path))
+            bool is_regular = std::filesystem::is_regular_file(file_path, ec);
+            if (ec)
+                return std::unexpected(error_handler::make_error(error_code::filesystem_error,
+                    std::format("sound_buffer::load_from_file: Failed to check \"{}\": {}", filename, ec.message())));
+            if (!is_regular)
                 return std::unexpected(error_handler::make_error(error_code::invalid_argument,
                     "sound_buffer::load_from_file: Not a regular file: \"" + filename + "\""));
 

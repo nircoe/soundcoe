@@ -1,21 +1,23 @@
 #pragma once
 
 #include <soundcoe/core/audio_context.hpp>
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <soundcoe/resources/sound_source.hpp>
+#include <AL/al.h>
 #include <string>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <mutex>
 #include <deque>
+#include <expected>
 #include <filesystem>
 #include <optional>
 #include <functional>
 #include <chrono>
 #include <cstddef>
-#include <AL/al.h>
 
 namespace soundcoe
 {
@@ -58,30 +60,33 @@ namespace soundcoe
             void free_buffers();
             std::filesystem::path normalize_path(const std::string &path) const;
             bool scan_directory_for_files(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
-            bool preload_file_impl(const std::filesystem::path &file_path);
-            bool unload_file_impl(const std::filesystem::path &file_path);
+            [[nodiscard]] std::expected<void, error> preload_file_impl(const std::filesystem::path &file_path);
+            [[nodiscard]] std::expected<void, error> unload_file_impl(const std::filesystem::path &file_path);
             bool is_directory_loaded_impl(const std::string &subdirectory) const;
             sound_priority get_highest_priority_for_buffer(ALuint buffer_id) const;
-            bool release_buffer_impl(const std::string &filename);
+            void release_buffer_impl(const std::string &filename);
             std::filesystem::path find_file_in_loaded_directories(const std::string &filename) const;
 
         public:
             resource_manager();
             ~resource_manager();
 
-            void initialize(const std::string &audio_root_directory, size_t max_sources = 64,
-                            size_t max_cache_size_mb = UNLIMITED_CACHE);
+            [[nodiscard]] std::expected<void, error> initialize(const std::string &audio_root_directory,
+                                                                std::size_t max_sources = 64,
+                                                                std::size_t max_cache_size_mb = UNLIMITED_CACHE);
             void shutdown();
             bool is_initialized() const;
 
-            bool preload_directory(const std::string &subdirectory);
-            bool unload_directory(const std::string &subdirectory);
+            [[nodiscard]] std::expected<void, error> preload_directory(const std::string &subdirectory);
+            [[nodiscard]] std::expected<void, error> unload_directory(const std::string &subdirectory);
 
-            std::optional<std::reference_wrapper<sound_source>> acquire_source(size_t &pool_index, sound_priority priority = sound_priority::medium);
-            std::optional<std::reference_wrapper<sound_buffer>> get_buffer(const std::string &filename);
-            bool release_source(std::reference_wrapper<sound_source> source);
-            bool release_buffer(std::reference_wrapper<sound_buffer> buffer);
-            bool release_buffer(const std::string &filename);
+            [[nodiscard]] std::expected<std::reference_wrapper<sound_source>, error> acquire_source(
+                std::size_t &pool_index, sound_priority priority = sound_priority::medium);
+            [[nodiscard]] std::expected<std::reference_wrapper<sound_buffer>, error> get_buffer(
+                const std::string &filename);
+            void release_source(std::reference_wrapper<sound_source> source);
+            void release_buffer(std::reference_wrapper<sound_buffer> buffer);
+            void release_buffer(const std::string &filename);
 
             size_t get_active_source_count() const;
             size_t get_total_source_count() const;

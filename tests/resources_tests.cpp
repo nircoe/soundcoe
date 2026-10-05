@@ -32,13 +32,12 @@ protected:
     {
         test_audio_files::create_test_files();
 
-        m_resource_manager.initialize(test_audio_files::s_test_root_dir.string(), 4, 2);
+        ASSERT_TRUE(m_resource_manager.initialize(test_audio_files::s_test_root_dir.string(), 4, 2));
     }
 
     void TearDown() override
     {
-        try { m_resource_manager.shutdown(); }
-        catch (...) { }
+        m_resource_manager.shutdown();
         test_audio_files::cleanup();
     }
 
@@ -78,7 +77,7 @@ TEST_F(ResourceManagerTests, SourceAcquisitionAndRelease)
 
     if (source_opt.has_value())
     {
-        EXPECT_TRUE(m_resource_manager.release_source(source_opt.value()));
+        m_resource_manager.release_source(source_opt.value());
         EXPECT_EQ(m_resource_manager.get_active_source_count(), 0);
     }
 }
@@ -153,8 +152,8 @@ TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
 
     EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 total files
 
-    EXPECT_TRUE(m_resource_manager.release_buffer("test1.wav"));
-    EXPECT_TRUE(m_resource_manager.release_buffer("test1.wav"));
+    m_resource_manager.release_buffer("test1.wav");
+    m_resource_manager.release_buffer("test1.wav");
 }
 
 TEST_F(ResourceManagerTests, BufferReferenceCounting)
@@ -182,11 +181,6 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
     EXPECT_TRUE(buffer1.has_value());
     m_resource_manager.release_buffer(filename);
 
-    // Clear all reference_wrapper optionals to ensure no references remain
-    buffer1.reset();
-    buffer2.reset();
-    buffer3.reset();
-
     EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 files in cache
     size_t cleaned = m_resource_manager.cleanup_unused_buffers();
     EXPECT_EQ(cleaned, 2); // Both files should be cleaned (both have ref count 0)
@@ -196,13 +190,16 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
 TEST_F(ResourceManagerTests, InvalidBufferRequests)
 {
     auto non_existent = m_resource_manager.get_buffer("nonexistent.wav");
-    EXPECT_FALSE(non_existent.has_value());
+    ASSERT_FALSE(non_existent);
+    EXPECT_EQ(non_existent.error().code, error_code::file_not_found);
 
     auto non_audio = m_resource_manager.get_buffer("sounds/readme.txt");
-    EXPECT_FALSE(non_audio.has_value());
+    ASSERT_FALSE(non_audio);
+    EXPECT_EQ(non_audio.error().code, error_code::file_not_found);
 
     auto empty = m_resource_manager.get_buffer("");
-    EXPECT_FALSE(empty.has_value());
+    ASSERT_FALSE(empty);
+    EXPECT_EQ(empty.error().code, error_code::invalid_argument);
 }
 
 TEST_F(ResourceManagerTests, DirectoryOperations)
@@ -222,9 +219,15 @@ TEST_F(ResourceManagerTests, DirectoryOperations)
 
 TEST_F(ResourceManagerTests, InvalidDirectoryOperations)
 {
-    EXPECT_FALSE(m_resource_manager.preload_directory("nonexistent"));
+    auto missing = m_resource_manager.preload_directory("nonexistent");
+    ASSERT_FALSE(missing);
+    EXPECT_EQ(missing.error().code, error_code::directory_not_found);
     EXPECT_FALSE(m_resource_manager.is_directory_loaded("nonexistent"));
-    EXPECT_FALSE(m_resource_manager.preload_directory(""));
+
+    auto empty = m_resource_manager.preload_directory("");
+    ASSERT_FALSE(empty);
+    EXPECT_EQ(empty.error().code, error_code::invalid_argument);
+
     EXPECT_TRUE(m_resource_manager.unload_directory("notloaded"));
 }
 
@@ -287,8 +290,8 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
 
 TEST_F(ResourceManagerTests, ConcurrentBufferAccess)
 {
-    m_resource_manager.preload_directory("sounds");
-    m_resource_manager.preload_directory("music");
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
+    ASSERT_TRUE(m_resource_manager.preload_directory("music"));
 
     std::vector<std::future<void>> futures;
     std::vector<std::string> files = {"test1.wav", "test2.wav", "music1.wav"};
@@ -357,8 +360,11 @@ TEST_F(ResourceManagerTests, ErrorConditions)
     corrupt << "Invalid WAV data";
     corrupt.close();
 
-    auto corrupt_buffer = m_resource_manager.get_buffer("sounds/corrupt.wav");
-    EXPECT_FALSE(corrupt_buffer.has_value());
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
+
+    auto corrupt_buffer = m_resource_manager.get_buffer("corrupt.wav");
+    ASSERT_FALSE(corrupt_buffer);
+    EXPECT_EQ(corrupt_buffer.error().code, error_code::unsupported_format);
 
     std::filesystem::remove(corrupt_file);
 }
@@ -366,10 +372,10 @@ TEST_F(ResourceManagerTests, ErrorConditions)
 TEST_F(ResourceManagerTests, CacheLimits)
 {
     m_resource_manager.shutdown();
-    m_resource_manager.initialize(test_audio_files::s_test_root_dir.string(), 4, 1);
+    ASSERT_TRUE(m_resource_manager.initialize(test_audio_files::s_test_root_dir.string(), 4, 1));
 
-    m_resource_manager.preload_directory("sounds");
-    m_resource_manager.preload_directory("music");
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
+    ASSERT_TRUE(m_resource_manager.preload_directory("music"));
 
     std::vector<std::string> files = {"test1.wav", "test2.wav", "music1.wav"};
 
@@ -384,9 +390,69 @@ TEST_F(ResourceManagerTests, CacheLimits)
     EXPECT_LE(m_resource_manager.get_cache_size_bytes(), 1 * 1024 * 1024);
 }
 
+TEST_F(ResourceManagerTests, SourcePoolExhaustionError)
+{
+    std::vector<std::reference_wrapper<sound_source>> sources;
+    for (int i = 0; i < 4; ++i)
+    {
+        std::size_t pool_index;
+        auto source = m_resource_manager.acquire_source(pool_index, sound_priority::high);
+        ASSERT_TRUE(source);
+        sources.push_back(source.value());
+    }
+
+    std::size_t low_index;
+    auto low_priority = m_resource_manager.acquire_source(low_index, sound_priority::low);
+    ASSERT_FALSE(low_priority);
+    EXPECT_EQ(low_priority.error().code, error_code::resource_exhausted);
+    EXPECT_EQ(m_resource_manager.get_active_source_count(), 4);
+
+    for (auto &source : sources)
+        m_resource_manager.release_source(source);
+}
+
+TEST_F(ResourceManagerTests, UninitializedErrors)
+{
+    resource_manager uninitialized;
+
+    // Test 1: an empty root directory is rejected and nothing gets initialized
+    {
+        auto r = uninitialized.initialize("");
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_argument);
+        EXPECT_FALSE(uninitialized.is_initialized());
+    }
+
+    // Test 2: directory, source and buffer operations need an initialized manager
+    {
+        auto preload = uninitialized.preload_directory("sounds");
+        ASSERT_FALSE(preload);
+        EXPECT_EQ(preload.error().code, error_code::not_initialized);
+
+        auto unload = uninitialized.unload_directory("sounds");
+        ASSERT_FALSE(unload);
+        EXPECT_EQ(unload.error().code, error_code::not_initialized);
+
+        std::size_t pool_index;
+        auto source = uninitialized.acquire_source(pool_index);
+        ASSERT_FALSE(source);
+        EXPECT_EQ(source.error().code, error_code::not_initialized);
+
+        auto buffer = uninitialized.get_buffer("test1.wav");
+        ASSERT_FALSE(buffer);
+        EXPECT_EQ(buffer.error().code, error_code::not_initialized);
+    }
+
+    // Test 3: initialize on an already initialized manager is a success
+    {
+        EXPECT_TRUE(m_resource_manager.initialize(test_audio_files::s_test_root_dir.string()));
+        EXPECT_TRUE(m_resource_manager.is_initialized());
+    }
+}
+
 TEST_F(ResourceManagerTests, ProperShutdown)
 {
-    m_resource_manager.preload_directory("sounds");
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
     size_t pool_index;
     [[maybe_unused]] auto source = m_resource_manager.acquire_source(pool_index, sound_priority::medium);
 
@@ -395,10 +461,12 @@ TEST_F(ResourceManagerTests, ProperShutdown)
 
     size_t new_index;
     auto new_source = m_resource_manager.acquire_source(new_index, sound_priority::medium);
-    EXPECT_FALSE(new_source.has_value());
+    ASSERT_FALSE(new_source);
+    EXPECT_EQ(new_source.error().code, error_code::not_initialized);
 
     auto buffer = m_resource_manager.get_buffer("sounds/test1.wav");
-    EXPECT_FALSE(buffer.has_value());
+    ASSERT_FALSE(buffer);
+    EXPECT_EQ(buffer.error().code, error_code::not_initialized);
 }
 
 class SoundBufferTests : public ::testing::Test
@@ -410,13 +478,12 @@ protected:
     void SetUp() override
     {
         test_audio_files::create_test_files();
-        m_audio_context.initialize();
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) {}
+        static_cast<void>(m_audio_context.shutdown());
     }
 
     static void SetUpTestSuite() { test_audio_files::create_test_files(); }
@@ -575,13 +642,12 @@ protected:
     void SetUp() override
     {
         test_audio_files::create_test_files();
-        m_audio_context.initialize();
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) {}
+        static_cast<void>(m_audio_context.shutdown());
     }
 
     static void SetUpTestSuite() { test_audio_files::create_test_files(); }

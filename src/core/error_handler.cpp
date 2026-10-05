@@ -1,7 +1,6 @@
 #include <soundcoe/core/error_handler.hpp>
-#include <format>
-#include <stdexcept>
 #include <soundcoe_config.hpp>
+#include <format>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -55,17 +54,6 @@ namespace soundcoe
                     create_error_message("OpenAL Error: ", operation, get_openal_error_as_string(al_error))));
             }
 
-            void throw_on_openal_error(const std::string &operation)
-            {
-                ALenum al_error = alGetError();
-                if (al_error == AL_NO_ERROR) return;
-
-                std::string message =
-                    create_error_message("OpenAL Error: ", operation, get_openal_error_as_string(al_error));
-                logcoe::error(message);
-                throw std::runtime_error(message);
-            }
-
             ALenum clear_openal_error()
             {
                 return alGetError();
@@ -100,17 +88,6 @@ namespace soundcoe
 
                 return std::unexpected(make_error(error_code::alc_error,
                     create_error_message("ALC Error: ", operation, get_alc_error_as_string(alc_error))));
-            }
-
-            void throw_on_alc_error(ALCdevice *device, const std::string &operation)
-            {
-                ALCenum alc_error = alcGetError(device);
-                if (alc_error == ALC_NO_ERROR) return;
-
-                std::string message = create_error_message("ALC Error: ", operation, 
-                    get_alc_error_as_string(alc_error));
-                logcoe::error(message);
-                throw std::runtime_error(message);
             }
 
             ALCenum clear_alc_error(ALCdevice *device)
