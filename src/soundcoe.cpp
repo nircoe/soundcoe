@@ -17,15 +17,15 @@ namespace soundcoe
         }
     }
 
-    bool initialize(const std::string &audio_root_directory, size_t max_sources,
-                    size_t max_cache_size_mb, const std::string &sound_subdir,
-                    const std::string &music_subdir, LogLevel level)
+    std::expected<void, error> initialize(const std::string &audio_root_directory, size_t max_sources,
+                                          size_t max_cache_size_mb, const std::string &sound_subdir,
+                                          const std::string &music_subdir, LogLevel level)
     {
         return internal::get_sound_manager_instance().initialize(audio_root_directory, max_sources, max_cache_size_mb,
                                                             sound_subdir, music_subdir, level);
     }
 
-    bool initialize(const init_config &config)
+    std::expected<void, error> initialize(const init_config &config)
     {
         return initialize(config.audio_root_directory, config.max_sources, config.max_cache_size_mb,
                           config.sound_subdir, config.music_subdir, config.level);
@@ -41,12 +41,12 @@ namespace soundcoe
         return internal::get_sound_manager_instance().is_initialized();
     }
 
-    bool preload_scene(const std::string &scene_name)
+    std::expected<void, error> preload_scene(const std::string &scene_name)
     {
         return internal::get_sound_manager_instance().preload_scene(scene_name);
     }
 
-    bool unload_scene(const std::string &scene_name)
+    std::expected<void, error> unload_scene(const std::string &scene_name)
     {
         return internal::get_sound_manager_instance().unload_scene(scene_name);
     }
@@ -61,21 +61,21 @@ namespace soundcoe
         internal::get_sound_manager_instance().update();
     }
 
-    sound_handle play_sound(const std::string &filename, float volume, float pitch, bool loop,
-                          sound_priority priority)
+    std::expected<sound_handle, error> play_sound(const std::string &filename, float volume, float pitch, bool loop,
+                                                  sound_priority priority)
     {
         return internal::get_sound_manager_instance().play_sound(filename, volume, pitch, loop, priority);
     }
 
-    sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity,
-                            float volume, float pitch, bool loop,
-                            sound_priority priority)
+    std::expected<sound_handle, error> play_sound3d(const std::string &filename, const vec3 &position,
+                                                    const vec3 &velocity, float volume, float pitch, bool loop,
+                                                    sound_priority priority)
     {
         return internal::get_sound_manager_instance().play_sound3d(filename, position, velocity, volume, pitch, loop, priority);
     }
 
-    music_handle play_music(const std::string &filename, float volume, float pitch, bool loop,
-                          sound_priority priority)
+    std::expected<music_handle, error> play_music(const std::string &filename, float volume, float pitch, bool loop,
+                                                  sound_priority priority)
     {
         return internal::get_sound_manager_instance().play_music(filename, volume, pitch, loop, priority);
     }
@@ -234,36 +234,34 @@ namespace soundcoe
         return internal::get_sound_manager_instance().get_active_music_count();
     }
 
-    sound_handle fade_in_sound(const std::string &filename, float duration,
-                            float volume, float pitch, bool loop,
-                            sound_priority priority)
+    std::expected<sound_handle, error> fade_in_sound(const std::string &filename, float duration, float volume,
+                                                     float pitch, bool loop, sound_priority priority)
     {
         return internal::get_sound_manager_instance().fade_in_sound(filename, duration, volume, pitch, loop, priority);
     }
 
-    music_handle fade_in_music(const std::string &filename, float duration,
-                            float volume, float pitch, bool loop,
-                            sound_priority priority)
+    std::expected<music_handle, error> fade_in_music(const std::string &filename, float duration, float volume,
+                                                     float pitch, bool loop, sound_priority priority)
     {
         return internal::get_sound_manager_instance().fade_in_music(filename, duration, volume, pitch, loop, priority);
     }
 
-    bool fade_out_sound(sound_handle handle, float duration)
+    std::expected<void, error> fade_out_sound(sound_handle handle, float duration)
     {
         return internal::get_sound_manager_instance().fade_out_sound(handle, duration);
     }
 
-    bool fade_out_music(music_handle handle, float duration)
+    std::expected<void, error> fade_out_music(music_handle handle, float duration)
     {
         return internal::get_sound_manager_instance().fade_out_music(handle, duration);
     }
 
-    bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration)
+    std::expected<void, error> fade_to_volume_sound(sound_handle handle, float target_volume, float duration)
     {
         return internal::get_sound_manager_instance().fade_to_volume_sound(handle, target_volume, duration);
     }
 
-    bool fade_to_volume_music(music_handle handle, float target_volume, float duration)
+    std::expected<void, error> fade_to_volume_music(music_handle handle, float target_volume, float duration)
     {
         return internal::get_sound_manager_instance().fade_to_volume_music(handle, target_volume, duration);
     }

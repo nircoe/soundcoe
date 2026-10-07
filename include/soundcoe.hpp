@@ -1,8 +1,10 @@
 #pragma once
 
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/utils/math.hpp>
 #include <string>
+#include <expected>
 #include <cstddef>
 
 namespace soundcoe
@@ -55,33 +57,35 @@ namespace soundcoe
      * @param level Logging level for soundcoe operations. Controls the verbosity of log output.
      *              Default is LogLevel::DEBUG.
      *
-     * @return true if initialization was successful, false if it failed (e.g., invalid directory,
-     *         OpenAL initialization failure, or system already initialized).
+     * @return An empty std::expected on success, or an error: already_initialized if called twice,
+     *         invalid_argument for an empty directory, directory_not_found if the directory is missing or isn't a
+     *         directory, or the error from the audio context or the "general" preload.
      *
      * @note This function should only be called once at application startup. Multiple calls will
-     *       return false. Call shutdown() before calling initialize() again if needed.
+     *       return an already_initialized error. Call shutdown() before calling initialize() again if needed.
      *
      * @example
      * // Basic initialization - will load ./audio/general/sfx/ and ./audio/general/music/ if they exist
-     * if (!soundcoe::initialize("./audio")) {
-     *     std::cerr << "Failed to initialize audio: " << soundcoe::get_error() << std::endl;
+     * if (auto r = soundcoe::initialize("./audio"); !r) {
+     *     std::cerr << "Failed to initialize audio: " << r.error().message << std::endl;
      * }
      *
      * @example
      * // Custom subdirectory names - will load ./game_audio/general/sounds/ and ./game_audio/general/bgm/
-     * if (!soundcoe::initialize("./game_audio", 64, 128, "sounds", "bgm", LogLevel::WARNING)) {
+     * if (auto r = soundcoe::initialize("./game_audio", 64, 128, "sounds", "bgm", LogLevel::WARNING); !r) {
      *     // Handle initialization failure
      * }
      */
-    bool initialize(const std::string &audio_root_directory, size_t max_sources = 64,
-                           size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
-                           const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
+    [[nodiscard]] std::expected<void, error> initialize(
+        const std::string &audio_root_directory, size_t max_sources = 64,
+        size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+        const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
 
     /**
      * @brief Initializes soundcoe from an init_config bundle. Forwards to the flat-parameter
      *        overload above - see its documentation for behavior/return value.
      */
-    bool initialize(const init_config &config);
+    [[nodiscard]] std::expected<void, error> initialize(const init_config &config);
 
     /**
      * @brief Shuts down soundcoe and releases all resources.
@@ -107,17 +111,18 @@ namespace soundcoe
      * audio_root_directory/{scene_name}/{music_subdir}/ into memory for faster playback.
      * 
      * @param scene_name Name of the scene directory to preload.
-     * @return true if scene was loaded successfully, false if directory doesn't exist or loading failed.
+     * @return An empty std::expected on success, or an error (not_initialized, invalid_argument for an empty name,
+     *         directory_not_found if the directory doesn't exist).
      */
-    bool preload_scene(const std::string &scene_name);
+    [[nodiscard]] std::expected<void, error> preload_scene(const std::string &scene_name);
 
     /**
      * @brief Unloads a previously loaded scene and frees its audio resources.
      * 
      * @param scene_name Name of the scene directory to unload.
-     * @return true if scene was unloaded successfully, false if scene wasn't loaded.
+     * @return An empty std::expected on success, or an error (not_initialized, directory_not_found).
      */
-    bool unload_scene(const std::string &scene_name);
+    [[nodiscard]] std::expected<void, error> unload_scene(const std::string &scene_name);
 
     /**
      * @brief Checks if a scene is currently loaded.
@@ -145,10 +150,12 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or an error (not_initialized, file_not_found,
+     *         resource_exhausted, or an OpenAL error) if playback failed.
      */
-    sound_handle play_sound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                 sound_priority priority = sound_priority::medium);
+    [[nodiscard]] std::expected<sound_handle, error> play_sound(
+        const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+        sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays a 3D positioned sound with spatial audio properties.
@@ -160,11 +167,13 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or an error (not_initialized, file_not_found,
+     *         resource_exhausted, or an OpenAL error) if playback failed.
      */
-    sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
-                                   float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                   sound_priority priority = sound_priority::medium);
+    [[nodiscard]] std::expected<sound_handle, error> play_sound3d(
+        const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
+        float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+        sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays a music file with specified properties.
@@ -174,10 +183,12 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the music. Default is true.
      * @param priority Music priority for resource allocation. Default is Critical.
-     * @return music_handle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
+     * @return music_handle to control the playing music, or an error (not_initialized, file_not_found,
+     *         resource_exhausted, or an OpenAL error) if playback failed.
      */
-    music_handle play_music(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                 sound_priority priority = sound_priority::critical);
+    [[nodiscard]] std::expected<music_handle, error> play_music(
+        const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+        sound_priority priority = sound_priority::critical);
 
     /**
      * @brief Pauses a specific sound.
@@ -397,11 +408,13 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the sound. Default is false.
      * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or INVALID_SOUND_HANDLE (equal to 0) if playback failed.
+     * @return sound_handle to control the playing sound, or an error if playback or the fade failed
+     *         (invalid_argument for a non-positive duration, plus the errors of play_sound()).
+     *         If the fade fails, the sound is stopped.
      */
-    sound_handle fade_in_sound(const std::string &filename, float duration,
-                                   float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                   sound_priority priority = sound_priority::medium);
+    [[nodiscard]] std::expected<sound_handle, error> fade_in_sound(
+        const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+        sound_priority priority = sound_priority::medium);
 
     /**
      * @brief Plays music with a fade-in effect from silence to target volume.
@@ -412,29 +425,33 @@ namespace soundcoe
      * @param pitch Pitch multiplier. Default is 1.0.
      * @param loop Whether to loop the music. Default is true.
      * @param priority Music priority for resource allocation. Default is Critical.
-     * @return music_handle to control the playing music, or INVALID_MUSIC_HANDLE (equal to 0) if playback failed.
+     * @return music_handle to control the playing music, or an error if playback or the fade failed
+     *         (invalid_argument for a non-positive duration, plus the errors of play_music()).
+     *         If the fade fails, the music is stopped.
      */
-    music_handle fade_in_music(const std::string &filename, float duration,
-                                   float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                   sound_priority priority = sound_priority::critical);
+    [[nodiscard]] std::expected<music_handle, error> fade_in_music(
+        const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+        sound_priority priority = sound_priority::critical);
 
     /**
      * @brief Fades out a sound from current volume to silence, then stops it.
      * 
      * @param handle Handle of the sound to fade out.
      * @param duration Fade-out duration in seconds.
-     * @return true if fade started successfully, false if handle is invalid.
+     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
+     *         non-positive duration, invalid_state if the sound isn't playing, source_inactive).
      */
-    bool fade_out_sound(sound_handle handle, float duration);
+    [[nodiscard]] std::expected<void, error> fade_out_sound(sound_handle handle, float duration);
 
     /**
      * @brief Fades out music from current volume to silence, then stops it.
      * 
      * @param handle Handle of the music to fade out.
      * @param duration Fade-out duration in seconds.
-     * @return true if fade started successfully, false if handle is invalid.
+     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
+     *         non-positive duration, invalid_state if the music isn't playing, source_inactive).
      */
-    bool fade_out_music(music_handle handle, float duration);
+    [[nodiscard]] std::expected<void, error> fade_out_music(music_handle handle, float duration);
 
     /**
      * @brief Fades a sound from current volume to a target volume over time.
@@ -442,9 +459,12 @@ namespace soundcoe
      * @param handle Handle of the sound to fade.
      * @param target_volume Target volume level.
      * @param duration Fade duration in seconds.
-     * @return true if fade started successfully, false if handle is invalid.
+     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
+     *         negative target volume or non-positive duration, invalid_state if the sound isn't playing,
+     *         source_inactive).
      */
-    bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration);
+    [[nodiscard]] std::expected<void, error> fade_to_volume_sound(sound_handle handle, float target_volume,
+                                                                  float duration);
 
     /**
      * @brief Fades music from current volume to a target volume over time.
@@ -452,9 +472,12 @@ namespace soundcoe
      * @param handle Handle of the music to fade.
      * @param target_volume Target volume level.
      * @param duration Fade duration in seconds.
-     * @return true if fade started successfully, false if handle is invalid.
+     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
+     *         negative target volume or non-positive duration, invalid_state if the music isn't playing,
+     *         source_inactive).
      */
-    bool fade_to_volume_music(music_handle handle, float target_volume, float duration);
+    [[nodiscard]] std::expected<void, error> fade_to_volume_music(music_handle handle, float target_volume,
+                                                                  float duration);
 
     /**
      * @brief Sets the master volume multiplier for all audio (sounds and music).

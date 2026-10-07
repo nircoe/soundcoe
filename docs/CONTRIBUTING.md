@@ -58,7 +58,7 @@ The null backend has no audible output, so verify playback locally.
   the compiler) and never an `m_`/`s_`/`g_` prefix (those already mean something else). This
   convention change lines soundcoe up with gamecoe's style, since gamecoe is soundcoe's main
   consumer.
-- Keep lines under 120 characters
+- Keep lines up to 120 characters
 
 ### Testing Guidelines
 - Add tests for new features in the appropriate test files

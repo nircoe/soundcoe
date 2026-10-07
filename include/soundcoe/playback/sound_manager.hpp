@@ -108,10 +108,12 @@ namespace soundcoe
 
             bool set_error(const std::string &error);
 
-            bool fade_to_volume(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                            float target_volume, float duration, const std::string &method);
-            bool fade(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                    bool fade_in, float duration, const std::string &method);
+            [[nodiscard]] std::expected<void, error> fade_to_volume(
+                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
+                float duration, const std::string &method);
+            [[nodiscard]] std::expected<void, error> fade(
+                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, bool fade_in, float duration,
+                const std::string &method);
 
             bool check_audio_state(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
                                 sound_state state, const std::string &method);
@@ -125,11 +127,11 @@ namespace soundcoe
             bool audio_operation_all(std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
                                 const std::string &method);
 
-            size_t play(std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename,
-                        float volume, float pitch, bool loop, sound_priority priority,
-                        std::atomic<size_t> &next_handle, const std::string &method,
-                        float master_category_volume, float master_category_pitch,
-                        bool is_3d = false, const vec3 &position = vec3::zero(), const vec3 &velocity = vec3::zero());
+            [[nodiscard]] std::expected<size_t, error> play(
+                std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename, float volume,
+                float pitch, bool loop, sound_priority priority, std::atomic<size_t> &next_handle,
+                const std::string &method, float master_category_volume, float master_category_pitch,
+                bool is_3d = false, const vec3 &position = vec3::zero(), const vec3 &velocity = vec3::zero());
 
             void handle_streaming_audio();
             void handle_fade_effects(std::unordered_map<size_t, active_audio> &active_audio_,
@@ -140,25 +142,29 @@ namespace soundcoe
             sound_manager();
             ~sound_manager();
 
-            bool initialize(const std::string &audio_root_directory, size_t max_sources = 64,
-                            size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
-                            const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
+            [[nodiscard]] std::expected<void, error> initialize(
+                const std::string &audio_root_directory, size_t max_sources = 64,
+                size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+                const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
             void shutdown();
             bool is_initialized() const;
 
-            bool preload_scene(const std::string &scene_name);
-            bool unload_scene(const std::string &scene_name);
+            [[nodiscard]] std::expected<void, error> preload_scene(const std::string &scene_name);
+            [[nodiscard]] std::expected<void, error> unload_scene(const std::string &scene_name);
             bool is_scene_loaded(const std::string &scene_name) const;
 
             void update();
 
-            sound_handle play_sound(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                sound_priority priority = sound_priority::medium);
-            sound_handle play_sound3d(const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
-                                    float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    sound_priority priority = sound_priority::medium);
-            music_handle play_music(const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                sound_priority priority = sound_priority::critical);
+            [[nodiscard]] std::expected<sound_handle, error> play_sound(
+                const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+                sound_priority priority = sound_priority::medium);
+            [[nodiscard]] std::expected<sound_handle, error> play_sound3d(
+                const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
+                float volume = 1.0f, float pitch = 1.0f, bool loop = false,
+                sound_priority priority = sound_priority::medium);
+            [[nodiscard]] std::expected<music_handle, error> play_music(
+                const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
+                sound_priority priority = sound_priority::critical);
 
             bool pause_sound(sound_handle handle);
             bool pause_music(music_handle handle);
@@ -192,16 +198,18 @@ namespace soundcoe
             size_t get_active_sounds_count() const;
             size_t get_active_music_count() const;
 
-            sound_handle fade_in_sound(const std::string &filename, float duration,
-                                    float volume = 1.0f, float pitch = 1.0f, bool loop = false,
-                                    sound_priority priority = sound_priority::medium);
-            music_handle fade_in_music(const std::string &filename, float duration,
-                                    float volume = 1.0f, float pitch = 1.0f, bool loop = true,
-                                    sound_priority priority = sound_priority::critical);
-            bool fade_out_sound(sound_handle handle, float duration);
-            bool fade_out_music(music_handle handle, float duration);
-            bool fade_to_volume_sound(sound_handle handle, float target_volume, float duration);
-            bool fade_to_volume_music(music_handle handle, float target_volume, float duration);
+            [[nodiscard]] std::expected<sound_handle, error> fade_in_sound(
+                const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f,
+                bool loop = false, sound_priority priority = sound_priority::medium);
+            [[nodiscard]] std::expected<music_handle, error> fade_in_music(
+                const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f,
+                bool loop = true, sound_priority priority = sound_priority::critical);
+            [[nodiscard]] std::expected<void, error> fade_out_sound(sound_handle handle, float duration);
+            [[nodiscard]] std::expected<void, error> fade_out_music(music_handle handle, float duration);
+            [[nodiscard]] std::expected<void, error> fade_to_volume_sound(sound_handle handle, float target_volume,
+                                                                          float duration);
+            [[nodiscard]] std::expected<void, error> fade_to_volume_music(music_handle handle, float target_volume,
+                                                                          float duration);
 
             bool set_master_volume(float volume);
             bool set_master_sounds_volume(float volume);
