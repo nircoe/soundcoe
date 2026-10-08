@@ -221,13 +221,13 @@ TEST_F(SoundManagerTests, MasterVolumeControls)
 {
     initialize_sound_manager();
 
-    EXPECT_TRUE(m_sound_manager.set_master_volume(0.8f));
+    m_sound_manager.set_master_volume(0.8f);
     EXPECT_EQ(m_sound_manager.get_master_volume(), 0.8f);
 
-    EXPECT_TRUE(m_sound_manager.set_master_sounds_volume(0.6f));
+    m_sound_manager.set_master_sounds_volume(0.6f);
     EXPECT_EQ(m_sound_manager.get_master_sounds_volume(), 0.6f);
 
-    EXPECT_TRUE(m_sound_manager.set_master_music_volume(0.4f));
+    m_sound_manager.set_master_music_volume(0.4f);
     EXPECT_EQ(m_sound_manager.get_master_music_volume(), 0.4f);
 }
 
@@ -235,13 +235,13 @@ TEST_F(SoundManagerTests, MasterPitchControls)
 {
     initialize_sound_manager();
 
-    EXPECT_TRUE(m_sound_manager.set_master_pitch(1.2f));
+    m_sound_manager.set_master_pitch(1.2f);
     EXPECT_EQ(m_sound_manager.get_master_pitch(), 1.2f);
 
-    EXPECT_TRUE(m_sound_manager.set_master_sounds_pitch(0.9f));
+    m_sound_manager.set_master_sounds_pitch(0.9f);
     EXPECT_EQ(m_sound_manager.get_master_sounds_pitch(), 0.9f);
 
-    EXPECT_TRUE(m_sound_manager.set_master_music_pitch(1.1f));
+    m_sound_manager.set_master_music_pitch(1.1f);
     EXPECT_EQ(m_sound_manager.get_master_music_pitch(), 1.1f);
 }
 
@@ -253,16 +253,16 @@ TEST_F(SoundManagerTests, MuteControls)
     EXPECT_FALSE(m_sound_manager.is_sounds_muted());
     EXPECT_FALSE(m_sound_manager.is_music_muted());
 
-    EXPECT_TRUE(m_sound_manager.mute_all_sounds());
+    m_sound_manager.mute_all_sounds();
     EXPECT_TRUE(m_sound_manager.is_sounds_muted());
 
-    EXPECT_TRUE(m_sound_manager.mute_all_music());
+    m_sound_manager.mute_all_music();
     EXPECT_TRUE(m_sound_manager.is_music_muted());
 
-    EXPECT_TRUE(m_sound_manager.mute_all());
+    m_sound_manager.mute_all();
     EXPECT_TRUE(m_sound_manager.is_muted());
 
-    EXPECT_TRUE(m_sound_manager.unmute_all());
+    m_sound_manager.unmute_all();
     EXPECT_FALSE(m_sound_manager.is_muted());
     EXPECT_FALSE(m_sound_manager.is_sounds_muted());
     EXPECT_FALSE(m_sound_manager.is_music_muted());
@@ -287,6 +287,18 @@ TEST_F(SoundManagerTests, ListenerControls)
     vec3 new_position(4.0f, 5.0f, 6.0f);
     EXPECT_TRUE(m_sound_manager.set_listener_position(new_position));
     EXPECT_EQ(m_sound_manager.get_listener_position(), new_position);
+
+    vec3 new_velocity(0.4f, 0.5f, 0.6f);
+    EXPECT_TRUE(m_sound_manager.set_listener_velocity(new_velocity));
+    EXPECT_EQ(m_sound_manager.get_listener_velocity(), new_velocity);
+
+    vec3 new_forward(1.0f, 0.0f, 0.0f);
+    EXPECT_TRUE(m_sound_manager.set_listener_forward(new_forward));
+    EXPECT_EQ(m_sound_manager.get_listener_forward(), new_forward);
+
+    vec3 new_up(0.0f, 0.0f, 1.0f);
+    EXPECT_TRUE(m_sound_manager.set_listener_up(new_up));
+    EXPECT_EQ(m_sound_manager.get_listener_up(), new_up);
 }
 
 TEST_F(SoundManagerTests, FadeInSound)
@@ -599,8 +611,17 @@ TEST_F(SoundManagerTests, InvalidHandleOperations)
     ASSERT_FALSE(music_playing);
     EXPECT_EQ(music_playing.error().code, error_code::invalid_handle);
 
-    EXPECT_FALSE(m_sound_manager.set_sound_volume(999, 0.5f));
-    EXPECT_FALSE(m_sound_manager.set_music_pitch(999, 1.2f));
+    auto sound_volume = m_sound_manager.set_sound_volume(999, 0.5f);
+    ASSERT_FALSE(sound_volume);
+    EXPECT_EQ(sound_volume.error().code, error_code::invalid_handle);
+
+    auto invalid_sound_volume = m_sound_manager.set_sound_volume(INVALID_SOUND_HANDLE, 0.5f);
+    ASSERT_FALSE(invalid_sound_volume);
+    EXPECT_EQ(invalid_sound_volume.error().code, error_code::invalid_handle);
+
+    auto music_pitch = m_sound_manager.set_music_pitch(999, 1.2f);
+    ASSERT_FALSE(music_pitch);
+    EXPECT_EQ(music_pitch.error().code, error_code::invalid_handle);
 
     auto sound = m_sound_manager.fade_out_sound(999, 1.0f);
     ASSERT_FALSE(sound);
@@ -613,6 +634,4 @@ TEST_F(SoundManagerTests, InvalidHandleOperations)
     auto invalid = m_sound_manager.fade_out_sound(INVALID_SOUND_HANDLE, 1.0f);
     ASSERT_FALSE(invalid);
     EXPECT_EQ(invalid.error().code, error_code::invalid_handle);
-
-    EXPECT_NE(m_sound_manager.get_error(), "");
 }

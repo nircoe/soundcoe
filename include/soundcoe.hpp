@@ -290,54 +290,54 @@ namespace soundcoe
      * 
      * @param handle Handle of the sound to modify.
      * @param volume New volume level.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_sound_volume(sound_handle handle, float volume);
+    [[nodiscard]] std::expected<void, error> set_sound_volume(sound_handle handle, float volume);
 
     /**
      * @brief Sets the volume of a specific music track.
      * 
      * @param handle Handle of the music to modify.
      * @param volume New volume level.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_music_volume(music_handle handle, float volume);
+    [[nodiscard]] std::expected<void, error> set_music_volume(music_handle handle, float volume);
 
     /**
      * @brief Sets the pitch of a specific sound.
      * 
      * @param handle Handle of the sound to modify.
      * @param pitch New pitch multiplier.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_sound_pitch(sound_handle handle, float pitch);
+    [[nodiscard]] std::expected<void, error> set_sound_pitch(sound_handle handle, float pitch);
 
     /**
      * @brief Sets the pitch of a specific music track.
      * 
      * @param handle Handle of the music to modify.
      * @param pitch New pitch multiplier.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_music_pitch(music_handle handle, float pitch);
+    [[nodiscard]] std::expected<void, error> set_music_pitch(music_handle handle, float pitch);
 
     /**
      * @brief Sets the 3D position of a sound source.
      * 
      * @param handle Handle of the sound to modify.
      * @param position New 3D world position.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_sound_position(sound_handle handle, const vec3 &position);
+    [[nodiscard]] std::expected<void, error> set_sound_position(sound_handle handle, const vec3 &position);
 
     /**
      * @brief Sets the 3D velocity of a sound source for doppler effect.
      * 
      * @param handle Handle of the sound to modify.
      * @param velocity New 3D velocity vector.
-     * @return true if successfully set, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
+    [[nodiscard]] std::expected<void, error> set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
     /**
      * @brief Checks if a sound is currently playing.
@@ -485,49 +485,43 @@ namespace soundcoe
      * @brief Sets the master volume multiplier for all audio (sounds and music).
      * 
      * @param volume Master volume multiplier level.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_volume(float volume);
+    void set_master_volume(float volume);
 
     /**
      * @brief Sets the master volume multiplier for all sound effects.
      * 
      * @param volume Sounds master volume level multiplier.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_sounds_volume(float volume);
+    void set_master_sounds_volume(float volume);
 
     /**
      * @brief Sets the master volume multiplier for all music tracks.
      * 
      * @param volume Music master volume level multiplier.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_music_volume(float volume);
+    void set_master_music_volume(float volume);
 
     /**
      * @brief Sets the master pitch multiplier for all audio (sounds and music).
      * 
      * @param pitch Master pitch multiplier.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_pitch(float pitch);
+    void set_master_pitch(float pitch);
 
     /**
      * @brief Sets the master pitch multiplier for all sounds effects.
      * 
      * @param pitch Sounds master pitch multiplier.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_sounds_pitch(float pitch);
+    void set_master_sounds_pitch(float pitch);
 
     /**
      * @brief Sets the master pitch multiplier for all music tracks.
      * 
      * @param pitch Music master pitch multiplier.
-     * @return true if successfully set, false on error.
      */
-    bool set_master_music_pitch(float pitch);
+    void set_master_music_pitch(float pitch);
 
     /**
      * @brief Gets the current master volume multiplier for all audio.
@@ -629,41 +623,42 @@ namespace soundcoe
      * @param velocity 3D velocity vector for doppler effect.
      * @param forward Forward direction vector (must be normalized).
      * @param up Up direction vector (must be normalized). Default is vec3::up().
-     * @return true if successfully updated, false on error.
+     * @return An empty std::expected on success, or an OpenAL error.
      */
-    bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
+    [[nodiscard]] std::expected<void, error> update_listener(
+        const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
 
     /**
      * @brief Sets the 3D position of the audio listener.
      * 
      * @param position 3D world position of the listener.
-     * @return true if successfully set, false on error.
+     * @return An empty std::expected on success, or an OpenAL error.
      */
-    bool set_listener_position(const vec3 &position);
+    [[nodiscard]] std::expected<void, error> set_listener_position(const vec3 &position);
 
     /**
      * @brief Sets the velocity of the audio listener for doppler effect.
      * 
      * @param velocity 3D velocity vector of the listener.
-     * @return true if successfully set, false on error.
+     * @return An empty std::expected on success, or an OpenAL error.
      */
-    bool set_listener_velocity(const vec3 &velocity);
+    [[nodiscard]] std::expected<void, error> set_listener_velocity(const vec3 &velocity);
 
     /**
      * @brief Sets the forward direction of the audio listener.
      * 
      * @param forward Forward direction vector (must be normalized).
-     * @return true if successfully set, false on error.
+     * @return An empty std::expected on success, or an OpenAL error.
      */
-    bool set_listener_forward(const vec3 &forward);
+    [[nodiscard]] std::expected<void, error> set_listener_forward(const vec3 &forward);
 
     /**
      * @brief Sets the up direction of the audio listener.
      * 
      * @param up Up direction vector (must be normalized).
-     * @return true if successfully set, false on error.
+     * @return An empty std::expected on success, or an OpenAL error.
      */
-    bool set_listener_up(const vec3 &up);
+    [[nodiscard]] std::expected<void, error> set_listener_up(const vec3 &up);
 
     /**
      * @brief Gets the current 3D position of the audio listener.
@@ -692,18 +687,6 @@ namespace soundcoe
      * @return Current listener up direction vector.
      */
     vec3 get_listener_up();
-
-    /**
-     * @brief Gets the last error message and clears the error state.
-     * 
-     * @return Last error message, or empty string if no error occurred.
-     */
-    const std::string get_error();
-
-    /**
-     * @brief Clears the current error state without returning the message.
-     */
-    void clear_error();
 
     /**
      * @brief Checks if a handle (sound or music) is valid and active.

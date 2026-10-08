@@ -72,9 +72,6 @@ namespace soundcoe
             std::chrono::steady_clock::time_point m_last_update;
             bool m_first_update = true;
 
-            std::string m_last_error = "";
-            bool m_has_error = false;
-
             template <typename Setter, typename Getter>
             void update_all_audio_property(std::unordered_map<size_t, active_audio> &active_audio_,
                                         Setter set_property, Getter get_base_property,
@@ -106,8 +103,6 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> set_listener_velocity_impl(const vec3 &velocity);
             [[nodiscard]] std::expected<void, error> set_listener_orientation_impl(const vec3 &forward, const vec3 &up);
 
-            bool set_error(const std::string &error);
-
             [[nodiscard]] std::expected<void, error> fade_to_volume(
                 std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
                 float duration, const std::string &method);
@@ -119,9 +114,9 @@ namespace soundcoe
                 std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
                 const std::string &method);
 
-            bool set_audio_property(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                                property_type type, const std::string &method,
-                                float value, float y = 0.0f, float z = 0.0f);
+            [[nodiscard]] std::expected<void, error> set_audio_property(
+                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, property_type type,
+                const std::string &method, float value, float y = 0.0f, float z = 0.0f);
 
             [[nodiscard]] std::expected<void, error> audio_operation(
                 std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
@@ -184,12 +179,12 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> stop_all_sounds();
             [[nodiscard]] std::expected<void, error> stop_all_music();
             [[nodiscard]] std::expected<void, error> stop_all();
-            bool set_sound_volume(sound_handle handle, float volume);
-            bool set_music_volume(music_handle handle, float volume);
-            bool set_sound_pitch(sound_handle handle, float pitch);
-            bool set_music_pitch(music_handle handle, float pitch);
-            bool set_sound_position(sound_handle handle, const vec3 &position);
-            bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
+            [[nodiscard]] std::expected<void, error> set_sound_volume(sound_handle handle, float volume);
+            [[nodiscard]] std::expected<void, error> set_music_volume(music_handle handle, float volume);
+            [[nodiscard]] std::expected<void, error> set_sound_pitch(sound_handle handle, float pitch);
+            [[nodiscard]] std::expected<void, error> set_music_pitch(music_handle handle, float pitch);
+            [[nodiscard]] std::expected<void, error> set_sound_position(sound_handle handle, const vec3 &position);
+            [[nodiscard]] std::expected<void, error> set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
             [[nodiscard]] std::expected<bool, error> is_sound_playing(sound_handle handle);
             [[nodiscard]] std::expected<bool, error> is_music_playing(music_handle handle);
@@ -214,12 +209,12 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> fade_to_volume_music(music_handle handle, float target_volume,
                                                                           float duration);
 
-            bool set_master_volume(float volume);
-            bool set_master_sounds_volume(float volume);
-            bool set_master_music_volume(float volume);
-            bool set_master_pitch(float pitch);
-            bool set_master_sounds_pitch(float pitch);
-            bool set_master_music_pitch(float pitch);
+            void set_master_volume(float volume);
+            void set_master_sounds_volume(float volume);
+            void set_master_music_volume(float volume);
+            void set_master_pitch(float pitch);
+            void set_master_sounds_pitch(float pitch);
+            void set_master_music_pitch(float pitch);
             float get_master_volume() const;
             float get_master_sounds_volume() const;
             float get_master_music_volume() const;
@@ -227,29 +222,27 @@ namespace soundcoe
             float get_master_sounds_pitch() const;
             float get_master_music_pitch() const;
 
-            bool mute_all_sounds();
-            bool mute_all_music();
-            bool mute_all();
-            bool unmute_all_sounds();
-            bool unmute_all_music();
-            bool unmute_all();
+            void mute_all_sounds();
+            void mute_all_music();
+            void mute_all();
+            void unmute_all_sounds();
+            void unmute_all_music();
+            void unmute_all();
             bool is_muted() const;
             bool is_sounds_muted() const;
             bool is_music_muted() const;
 
-            bool update_listener(const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
-            bool set_listener_position(const vec3 &position);
-            bool set_listener_velocity(const vec3 &velocity);
-            bool set_listener_forward(const vec3 &forward);
-            bool set_listener_up(const vec3 &up = vec3::up());
+            [[nodiscard]] std::expected<void, error> update_listener(
+                const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
+            [[nodiscard]] std::expected<void, error> set_listener_position(const vec3 &position);
+            [[nodiscard]] std::expected<void, error> set_listener_velocity(const vec3 &velocity);
+            [[nodiscard]] std::expected<void, error> set_listener_forward(const vec3 &forward);
+            [[nodiscard]] std::expected<void, error> set_listener_up(const vec3 &up = vec3::up());
 
             vec3 get_listener_position();
             vec3 get_listener_velocity();
             vec3 get_listener_forward();
             vec3 get_listener_up();
-
-            const std::string get_error();
-            void clear_error();
 
             static bool is_handle_valid(size_t handle);
         };
