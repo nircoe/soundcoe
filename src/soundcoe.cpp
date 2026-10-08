@@ -80,88 +80,88 @@ namespace soundcoe
         return internal::get_sound_manager_instance().play_music(filename, volume, pitch, loop, priority);
     }
 
-    bool pause_sound(sound_handle handle)
+    std::expected<void, error> pause_sound(sound_handle handle)
     {
         return internal::get_sound_manager_instance().pause_sound(handle);
     }
 
-    bool pause_music(music_handle handle)
+    std::expected<void, error> pause_music(music_handle handle)
     {
         return internal::get_sound_manager_instance().pause_music(handle);
     }
 
     void pause_all_sounds()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().pause_all_sounds();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().pause_all_sounds();
+        assert(r);
     }
 
     void pause_all_music()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().pause_all_music();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().pause_all_music();
+        assert(r);
     }
 
     void pause_all()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().pause_all();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().pause_all();
+        assert(r);
     }
 
-    bool resume_sound(sound_handle handle)
+    std::expected<void, error> resume_sound(sound_handle handle)
     {
         return internal::get_sound_manager_instance().resume_sound(handle);
     }
 
-    bool resume_music(music_handle handle)
+    std::expected<void, error> resume_music(music_handle handle)
     {
         return internal::get_sound_manager_instance().resume_music(handle);
     }
 
     void resume_all_sounds()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().resume_all_sounds();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().resume_all_sounds();
+        assert(r);
     }
 
     void resume_all_music()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().resume_all_music();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().resume_all_music();
+        assert(r);
     }
 
     void resume_all()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().resume_all();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().resume_all();
+        assert(r);
     }
 
-    bool stop_sound(sound_handle handle)
+    std::expected<void, error> stop_sound(sound_handle handle)
     {
         return internal::get_sound_manager_instance().stop_sound(handle);
     }
 
-    bool stop_music(music_handle handle)
+    std::expected<void, error> stop_music(music_handle handle)
     {
         return internal::get_sound_manager_instance().stop_music(handle);
     }
 
     void stop_all_sounds()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().stop_all_sounds();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().stop_all_sounds();
+        assert(r);
     }
 
     void stop_all_music()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().stop_all_music();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().stop_all_music();
+        assert(r);
     }
 
     void stop_all()
     {
-        [[maybe_unused]] bool succeed = internal::get_sound_manager_instance().stop_all();
-        assert(succeed);
+        [[maybe_unused]] auto r = internal::get_sound_manager_instance().stop_all();
+        assert(r);
     }
 
     bool set_sound_volume(sound_handle handle, float volume)
@@ -194,32 +194,32 @@ namespace soundcoe
         return internal::get_sound_manager_instance().set_sound_velocity(handle, velocity);
     }
 
-    bool is_sound_playing(sound_handle handle)
+    std::expected<bool, error> is_sound_playing(sound_handle handle)
     {
         return internal::get_sound_manager_instance().is_sound_playing(handle);
     }
 
-    bool is_music_playing(music_handle handle)
+    std::expected<bool, error> is_music_playing(music_handle handle)
     {
         return internal::get_sound_manager_instance().is_music_playing(handle);
     }
 
-    bool is_sound_paused(sound_handle handle)
+    std::expected<bool, error> is_sound_paused(sound_handle handle)
     {
         return internal::get_sound_manager_instance().is_sound_paused(handle);
     }
 
-    bool is_music_paused(music_handle handle)
+    std::expected<bool, error> is_music_paused(music_handle handle)
     {
         return internal::get_sound_manager_instance().is_music_paused(handle);
     }
 
-    bool is_sound_stopped(sound_handle handle)
+    std::expected<bool, error> is_sound_stopped(sound_handle handle)
     {
         return internal::get_sound_manager_instance().is_sound_stopped(handle);
     }
 
-    bool is_music_stopped(music_handle handle)
+    std::expected<bool, error> is_music_stopped(music_handle handle)
     {
         return internal::get_sound_manager_instance().is_music_stopped(handle);
     }

@@ -180,22 +180,23 @@ namespace soundcoe
             return {};
         }
 
-        bool sound_manager::check_audio_state(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                                           sound_state state, const std::string &method)
+        std::expected<bool, error> sound_manager::check_audio_state(
+            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
+            const std::string &method)
         {
-            m_last_error = "";
-            m_has_error = false;
-
             auto it = active_audio_.find(handle);
             if (it == active_audio_.end())
-                return set_error("sound_manager::" + method + ": Invalid handle");
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
 
             active_audio &audio = it->second;
             auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
             if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
             {
                 active_audio_.erase(it);
-                return set_error("sound_manager::" + method + ": Audio source is no longer active");
+                return std::unexpected(error_handler::make_error(
+                    error_code::source_inactive,
+                    std::format("sound_manager::{}: Audio source is no longer active", method)));
             }
 
             auto &source = source_allocation.value().get().m_source;
@@ -206,7 +207,9 @@ namespace soundcoe
             if (state == sound_state::stopped)
                 return source->is_stopped();
 
-            return set_error("sound_manager::" + method + ": Internal error - Invalid operation type");
+            return std::unexpected(error_handler::make_error(
+                error_code::invalid_argument,
+                std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
         }
 
         bool sound_manager::set_audio_property(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
@@ -242,43 +245,50 @@ namespace soundcoe
             return set_error("sound_manager::" + method + ": Internal error - Invalid property_type");
         }
 
-        bool sound_manager::audio_operation(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                                          sound_state operation, const std::string &method)
+        std::expected<void, error> sound_manager::audio_operation(
+            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
+            const std::string &method)
         {
             auto it = active_audio_.find(handle);
             if (it == active_audio_.end())
-                return set_error("sound_manager::" + method + ": Invalid handle");
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
 
             active_audio &audio = it->second;
             auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
             if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
             {
                 active_audio_.erase(it);
-                return set_error("sound_manager::" + method + ": Audio source is no longer active");
+                return std::unexpected(error_handler::make_error(
+                    error_code::source_inactive,
+                    std::format("sound_manager::{}: Audio source is no longer active", method)));
             }
 
             auto &source = source_allocation.value().get().m_source;
             if (operation == sound_state::playing)
-                return source->play().has_value();
+                return source->play();
             if (operation == sound_state::paused)
-                return source->pause().has_value();
+                return source->pause();
             if (operation == sound_state::stopped)
             {
-                bool succeed = source->stop().has_value();
-                if (succeed)
+                auto r = source->stop();
+                if (r)
                 {
                     m_resource_manager.release_source(*source);
                     m_resource_manager.release_buffer(audio.m_filename);
                     active_audio_.erase(it);
                 }
-                return succeed;
+                return r;
             }
 
-            return set_error("sound_manager::" + method + ": Internal error - Invalid operation type");
+            return std::unexpected(error_handler::make_error(
+                error_code::invalid_argument,
+                std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
         }
 
-        bool sound_manager::audio_operation_all(std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
-                                             const std::string &method)
+        std::expected<void, error> sound_manager::audio_operation_all(
+            std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
+            const std::string &method)
         {
             for (auto it = active_audio_.begin(); it != active_audio_.end();)
             {
@@ -296,15 +306,15 @@ namespace soundcoe
                 if (operation == sound_state::playing)
                 {
                     if (source->is_paused())
-                        success = source->play().has_value();
+                        success = static_cast<bool>(source->play());
                     else
                         logcoe::warning("sound_manager::" + method + ": handle " + std::to_string(it->first) + " is not paused");
                 }
                 else if (operation == sound_state::paused)
-                    success = source->pause().has_value();
+                    success = static_cast<bool>(source->pause());
                 else if (operation == sound_state::stopped)
                 {
-                    success = source->stop().has_value();
+                    success = static_cast<bool>(source->stop());
                     if (success)
                     {
                         m_resource_manager.release_source(*source);
@@ -314,7 +324,9 @@ namespace soundcoe
                     }
                 }
                 else
-                    return set_error("sound_manager::" + method + ": Internal error - Invalid operation type");
+                    return std::unexpected(error_handler::make_error(
+                        error_code::invalid_argument,
+                        std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
 
                 if (!success)
                     logcoe::warning("sound_manager::" + method + ": Failed to operate on handle - " + std::to_string(it->first));
@@ -322,7 +334,7 @@ namespace soundcoe
                 ++it;
             }
 
-            return true;
+            return {};
         }
 
         std::expected<size_t, error> sound_manager::play(
@@ -658,118 +670,132 @@ namespace soundcoe
                         m_master_music_volume, m_master_music_pitch);
         }
 
-        bool sound_manager::pause_sound(sound_handle handle)
+        std::expected<void, error> sound_manager::pause_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation(m_active_sounds, handle, sound_state::paused, "pause_sound");
         }
 
-        bool sound_manager::pause_music(music_handle handle)
+        std::expected<void, error> sound_manager::pause_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation(m_active_music, handle, sound_state::paused, "pause_music");
         }
 
-        bool sound_manager::pause_all_sounds()
+        std::expected<void, error> sound_manager::pause_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_sounds, sound_state::paused, "pause_all_sounds");
         }
 
-        bool sound_manager::pause_all_music()
+        std::expected<void, error> sound_manager::pause_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_music, sound_state::paused, "pause_all_music");
         }
 
-        bool sound_manager::pause_all()
+        std::expected<void, error> sound_manager::pause_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, sound_state::paused, "pause_all") &&
-                   audio_operation_all(m_active_music, sound_state::paused, "pause_all");
+            if (auto r = audio_operation_all(m_active_sounds, sound_state::paused, "pause_all"); !r)
+                return r;
+
+            return audio_operation_all(m_active_music, sound_state::paused, "pause_all");
         }
 
-        bool sound_manager::resume_sound(sound_handle handle)
+        std::expected<void, error> sound_manager::resume_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (!check_audio_state(m_active_sounds, handle, sound_state::paused, "resume_sound"))
-                return set_error("sound_manager::resume_sound: Sound is not paused");
+            auto r = check_audio_state(m_active_sounds, handle, sound_state::paused, "resume_sound");
+            if (!r)
+                return std::unexpected(r.error());
+            if (!*r)
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_state, "sound_manager::resume_sound: Sound is not paused"));
 
             return audio_operation(m_active_sounds, handle, sound_state::playing, "resume_sound");
         }
 
-        bool sound_manager::resume_music(music_handle handle)
+        std::expected<void, error> sound_manager::resume_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (!check_audio_state(m_active_music, handle, sound_state::paused, "resume_music"))
-                return set_error("sound_manager::resume_music: Music is not paused");
+            auto r = check_audio_state(m_active_music, handle, sound_state::paused, "resume_music");
+            if (!r)
+                return std::unexpected(r.error());
+            if (!*r)
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_state, "sound_manager::resume_music: Music is not paused"));
 
             return audio_operation(m_active_music, handle, sound_state::playing, "resume_music");
         }
 
-        bool sound_manager::resume_all_sounds()
+        std::expected<void, error> sound_manager::resume_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_sounds, sound_state::playing, "resume_all_sounds");
         }
 
-        bool sound_manager::resume_all_music()
+        std::expected<void, error> sound_manager::resume_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_music, sound_state::playing, "resume_all_music");
         }
 
-        bool sound_manager::resume_all()
+        std::expected<void, error> sound_manager::resume_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, sound_state::playing, "resume_all") &&
-                   audio_operation_all(m_active_music, sound_state::playing, "resume_all");
+            if (auto r = audio_operation_all(m_active_sounds, sound_state::playing, "resume_all"); !r)
+                return r;
+
+            return audio_operation_all(m_active_music, sound_state::playing, "resume_all");
         }
 
-        bool sound_manager::stop_sound(sound_handle handle)
+        std::expected<void, error> sound_manager::stop_sound(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation(m_active_sounds, handle, sound_state::stopped, "stop_sound");
         }
 
-        bool sound_manager::stop_music(music_handle handle)
+        std::expected<void, error> sound_manager::stop_music(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation(m_active_music, handle, sound_state::stopped, "stop_music");
         }
 
-        bool sound_manager::stop_all_sounds()
+        std::expected<void, error> sound_manager::stop_all_sounds()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_sounds, sound_state::stopped, "stop_all_sounds");
         }
 
-        bool sound_manager::stop_all_music()
+        std::expected<void, error> sound_manager::stop_all_music()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return audio_operation_all(m_active_music, sound_state::stopped, "stop_all_music");
         }
 
-        bool sound_manager::stop_all()
+        std::expected<void, error> sound_manager::stop_all()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
-            return audio_operation_all(m_active_sounds, sound_state::stopped, "stop_all") &&
-                   audio_operation_all(m_active_music, sound_state::stopped, "stop_all");
+            if (auto r = audio_operation_all(m_active_sounds, sound_state::stopped, "stop_all"); !r)
+                return r;
+
+            return audio_operation_all(m_active_music, sound_state::stopped, "stop_all");
         }
 
         bool sound_manager::set_sound_volume(sound_handle handle, float volume)
@@ -816,42 +842,42 @@ namespace soundcoe
                                     velocity.x, velocity.y, velocity.z);
         }
 
-        bool sound_manager::is_sound_playing(sound_handle handle)
+        std::expected<bool, error> sound_manager::is_sound_playing(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return check_audio_state(m_active_sounds, handle, sound_state::playing, "is_sound_playing");
         }
 
-        bool sound_manager::is_music_playing(music_handle handle)
+        std::expected<bool, error> sound_manager::is_music_playing(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return check_audio_state(m_active_music, handle, sound_state::playing, "is_music_playing");
         }
 
-        bool sound_manager::is_sound_paused(sound_handle handle)
+        std::expected<bool, error> sound_manager::is_sound_paused(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return check_audio_state(m_active_sounds, handle, sound_state::paused, "is_sound_paused");
         }
 
-        bool sound_manager::is_music_paused(music_handle handle)
+        std::expected<bool, error> sound_manager::is_music_paused(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return check_audio_state(m_active_music, handle, sound_state::paused, "is_music_paused");
         }
 
-        bool sound_manager::is_sound_stopped(sound_handle handle)
+        std::expected<bool, error> sound_manager::is_sound_stopped(sound_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
             return check_audio_state(m_active_sounds, handle, sound_state::stopped, "is_sound_stopped");
         }
 
-        bool sound_manager::is_music_stopped(music_handle handle)
+        std::expected<bool, error> sound_manager::is_music_stopped(music_handle handle)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 

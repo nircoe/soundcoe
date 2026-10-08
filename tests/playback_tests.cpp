@@ -96,7 +96,9 @@ TEST_F(SoundManagerTests, PlaySoundBasic)
     EXPECT_TRUE(sound_manager::is_handle_valid(*handle));
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto r = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(*r);
     EXPECT_EQ(m_sound_manager.get_active_sounds_count(), 1);
 }
 
@@ -109,7 +111,9 @@ TEST_F(SoundManagerTests, PlayMusicBasic)
     EXPECT_TRUE(sound_manager::is_handle_valid(*handle));
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_music_playing(*handle));
+    auto r = m_sound_manager.is_music_playing(*handle);
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(*r);
     EXPECT_EQ(m_sound_manager.get_active_music_count(), 1);
 }
 
@@ -124,7 +128,9 @@ TEST_F(SoundManagerTests, PlaySound3D)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto r = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(*r);
 }
 
 TEST_F(SoundManagerTests, InvalidFileHandling)
@@ -171,15 +177,21 @@ TEST_F(SoundManagerTests, PlaybackControls)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto playing = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(playing);
+    EXPECT_TRUE(*playing);
 
     EXPECT_TRUE(m_sound_manager.pause_sound(*handle));
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_paused(*handle));
+    auto paused = m_sound_manager.is_sound_paused(*handle);
+    ASSERT_TRUE(paused);
+    EXPECT_TRUE(*paused);
 
     EXPECT_TRUE(m_sound_manager.resume_sound(*handle));
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto resumed = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(resumed);
+    EXPECT_TRUE(*resumed);
 
     EXPECT_TRUE(m_sound_manager.stop_sound(*handle));
     m_sound_manager.update();
@@ -285,10 +297,14 @@ TEST_F(SoundManagerTests, FadeInSound)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto playing = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(playing);
+    EXPECT_TRUE(*playing);
 
     wait_for_fade(0.1f);
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto still_playing = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(still_playing);
+    EXPECT_TRUE(*still_playing);
 }
 
 TEST_F(SoundManagerTests, FadeInInvalidDuration)
@@ -314,10 +330,14 @@ TEST_F(SoundManagerTests, FadeInMusic)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_music_playing(*handle));
+    auto playing = m_sound_manager.is_music_playing(*handle);
+    ASSERT_TRUE(playing);
+    EXPECT_TRUE(*playing);
 
     wait_for_fade(0.1f);
-    EXPECT_TRUE(m_sound_manager.is_music_playing(*handle));
+    auto still_playing = m_sound_manager.is_music_playing(*handle);
+    ASSERT_TRUE(still_playing);
+    EXPECT_TRUE(*still_playing);
 }
 
 TEST_F(SoundManagerTests, FadeOutSound)
@@ -328,7 +348,9 @@ TEST_F(SoundManagerTests, FadeOutSound)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*handle));
+    auto r = m_sound_manager.is_sound_playing(*handle);
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(*r);
 
     EXPECT_TRUE(m_sound_manager.fade_out_sound(*handle, 0.1f));
     wait_for_fade(1.0f);
@@ -344,7 +366,9 @@ TEST_F(SoundManagerTests, FadeOutMusic)
     ASSERT_TRUE(handle);
 
     m_sound_manager.update();
-    EXPECT_TRUE(m_sound_manager.is_music_playing(*handle));
+    auto r = m_sound_manager.is_music_playing(*handle);
+    ASSERT_TRUE(r);
+    EXPECT_TRUE(*r);
 
     EXPECT_TRUE(m_sound_manager.fade_out_music(*handle, 0.1f));
     wait_for_fade(1.0f);
@@ -369,8 +393,12 @@ TEST_F(SoundManagerTests, FadeToVolume)
 
     wait_for_fade(0.1f);
 
-    EXPECT_TRUE(m_sound_manager.is_sound_playing(*sound_handle_));
-    EXPECT_TRUE(m_sound_manager.is_music_playing(*music_handle_));
+    auto sound_playing = m_sound_manager.is_sound_playing(*sound_handle_);
+    ASSERT_TRUE(sound_playing);
+    EXPECT_TRUE(*sound_playing);
+    auto music_playing = m_sound_manager.is_music_playing(*music_handle_);
+    ASSERT_TRUE(music_playing);
+    EXPECT_TRUE(*music_playing);
 }
 
 TEST_F(SoundManagerTests, SceneManagement)
@@ -433,11 +461,15 @@ TEST_F(SoundManagerTests, MultipleSoundsAndMusic)
     m_sound_manager.update();
     for (auto handle : sound_handles)
     {
-        EXPECT_TRUE(m_sound_manager.is_sound_paused(handle));
+        auto r = m_sound_manager.is_sound_paused(handle);
+        ASSERT_TRUE(r);
+        EXPECT_TRUE(*r);
     }
     for (auto handle : music_handles)
     {
-        EXPECT_TRUE(m_sound_manager.is_music_paused(handle));
+        auto r = m_sound_manager.is_music_paused(handle);
+        ASSERT_TRUE(r);
+        EXPECT_TRUE(*r);
     }
 
     EXPECT_TRUE(m_sound_manager.stop_all());
@@ -450,17 +482,53 @@ TEST_F(SoundManagerTests, ErrorHandling)
 {
     initialize_sound_manager();
 
-    m_sound_manager.clear_error();
-    EXPECT_EQ(m_sound_manager.get_error(), "");
+    auto pause = m_sound_manager.pause_sound(INVALID_SOUND_HANDLE);
+    ASSERT_FALSE(pause);
+    EXPECT_EQ(pause.error().code, error_code::invalid_handle);
 
-    EXPECT_FALSE(m_sound_manager.pause_sound(INVALID_SOUND_HANDLE));
-    EXPECT_NE(m_sound_manager.get_error(), "");
+    auto resume = m_sound_manager.resume_music(INVALID_MUSIC_HANDLE);
+    ASSERT_FALSE(resume);
+    EXPECT_EQ(resume.error().code, error_code::invalid_handle);
+}
 
-    m_sound_manager.clear_error();
-    EXPECT_EQ(m_sound_manager.get_error(), "");
+TEST_F(SoundManagerTests, PlaybackControlErrors)
+{
+    initialize_sound_manager();
 
-    EXPECT_FALSE(m_sound_manager.resume_music(INVALID_MUSIC_HANDLE));
-    EXPECT_NE(m_sound_manager.get_error(), "");
+    // Test 1: stop_sound with an invalid handle
+    {
+        auto r = m_sound_manager.stop_sound(INVALID_SOUND_HANDLE);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_handle);
+    }
+
+    // Test 2: resume_sound on a sound that is playing
+    {
+        auto handle = m_sound_manager.play_sound("beep.wav");
+        ASSERT_TRUE(handle);
+
+        auto r = m_sound_manager.resume_sound(*handle);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_state);
+    }
+
+    // Test 3: is_sound_playing with an invalid handle
+    {
+        auto r = m_sound_manager.is_sound_playing(INVALID_SOUND_HANDLE);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_handle);
+    }
+
+    // Test 4: is_sound_playing on a sound that was stopped and released
+    {
+        auto handle = m_sound_manager.play_sound("beep.wav");
+        ASSERT_TRUE(handle);
+        ASSERT_TRUE(m_sound_manager.stop_sound(*handle));
+
+        auto r = m_sound_manager.is_sound_playing(*handle);
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_handle);
+    }
 }
 
 TEST_F(SoundManagerTests, ConcurrentAccess)
@@ -479,7 +547,7 @@ TEST_F(SoundManagerTests, ConcurrentAccess)
                 if (handle) {
                     successCount++;
                     m_sound_manager.update();
-                    m_sound_manager.stop_sound(*handle);
+                    static_cast<void>(m_sound_manager.stop_sound(*handle));
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             } }));
@@ -523,8 +591,14 @@ TEST_F(SoundManagerTests, InvalidHandleOperations)
 {
     initialize_sound_manager();
 
-    EXPECT_FALSE(m_sound_manager.is_sound_playing(INVALID_SOUND_HANDLE));
-    EXPECT_FALSE(m_sound_manager.is_music_playing(INVALID_MUSIC_HANDLE));
+    auto sound_playing = m_sound_manager.is_sound_playing(INVALID_SOUND_HANDLE);
+    ASSERT_FALSE(sound_playing);
+    EXPECT_EQ(sound_playing.error().code, error_code::invalid_handle);
+
+    auto music_playing = m_sound_manager.is_music_playing(INVALID_MUSIC_HANDLE);
+    ASSERT_FALSE(music_playing);
+    EXPECT_EQ(music_playing.error().code, error_code::invalid_handle);
+
     EXPECT_FALSE(m_sound_manager.set_sound_volume(999, 0.5f));
     EXPECT_FALSE(m_sound_manager.set_music_pitch(999, 1.2f));
 

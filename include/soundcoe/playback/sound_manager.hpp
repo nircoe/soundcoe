@@ -115,17 +115,20 @@ namespace soundcoe
                 std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, bool fade_in, float duration,
                 const std::string &method);
 
-            bool check_audio_state(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                                sound_state state, const std::string &method);
+            [[nodiscard]] std::expected<bool, error> check_audio_state(
+                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
+                const std::string &method);
 
             bool set_audio_property(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
                                 property_type type, const std::string &method,
                                 float value, float y = 0.0f, float z = 0.0f);
 
-            bool audio_operation(std::unordered_map<size_t, active_audio> &active_audio_, size_t handle,
-                                sound_state operation, const std::string &method);
-            bool audio_operation_all(std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
-                                const std::string &method);
+            [[nodiscard]] std::expected<void, error> audio_operation(
+                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
+                const std::string &method);
+            [[nodiscard]] std::expected<void, error> audio_operation_all(
+                std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
+                const std::string &method);
 
             [[nodiscard]] std::expected<size_t, error> play(
                 std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename, float volume,
@@ -166,21 +169,21 @@ namespace soundcoe
                 const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
                 sound_priority priority = sound_priority::critical);
 
-            bool pause_sound(sound_handle handle);
-            bool pause_music(music_handle handle);
-            bool pause_all_sounds();
-            bool pause_all_music();
-            bool pause_all();
-            bool resume_sound(sound_handle handle);
-            bool resume_music(music_handle handle);
-            bool resume_all_sounds();
-            bool resume_all_music();
-            bool resume_all();
-            bool stop_sound(sound_handle handle);
-            bool stop_music(music_handle handle);
-            bool stop_all_sounds();
-            bool stop_all_music();
-            bool stop_all();
+            [[nodiscard]] std::expected<void, error> pause_sound(sound_handle handle);
+            [[nodiscard]] std::expected<void, error> pause_music(music_handle handle);
+            [[nodiscard]] std::expected<void, error> pause_all_sounds();
+            [[nodiscard]] std::expected<void, error> pause_all_music();
+            [[nodiscard]] std::expected<void, error> pause_all();
+            [[nodiscard]] std::expected<void, error> resume_sound(sound_handle handle);
+            [[nodiscard]] std::expected<void, error> resume_music(music_handle handle);
+            [[nodiscard]] std::expected<void, error> resume_all_sounds();
+            [[nodiscard]] std::expected<void, error> resume_all_music();
+            [[nodiscard]] std::expected<void, error> resume_all();
+            [[nodiscard]] std::expected<void, error> stop_sound(sound_handle handle);
+            [[nodiscard]] std::expected<void, error> stop_music(music_handle handle);
+            [[nodiscard]] std::expected<void, error> stop_all_sounds();
+            [[nodiscard]] std::expected<void, error> stop_all_music();
+            [[nodiscard]] std::expected<void, error> stop_all();
             bool set_sound_volume(sound_handle handle, float volume);
             bool set_music_volume(music_handle handle, float volume);
             bool set_sound_pitch(sound_handle handle, float pitch);
@@ -188,12 +191,12 @@ namespace soundcoe
             bool set_sound_position(sound_handle handle, const vec3 &position);
             bool set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
-            bool is_sound_playing(sound_handle handle);
-            bool is_music_playing(music_handle handle);
-            bool is_sound_paused(sound_handle handle);
-            bool is_music_paused(music_handle handle);
-            bool is_sound_stopped(sound_handle handle);
-            bool is_music_stopped(music_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_sound_playing(sound_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_music_playing(music_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_sound_paused(sound_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_music_paused(music_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_sound_stopped(sound_handle handle);
+            [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
             size_t get_active_sounds_count() const;
             size_t get_active_music_count() const;

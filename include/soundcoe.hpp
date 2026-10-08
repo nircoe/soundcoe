@@ -194,17 +194,17 @@ namespace soundcoe
      * @brief Pauses a specific sound.
      * 
      * @param handle Handle of the sound to pause.
-     * @return true if successfully paused, false if handle is invalid or sound not playing.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool pause_sound(sound_handle handle);
+    [[nodiscard]] std::expected<void, error> pause_sound(sound_handle handle);
 
     /**
      * @brief Pauses a specific music track.
      * 
      * @param handle Handle of the music to pause.
-     * @return true if successfully paused, false if handle is invalid or music not playing.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool pause_music(music_handle handle);
+    [[nodiscard]] std::expected<void, error> pause_music(music_handle handle);
 
     /**
      * @brief Pauses all currently playing sounds.
@@ -225,17 +225,19 @@ namespace soundcoe
      * @brief Resumes a paused sound.
      * 
      * @param handle Handle of the sound to resume.
-     * @return true if successfully resumed, false if handle is invalid or sound not paused.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, invalid_state if
+     *         the sound isn't paused, or an OpenAL error).
      */
-    bool resume_sound(sound_handle handle);
+    [[nodiscard]] std::expected<void, error> resume_sound(sound_handle handle);
 
     /**
      * @brief Resumes a paused music track.
      * 
      * @param handle Handle of the music to resume.
-     * @return true if successfully resumed, false if handle is invalid or music not paused.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, invalid_state if
+     *         the music isn't paused, or an OpenAL error).
      */
-    bool resume_music(music_handle handle);
+    [[nodiscard]] std::expected<void, error> resume_music(music_handle handle);
 
     /**
      * @brief Resumes all paused sounds.
@@ -256,17 +258,17 @@ namespace soundcoe
      * @brief Stops a playing or paused sound.
      * 
      * @param handle Handle of the sound to stop.
-     * @return true if successfully stopped, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool stop_sound(sound_handle handle);
+    [[nodiscard]] std::expected<void, error> stop_sound(sound_handle handle);
 
     /**
      * @brief Stops a playing or paused music track.
      * 
      * @param handle Handle of the music to stop.
-     * @return true if successfully stopped, false if handle is invalid.
+     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
      */
-    bool stop_music(music_handle handle);
+    [[nodiscard]] std::expected<void, error> stop_music(music_handle handle);
 
     /**
      * @brief Stops all currently active sounds.
@@ -341,49 +343,49 @@ namespace soundcoe
      * @brief Checks if a sound is currently playing.
      * 
      * @param handle Handle of the sound to check.
-     * @return true if sound is playing, false if paused, stopped, or handle is invalid.
+     * @return true if the sound is playing and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_sound_playing(sound_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_sound_playing(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently playing.
      * 
      * @param handle Handle of the music to check.
-     * @return true if music is playing, false if paused, stopped, or handle is invalid.
+     * @return true if the music is playing and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_music_playing(music_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_music_playing(music_handle handle);
 
     /**
      * @brief Checks if a sound is currently paused.
      * 
      * @param handle Handle of the sound to check.
-     * @return true if sound is paused, false if playing, stopped, or handle is invalid.
+     * @return true if the sound is paused and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_sound_paused(sound_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_sound_paused(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently paused.
      * 
      * @param handle Handle of the music to check.
-     * @return true if music is paused, false if playing, stopped, or handle is invalid.
+     * @return true if the music is paused and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_music_paused(music_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_music_paused(music_handle handle);
 
     /**
      * @brief Checks if a sound is currently stopped.
      * 
      * @param handle Handle of the sound to check.
-     * @return true if sound is stopped, false if playing, paused, or handle is invalid.
+     * @return true if the sound is stopped and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_sound_stopped(sound_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_sound_stopped(sound_handle handle);
 
     /**
      * @brief Checks if a music track is currently stopped.
      * 
      * @param handle Handle of the music to check.
-     * @return true if music is stopped, false if playing, paused, or handle is invalid.
+     * @return true if the music is stopped and false if it isn't, or an error (invalid_handle, source_inactive).
      */
-    bool is_music_stopped(music_handle handle);
+    [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
     /**
      * @brief Gets the number of currently active sound sources.
