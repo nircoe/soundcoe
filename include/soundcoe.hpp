@@ -132,7 +132,8 @@ namespace soundcoe
      */
     bool is_scene_loaded(const std::string &scene_name);
 
-    // in the future: bool preload_scene/unload_scene/is_scene_loaded(const Scene &scene); with gamecoe::Scene object!
+    // in the future: std::expected<void, error> preload_scene/unload_scene and bool is_scene_loaded(const Scene &scene);
+    // with gamecoe::Scene object!
 
     /**
      * @brief Updates soundcoe internal systems (fade effects, cleanup).
