@@ -89,6 +89,33 @@ namespace soundcoe
             return {};
         }
 
+        namespace
+        {
+            using audio_map = std::unordered_map<std::size_t, active_audio>;
+            using found_audio = std::pair<audio_map::iterator, std::unique_ptr<sound_source> &>;
+
+            // An inactive source also drops its entry from the map.
+            [[nodiscard]] std::expected<found_audio, error> find_active_source(
+                resource_manager &resources, audio_map &active_audio_, std::size_t handle, const std::string &method)
+            {
+                auto it = active_audio_.find(handle);
+                if (it == active_audio_.end())
+                    return std::unexpected(error_handler::make_error(
+                        error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+
+                auto source_allocation = resources.get_source_allocation(it->second.m_source_index);
+                if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
+                {
+                    active_audio_.erase(it);
+                    return std::unexpected(error_handler::make_error(
+                        error_code::source_inactive,
+                        std::format("sound_manager::{}: Audio source is no longer active", method)));
+                }
+
+                return found_audio(it, source_allocation.value().get().m_source);
+            }
+        } // namespace
+
         std::expected<void, error> sound_manager::fade_to_volume(
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
             float duration, const std::string &method)
@@ -176,22 +203,11 @@ namespace soundcoe
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
             const std::string &method)
         {
-            auto it = active_audio_.find(handle);
-            if (it == active_audio_.end())
-                return std::unexpected(error_handler::make_error(
-                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+            auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
+            if (!found)
+                return std::unexpected(found.error());
 
-            active_audio &audio = it->second;
-            auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
-            if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-            {
-                active_audio_.erase(it);
-                return std::unexpected(error_handler::make_error(
-                    error_code::source_inactive,
-                    std::format("sound_manager::{}: Audio source is no longer active", method)));
-            }
-
-            auto &source = source_allocation.value().get().m_source;
+            auto &source = found->second;
             if (state == sound_state::playing)
                 return source->is_playing();
             if (state == sound_state::paused)
@@ -208,22 +224,11 @@ namespace soundcoe
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, property_type type,
             const std::string &method, float value, float y, float z)
         {
-            auto it = active_audio_.find(handle);
-            if (it == active_audio_.end())
-                return std::unexpected(error_handler::make_error(
-                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+            auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
+            if (!found)
+                return std::unexpected(found.error());
 
-            active_audio &audio = it->second;
-            auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
-            if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-            {
-                active_audio_.erase(it);
-                return std::unexpected(error_handler::make_error(
-                    error_code::source_inactive,
-                    std::format("sound_manager::{}: Audio source is no longer active", method)));
-            }
-
-            auto &source = source_allocation.value().get().m_source;
+            auto &source = found->second;
             vec3 vec;
             if (type == property_type::position || type == property_type::velocity)
                 vec = {value, y, z};
@@ -246,22 +251,12 @@ namespace soundcoe
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
             const std::string &method)
         {
-            auto it = active_audio_.find(handle);
-            if (it == active_audio_.end())
-                return std::unexpected(error_handler::make_error(
-                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+            auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
+            if (!found)
+                return std::unexpected(found.error());
 
+            auto &[it, source] = *found;
             active_audio &audio = it->second;
-            auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
-            if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-            {
-                active_audio_.erase(it);
-                return std::unexpected(error_handler::make_error(
-                    error_code::source_inactive,
-                    std::format("sound_manager::{}: Audio source is no longer active", method)));
-            }
-
-            auto &source = source_allocation.value().get().m_source;
             if (operation == sound_state::playing)
                 return source->play();
             if (operation == sound_state::paused)
@@ -299,20 +294,20 @@ namespace soundcoe
                 }
 
                 auto &source = source_allocation.value().get().m_source;
-                bool success = false;
+                std::expected<void, error> r;
                 if (operation == sound_state::playing)
                 {
                     if (source->is_paused())
-                        success = static_cast<bool>(source->play());
+                        r = source->play();
                     else
                         logcoe::warning("sound_manager::" + method + ": handle " + std::to_string(it->first) + " is not paused");
                 }
                 else if (operation == sound_state::paused)
-                    success = static_cast<bool>(source->pause());
+                    r = source->pause();
                 else if (operation == sound_state::stopped)
                 {
-                    success = static_cast<bool>(source->stop());
-                    if (success)
+                    r = source->stop();
+                    if (r)
                     {
                         m_resource_manager.release_source(*source);
                         m_resource_manager.release_buffer(audio.m_filename);
@@ -325,7 +320,7 @@ namespace soundcoe
                         error_code::invalid_argument,
                         std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
 
-                if (!success)
+                if (!r)
                     logcoe::warning("sound_manager::" + method + ": Failed to operate on handle - " + std::to_string(it->first));
 
                 ++it;

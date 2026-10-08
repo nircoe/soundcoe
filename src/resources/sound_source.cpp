@@ -1,6 +1,9 @@
 #include <soundcoe/resources/sound_source.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe_config.hpp>
+#include <expected>
+#include <format>
+#include <string_view>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -9,6 +12,15 @@ namespace soundcoe
 {
     namespace internal
     {
+        namespace
+        {
+            [[nodiscard]] std::unexpected<error> not_created(std::string_view method)
+            {
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_state, std::format("sound_source::{}: sound_source not created", method)));
+            }
+        } // namespace
+
         sound_source::sound_source() : m_position(vec3::zero()), m_velocity(vec3::zero()) { }
 
         sound_source::sound_source(sound_source &&other) noexcept :
@@ -131,9 +143,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::play()
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::play: sound_source not created"));
+            if (!m_created)
+                return not_created("play");
 
             if(is_playing())
             {
@@ -147,9 +158,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::pause()
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::pause: sound_source not created"));
+            if (!m_created)
+                return not_created("pause");
 
             if(is_paused())
             {
@@ -163,9 +173,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::stop()
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::stop: sound_source not created"));
+            if (!m_created)
+                return not_created("stop");
 
             if(!(is_playing() || is_paused()))
             {
@@ -179,9 +188,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::set_volume(float volume)
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::set_volume: sound_source not created"));
+            if (!m_created)
+                return not_created("set_volume");
 
             ALfloat al_volume = static_cast<ALfloat>(volume);
             alSourcef(m_source_id, AL_GAIN, al_volume);
@@ -194,9 +202,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::set_pitch(float pitch)
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::set_pitch: sound_source not created"));
+            if (!m_created)
+                return not_created("set_pitch");
 
             ALfloat al_pitch = static_cast<ALfloat>(pitch);
             alSourcef(m_source_id, AL_PITCH, al_pitch);
@@ -209,9 +216,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::set_position(const vec3 &position)
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::set_position: sound_source not created"));
+            if (!m_created)
+                return not_created("set_position");
 
             alSource3f(m_source_id, AL_POSITION,
                     static_cast<ALfloat>(position.x), static_cast<ALfloat>(position.y), static_cast<ALfloat>(position.z));
@@ -224,9 +230,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::set_velocity(const vec3 &velocity)
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::set_velocity: sound_source not created"));
+            if (!m_created)
+                return not_created("set_velocity");
 
             alSource3f(m_source_id, AL_VELOCITY,
                     static_cast<ALfloat>(velocity.x), static_cast<ALfloat>(velocity.y), static_cast<ALfloat>(velocity.z));
@@ -239,9 +244,8 @@ namespace soundcoe
 
         std::expected<void, error> sound_source::set_looping(bool looping)
         {
-            if(!m_created)
-                return std::unexpected(error_handler::make_error(error_code::invalid_state,
-                    "sound_source::set_looping: sound_source not created"));
+            if (!m_created)
+                return not_created("set_looping");
 
             ALboolean al_looping = looping ? AL_TRUE : AL_FALSE;
             alSourcei(m_source_id, AL_LOOPING, al_looping);
