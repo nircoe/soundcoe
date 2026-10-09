@@ -14,6 +14,15 @@ namespace soundcoe
 {
     namespace internal
     {
+        namespace
+        {
+            [[nodiscard]] std::unexpected<error> not_initialized(const std::string &method)
+            {
+                return std::unexpected(error_handler::make_error(error_code::not_initialized,
+                    std::format("resource_manager::{}: resource_manager is not initialized", method)));
+            }
+        } // namespace
+
         resource_manager::resource_manager() : m_audio_context(), m_audio_root_directory(), m_source_pool(),
                                              m_free_source_indices(), m_buffer_cache(), m_loaded_directories() {}
 
@@ -87,8 +96,7 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
-                return std::unexpected(error_handler::make_error(error_code::not_initialized,
-                    "resource_manager::preload_directory: resource_manager is not initialized"));
+                return not_initialized("preload_directory");
 
             if (subdirectory.empty())
                 return std::unexpected(error_handler::make_error(error_code::invalid_argument,
@@ -99,9 +107,8 @@ namespace soundcoe
             std::error_code ec;
             bool is_directory = std::filesystem::exists(full_path, ec) && std::filesystem::is_directory(full_path, ec);
             if (ec)
-                return std::unexpected(error_handler::make_error(error_code::filesystem_error,
-                    std::format("resource_manager::preload_directory: Failed to check \"{}\": {}", subdirectory,
-                                ec.message())));
+                return std::unexpected(error_handler::make_filesystem_error("resource_manager::preload_directory",
+                                                                            subdirectory, ec));
             if (!is_directory)
                 return std::unexpected(error_handler::make_error(error_code::directory_not_found,
                     "resource_manager::preload_directory: Not a directory: \"" + subdirectory + "\""));
@@ -131,8 +138,7 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
-                return std::unexpected(error_handler::make_error(error_code::not_initialized,
-                    "resource_manager::unload_directory: resource_manager is not initialized"));
+                return not_initialized("unload_directory");
 
             if (subdirectory.empty())
             {
@@ -149,7 +155,7 @@ namespace soundcoe
             std::vector<std::filesystem::path> audio_files;
             if (scan_directory_for_files(subdirectory, audio_files))
                 for (const auto &file : audio_files)
-                    static_cast<void>(unload_file_impl(file));
+                    unload_file_impl(file);
             else
                 logcoe::warning("resource_manager::unload_directory: No audio files found in directory: " + subdirectory);
 
@@ -163,8 +169,7 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
-                return std::unexpected(error_handler::make_error(error_code::not_initialized,
-                    "resource_manager::acquire_source: resource_manager is not initialized"));
+                return not_initialized("acquire_source");
 
             size_t index;
             if (m_free_source_indices.empty())
@@ -197,8 +202,7 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
-                return std::unexpected(error_handler::make_error(error_code::not_initialized,
-                    "resource_manager::get_buffer: resource_manager is not initialized"));
+                return not_initialized("get_buffer");
 
             if (filename.empty())
                 return std::unexpected(error_handler::make_error(error_code::invalid_argument,
@@ -216,7 +220,12 @@ namespace soundcoe
                     return std::unexpected(r.error());
             }
 
-            auto &entry = m_buffer_cache[cache_key];
+            auto it = m_buffer_cache.find(cache_key);
+            if (it == m_buffer_cache.end())
+                return std::unexpected(error_handler::make_error(error_code::resource_exhausted,
+                    "resource_manager::get_buffer: Buffer was evicted right after loading: " + filename));
+
+            auto &entry = it->second;
             ++entry.m_reference_count;
             entry.m_last_accessed = std::chrono::steady_clock::now();
             return std::ref(*(entry.m_buffer));
@@ -514,9 +523,8 @@ namespace soundcoe
             std::error_code ec;
             bool is_file = std::filesystem::exists(file_path, ec) && std::filesystem::is_regular_file(file_path, ec);
             if (ec)
-                return std::unexpected(error_handler::make_error(error_code::filesystem_error,
-                    std::format("resource_manager::preload_file_impl: Failed to check \"{}\": {}", file_path.string(),
-                                ec.message())));
+                return std::unexpected(error_handler::make_filesystem_error("resource_manager::preload_file_impl",
+                                                                            file_path.string(), ec));
             if (!is_file)
                 return std::unexpected(error_handler::make_error(error_code::file_not_found,
                     "resource_manager::preload_file_impl: Not a File: \"" + file_path.string() + "\""));
@@ -529,6 +537,13 @@ namespace soundcoe
             entry.m_buffer = std::make_unique<sound_buffer>();
             if (auto r = entry.m_buffer->load_from_file(cache_key); !r)
                 return r;
+
+            auto buffer_size = static_cast<std::size_t>(entry.m_buffer->get_size());
+            if (buffer_size > m_max_cache_size)
+                return std::unexpected(error_handler::make_error(error_code::resource_exhausted,
+                    std::format("resource_manager::preload_file_impl: \"{}\" is {} bytes, larger than the cache "
+                                "limit of {} bytes", cache_key, buffer_size, m_max_cache_size)));
+
             entry.m_reference_count = 0;
             entry.m_last_accessed = std::chrono::steady_clock::now();
             m_current_cache_size += entry.m_buffer->get_size();
@@ -541,25 +556,27 @@ namespace soundcoe
             return {};
         }
 
-        std::expected<void, error> resource_manager::unload_file_impl(const std::filesystem::path &file_path)
+        void resource_manager::unload_file_impl(const std::filesystem::path &file_path)
         {
             std::error_code ec;
             bool is_file = std::filesystem::exists(file_path, ec) && std::filesystem::is_regular_file(file_path, ec);
             if (ec)
-                return std::unexpected(error_handler::make_error(error_code::filesystem_error,
-                    std::format("resource_manager::unload_file_impl: Failed to check \"{}\": {}", file_path.string(),
-                                ec.message())));
+            {
+                logcoe::warning("resource_manager::unload_file_impl: Failed to check \"" + file_path.string() +
+                                "\": " + ec.message());
+                return;
+            }
             if (!is_file)
             {
                 logcoe::warning("resource_manager::unload_file_impl: Not a File: \"" + file_path.string() + "\"");
-                return {};
+                return;
             }
 
             std::string cache_key = file_path.string();
             if (m_buffer_cache.find(cache_key) == m_buffer_cache.end())
             {
                 logcoe::warning("resource_manager::unload_file_impl: File is not loaded: \"" + cache_key + "\"");
-                return {};
+                return;
             }
 
             auto &entry = m_buffer_cache[cache_key];
@@ -583,7 +600,6 @@ namespace soundcoe
 
             m_current_cache_size -= entry.m_buffer->get_size();
             m_buffer_cache.erase(cache_key);
-            return {};
         }
 
         bool resource_manager::is_directory_loaded_impl(const std::string &subdirectory) const
@@ -647,10 +663,17 @@ namespace soundcoe
             for(const auto &dir : loaded_dirs)
             {
                 std::filesystem::path candidate_path = (m_audio_root_directory / dir / filename).lexically_normal();
-                if (std::filesystem::exists(candidate_path, ec) && std::filesystem::is_regular_file(candidate_path, ec))
+                bool is_file = std::filesystem::exists(candidate_path, ec) &&
+                               std::filesystem::is_regular_file(candidate_path, ec);
+                if (ec)
                 {
-                    return candidate_path;
+                    logcoe::warning("resource_manager::find_file_in_loaded_directories: Failed to check \"" +
+                                    candidate_path.string() + "\": " + ec.message());
+                    continue;
                 }
+
+                if (is_file)
+                    return candidate_path;
             }
             return std::filesystem::path();
         }

@@ -193,13 +193,28 @@ TEST_F(ResourceManagerTests, InvalidBufferRequests)
     ASSERT_FALSE(non_existent);
     EXPECT_EQ(non_existent.error().code, error_code::file_not_found);
 
-    auto non_audio = m_resource_manager.get_buffer("sounds/readme.txt");
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
+    auto non_audio = m_resource_manager.get_buffer("readme.txt");
     ASSERT_FALSE(non_audio);
-    EXPECT_EQ(non_audio.error().code, error_code::file_not_found);
+    EXPECT_EQ(non_audio.error().code, error_code::unsupported_format);
 
     auto empty = m_resource_manager.get_buffer("");
     ASSERT_FALSE(empty);
     EXPECT_EQ(empty.error().code, error_code::invalid_argument);
+}
+
+TEST_F(ResourceManagerTests, BufferLargerThanCacheLimit)
+{
+    m_resource_manager.shutdown();
+    ASSERT_TRUE(m_resource_manager.initialize(test_audio_files::s_test_root_dir.string(), 4, 0));
+    ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
+    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 0);
+
+    auto buffer = m_resource_manager.get_buffer("test1.wav");
+    ASSERT_FALSE(buffer);
+    EXPECT_EQ(buffer.error().code, error_code::resource_exhausted);
+    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 0);
+    EXPECT_EQ(m_resource_manager.get_cache_size_bytes(), 0);
 }
 
 TEST_F(ResourceManagerTests, DirectoryOperations)

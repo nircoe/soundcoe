@@ -114,16 +114,22 @@ namespace soundcoe
 
                 return found_audio(it, source_allocation.value().get().m_source);
             }
+
+            [[nodiscard]] std::unexpected<error> invalid_operation_type(const std::string &method)
+            {
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_argument,
+                    std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
+            }
         } // namespace
 
         std::expected<void, error> sound_manager::fade_to_volume(
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
             float duration, const std::string &method)
         {
-            auto it = active_audio_.find(handle);
-            if (it == active_audio_.end())
-                return std::unexpected(error_handler::make_error(
-                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+            auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
+            if (!found)
+                return std::unexpected(found.error());
 
             if (duration <= 0.0f)
                 return std::unexpected(error_handler::make_error(
@@ -135,18 +141,9 @@ namespace soundcoe
                     error_code::invalid_argument,
                     std::format("sound_manager::{}: Fade target volume must be non-negative", method)));
 
+            auto &[it, source] = *found;
             active_audio &audio = it->second;
 
-            auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
-            if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-            {
-                active_audio_.erase(it);
-                return std::unexpected(error_handler::make_error(
-                    error_code::source_inactive,
-                    std::format("sound_manager::{}: Audio source is no longer active", method)));
-            }
-
-            auto &source = source_allocation.value().get().m_source;
             if (!(source->is_playing()))
                 return std::unexpected(error_handler::make_error(
                     error_code::invalid_state,
@@ -164,28 +161,18 @@ namespace soundcoe
             std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, bool fade_in, float duration,
             const std::string &method)
         {
-            auto it = active_audio_.find(handle);
-            if (it == active_audio_.end())
-                return std::unexpected(error_handler::make_error(
-                    error_code::invalid_handle, std::format("sound_manager::{}: Invalid handle", method)));
+            auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
+            if (!found)
+                return std::unexpected(found.error());
 
             if (duration <= 0.0f)
                 return std::unexpected(error_handler::make_error(
                     error_code::invalid_argument,
                     std::format("sound_manager::{}: Fade duration must be positive", method)));
 
+            auto &[it, source] = *found;
             active_audio &audio = it->second;
 
-            auto source_allocation = m_resource_manager.get_source_allocation(audio.m_source_index);
-            if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-            {
-                active_audio_.erase(it);
-                return std::unexpected(error_handler::make_error(
-                    error_code::source_inactive,
-                    std::format("sound_manager::{}: Audio source is no longer active", method)));
-            }
-
-            auto &source = source_allocation.value().get().m_source;
             if (!fade_in && !(source->is_playing()))
                 return std::unexpected(error_handler::make_error(
                     error_code::invalid_state,
@@ -215,9 +202,7 @@ namespace soundcoe
             if (state == sound_state::stopped)
                 return source->is_stopped();
 
-            return std::unexpected(error_handler::make_error(
-                error_code::invalid_argument,
-                std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
+            return invalid_operation_type(method);
         }
 
         std::expected<void, error> sound_manager::set_audio_property(
@@ -273,9 +258,7 @@ namespace soundcoe
                 return r;
             }
 
-            return std::unexpected(error_handler::make_error(
-                error_code::invalid_argument,
-                std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
+            return invalid_operation_type(method);
         }
 
         std::expected<void, error> sound_manager::audio_operation_all(
@@ -316,9 +299,7 @@ namespace soundcoe
                     }
                 }
                 else
-                    return std::unexpected(error_handler::make_error(
-                        error_code::invalid_argument,
-                        std::format("sound_manager::{}: Internal error - Invalid operation type", method)));
+                    return invalid_operation_type(method);
 
                 if (!r)
                     logcoe::warning("sound_manager::" + method + ": Failed to operate on handle - " + std::to_string(it->first));
@@ -891,6 +872,10 @@ namespace soundcoe
         {
             std::lock_guard<std::mutex> lock(m_mutex);
 
+            if (duration <= 0.0f)
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_argument, "sound_manager::fade_in_sound: Fade duration must be positive"));
+
             auto handle = play(m_active_sounds, m_sound_subdir + filename, 0.0f, pitch, loop, priority,
                                m_next_sound_handle, "fade_in_sound", m_master_sounds_volume, m_master_sounds_pitch);
 
@@ -914,6 +899,10 @@ namespace soundcoe
                                                                         sound_priority priority)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+
+            if (duration <= 0.0f)
+                return std::unexpected(error_handler::make_error(
+                    error_code::invalid_argument, "sound_manager::fade_in_music: Fade duration must be positive"));
 
             auto handle = play(m_active_music, m_music_subdir + filename, 0.0f, pitch, loop, priority,
                                m_next_music_handle, "fade_in_music", m_master_music_volume, m_master_music_pitch);

@@ -16,7 +16,7 @@ C++ audio library for game developers, built on OpenAL. Thread-safe, single incl
 
 ## Requirements
 
-- C++23 compiler with `<expected>` (GCC 12+, Clang 16+ with libc++, Apple Clang from Xcode 15+, MSVC 2022 17.3+)
+- C++23 compiler with `<expected>` (GCC 13+, Clang 17+ with libc++, Apple Clang from Xcode 15+, MSVC 2022 17.3+)
 - CMake 3.22+
 - Windows, Linux, macOS or WebAssembly (Emscripten)
 

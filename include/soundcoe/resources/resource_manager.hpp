@@ -61,7 +61,7 @@ namespace soundcoe
             std::filesystem::path normalize_path(const std::string &path) const;
             bool scan_directory_for_files(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
             [[nodiscard]] std::expected<void, error> preload_file_impl(const std::filesystem::path &file_path);
-            [[nodiscard]] std::expected<void, error> unload_file_impl(const std::filesystem::path &file_path);
+            void unload_file_impl(const std::filesystem::path &file_path);
             bool is_directory_loaded_impl(const std::string &subdirectory) const;
             sound_priority get_highest_priority_for_buffer(ALuint buffer_id) const;
             void release_buffer_impl(const std::string &filename);

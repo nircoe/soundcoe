@@ -133,7 +133,7 @@ TEST_F(ErrorHandlerTests, CheckOpenALError)
 {
     // Test 1: no pending error is a success
     {
-        static_cast<void>(error_handler::clear_openal_error());
+        error_handler::clear_openal_error();
         EXPECT_TRUE(error_handler::check_openal_error("Test Operation").has_value());
     }
 
@@ -159,7 +159,7 @@ TEST_F(ErrorHandlerTests, CheckALCError)
 {
     // Test 1: no pending error is a success
     {
-        static_cast<void>(error_handler::clear_alc_error(m_audio_context.get_device()));
+        error_handler::clear_alc_error(m_audio_context.get_device());
         EXPECT_TRUE(error_handler::check_alc_error(m_audio_context.get_device(), "Test Operation").has_value());
     }
 

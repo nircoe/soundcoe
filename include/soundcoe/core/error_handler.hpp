@@ -1,11 +1,12 @@
 #pragma once
 
-#include <string>
-#include <expected>
-#include <AL/al.h>
-#include <AL/alc.h>
 #include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <expected>
+#include <string>
+#include <system_error>
 
 namespace soundcoe
 {
@@ -26,6 +27,8 @@ namespace soundcoe
 
             [[nodiscard]] error make_audio_decode_error(const std::string &filename, audio_format format,
                                                           audio_decoder_operation operation);
+            [[nodiscard]] error make_filesystem_error(const std::string &method, const std::string &path,
+                                                        std::error_code ec);
         } // namespace error_handler
     } // namespace internal
 } // namespace soundcoe

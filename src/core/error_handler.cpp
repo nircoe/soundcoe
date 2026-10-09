@@ -102,6 +102,12 @@ namespace soundcoe
                     std::format("Audio Decoder Error: {} - {} - {}", filename, to_string(format),
                         to_string(operation)));
             }
+
+            error make_filesystem_error(const std::string &method, const std::string &path, std::error_code ec)
+            {
+                return make_error(error_code::filesystem_error,
+                    std::format("{}: Failed to check \"{}\": {}", method, path, ec.message()));
+            }
         } // namespace error_handler
     } // namespace internal
 } // namespace soundcoe

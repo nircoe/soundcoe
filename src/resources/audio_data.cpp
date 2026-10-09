@@ -1,11 +1,12 @@
 #include <soundcoe/resources/audio_data.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <utility>
-#include <cstdlib>
 
 #include <dr_libs/dr_wav.h>
 #include <dr_libs/dr_mp3.h>
 #include <stb/stb_vorbis.h>
+
+#include <utility>
+#include <cstdlib>
 
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE

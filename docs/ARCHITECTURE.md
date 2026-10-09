@@ -180,8 +180,9 @@ The two options cannot both be ON.
 
 ## Memory Management
 
-- The singleton is constructed on first use. Call `initialize()` before anything else, calls made before it fail
-  with a not-initialized error.
+- The singleton is constructed on first use. Call `initialize()` before anything else. Before it, `play_*`,
+  `preload_scene` and `unload_scene` return `not_initialized`. Calls that take a handle (`pause_sound`,
+  `is_sound_playing`, ...) return `invalid_handle`, because no sound is active yet.
 - Cleanup is explicit through `shutdown()`.
 - The cache owns buffers (`unique_ptr`). A manual reference count tracks sources using each one.
 - Source pools are pre-created, so playback does not create sources. Buffers are still decoded at runtime on a

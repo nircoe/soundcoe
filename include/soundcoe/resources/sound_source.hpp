@@ -1,10 +1,10 @@
 #pragma once
 
-#include <expected>
 #include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <soundcoe/resources/sound_buffer.hpp>
 #include <AL/al.h>
+#include <expected>
 
 namespace soundcoe
 {

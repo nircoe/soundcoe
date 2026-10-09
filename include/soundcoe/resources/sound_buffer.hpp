@@ -2,9 +2,9 @@
 
 #include <soundcoe/core/error.hpp>
 #include <soundcoe/resources/audio_data.hpp>
-#include <string>
-#include <expected>
 #include <AL/al.h>
+#include <expected>
+#include <string>
 
 namespace soundcoe
 {
