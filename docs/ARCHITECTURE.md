@@ -15,7 +15,8 @@ soundcoe::vec3 player_vel(2.0f, 0.0f, 0.0f);        // Player velocity (for dopp
 soundcoe::vec3 forward(0.0f, 0.0f, -1.0f);         // Looking direction
 soundcoe::vec3 up(0.0f, 1.0f, 0.0f);               // Up vector
 
-soundcoe::update_listener(player_pos, player_vel, forward, up);
+if (!soundcoe::update_listener(player_pos, player_vel, forward, up))
+    return;
 
 // Play 3D positioned sounds
 soundcoe::vec3 enemy_pos(10.0f, 0.0f, -20.0f);
@@ -26,15 +27,18 @@ auto engine = soundcoe::play_sound3d("car_engine.wav", car_pos, soundcoe::vec3::
 
 // Update positions in your game loop
 soundcoe::vec3 updated_car_pos(-5.0f, 0.0f, 10.0f);
-soundcoe::set_sound_position(engine, updated_car_pos);
+if (engine)
+    static_cast<void>(soundcoe::set_sound_position(*engine, updated_car_pos));
 ```
 
 ### Advanced Fade Effects
 
 ```cpp
-auto music_handle_ = soundcoe::fade_in_music("battle_theme.ogg", 3.0f);
-soundcoe::fade_to_volume_music(music_handle_, 0.3f, 1.5f);  // Fade to 30% over 1.5 seconds
-soundcoe::fade_out_music(music_handle_, 2.0f);
+auto battle = soundcoe::fade_in_music("battle_theme.ogg", 3.0f);
+if (battle) {
+    static_cast<void>(soundcoe::fade_to_volume_music(*battle, 0.3f, 1.5f));  // Fade to 30% over 1.5 seconds
+    static_cast<void>(soundcoe::fade_out_music(*battle, 2.0f));
+}
 ```
 
 ### Master Volume Controls
@@ -54,7 +58,7 @@ soundcoe::unmute_all_music();              // Unmute music only
 
 ### Architecture Overview
 
-soundcoe hides OpenAL behind a simple free-function API:
+soundcoe hides OpenAL behind a free-function API:
 
 ```
 Game Code → soundcoe API → Internal Systems → OpenAL
@@ -79,56 +83,15 @@ A fade out stops the source when the volume reaches 0.
 - Source pool: when no source is free, a stopped source is reused. Otherwise the lowest-priority, oldest source is
   stopped and taken, unless every source outranks the new sound
 - Buffer cache with a size limit
-- Scene directory loading and unloading
+- Scene directory loading and unloading. The scene name is used directly as a subdirectory of the audio root,
+  and `initialize()` preloads `general/` if it exists
 - Audio decoders in `src/resources/audio_data.cpp`: WAV via dr_wav, MP3 via dr_mp3, OGG via stb_vorbis
 
 ### Core Layer
 - **audio_context**: OpenAL device and context management
-- **error_handler**: Error checking and reporting
+- **error_handler**: Creates and logs `error` values (`make_error`)
+- **error**: `error_code` enum and the `error` struct (code and message), in `core/error.hpp`
 - **Types**: 3D math (vec3) and audio enumerations
-
-## Data Flow
-
-### 1. Initialization Process
-```
-soundcoe::initialize() called
-    ↓
-Lock, init logging, validate root dir
-    ↓
-Init OpenAL context (resource_manager::initialize -> audio_context::initialize)
-    ↓
-Create source pool, set listener gain
-    ↓
-Preload general/ if it exists
-```
-
-### 2. Audio Playback Process
-```
-soundcoe::play_sound() called
-    ↓
-Get buffer from cache (get_buffer)
-    ↓
-Acquire source from the pool (acquire_source)
-    ↓
-Configure source and start playback
-    ↓
-Store handle in active audio map
-```
-
-### 3. Scene Management Process
-```
-soundcoe::preload_scene() called
-    ↓
-The scene name is used directly as a subdirectory of the audio root
-    ↓
-resource_manager::preload_directory()
-    ↓
-Scan directory for audio files
-    ↓
-Load and cache audio buffers
-    ↓
-Update loaded directories list
-```
 
 ## Thread Safety Implementation
 
@@ -217,8 +180,9 @@ The two options cannot both be ON.
 
 ## Memory Management
 
-- The singleton is constructed on first use. Call `initialize()` before anything else, calls made before it fail
-  with a not-initialized error.
+- The singleton is constructed on first use. Call `initialize()` before anything else. Before it, `play_*`,
+  `preload_scene` and `unload_scene` return `not_initialized`. Calls that take a handle (`pause_sound`,
+  `is_sound_playing`, ...) return `invalid_handle`, because no sound is active yet.
 - Cleanup is explicit through `shutdown()`.
 - The cache owns buffers (`unique_ptr`). A manual reference count tracks sources using each one.
 - Source pools are pre-created, so playback does not create sources. Buffers are still decoded at runtime on a
@@ -229,4 +193,6 @@ The two options cannot both be ON.
 ## Error Handling
 
 Logging goes through logcoe (optional, `SOUNDCOE_USE_LOGCOE`). Messages are prefixed `Class::method`.
-Failures return false or invalid handles, lower layers throw via error_handler.
+Fallible functions return `std::expected<T, error>`. `error_handler::make_error` is the only place an error is
+created, and it logs once at that point. Propagating an error never logs it again. There are no exceptions in the
+library.

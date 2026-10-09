@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <soundcoe/utils/math.hpp>
 #include <soundcoe/core/types.hpp>
-#include <cmath>
 #include <limits>
 
 #define _USE_MATH_DEFINES

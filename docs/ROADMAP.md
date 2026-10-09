@@ -8,6 +8,7 @@
 - Fade effects (fade in/out/to-volume) with real-time processing
 - Resource management with pooling, priority allocation, handle-based cleanup and caching
 - Cross-platform support (Windows, Linux, macOS, WebAssembly/Emscripten) with OpenAL backend
+- Typed error handling with `std::expected` and `error_code`
 
 ## Future Plans
 

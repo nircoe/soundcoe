@@ -1,6 +1,6 @@
 # soundcoe
 
-C++ audio library for game developers. Thread-safe, zero-config, single-include design with OpenAL backend.
+C++ audio library for game developers, built on OpenAL. Thread-safe, single include.
 
 [![Windows](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-windows.yml)
 [![Linux](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/nircoe/soundcoe/actions/workflows/ci-linux.yml)
@@ -9,23 +9,14 @@ C++ audio library for game developers. Thread-safe, zero-config, single-include 
 
 ## Why soundcoe?
 
-**Simple** - Single `#include <soundcoe.hpp>`, static functions, no setup required  
-**Game-Focused** - Scene management, fade effects, spatial audio, handle-based control  
-**Thread-Safe** - Call from any thread  
-**Performance** - Resource pooling, caching  
-
-```cpp
-soundcoe::initialize("./audio");
-soundcoe::preload_scene("menu");
-
-auto click = soundcoe::play_sound("ui_click.wav"); 
-auto music = soundcoe::fade_in_music("theme.ogg", 2.0f);
-auto explosion = soundcoe::play_sound3d("boom.wav", {10.0f, 0.0f, -20.0f});
-```
+- Single `#include <soundcoe.hpp>` with free functions
+- Scenes, fade effects, 3D audio and handle-based control
+- Thread-safe, callable from any thread
+- Source pooling and buffer caching
 
 ## Requirements
 
-- C++23 compiler
+- C++23 compiler with `<expected>` (GCC 13+, Clang 17+ with libc++, Apple Clang from Xcode 15+, MSVC 2022 17.3+)
 - CMake 3.22+
 - Windows, Linux, macOS or WebAssembly (Emscripten)
 
@@ -72,12 +63,15 @@ Note: Ensure your audio directory is accessible relative to your executable at r
 #include <soundcoe.hpp>
 
 int main() {
-    soundcoe::initialize("./audio");  // relative to executable
-    soundcoe::preload_scene("menu");
+    if (!soundcoe::initialize("./audio") || !soundcoe::preload_scene("menu"))  // relative to executable
+        return 1;
 
-    auto click_handle = soundcoe::play_sound("ui_click.wav");
-    auto music_handle_ = soundcoe::play_music("menu_ambient.ogg");
-    soundcoe::fade_out_music(music_handle_, 2.0f);
+    auto click = soundcoe::play_sound("ui_click.wav");
+    auto music = soundcoe::play_music("menu_ambient.ogg");
+    if (!click || !music)
+        return 1;
+    if (!soundcoe::fade_out_music(*music, 2.0f))
+        return 1;
 
     soundcoe::shutdown();
     return 0;
@@ -86,11 +80,25 @@ int main() {
 
 For 3D spatial audio, fade effects and backend configuration, see [Architecture Documentation](docs/ARCHITECTURE.md).
 
+## Error Handling
+
+Functions that can fail return `std::expected<T, soundcoe::error>` (`std::expected<void, soundcoe::error>` when there
+is no value). Check the result before using it. The error has a `code` (a `soundcoe::error_code`) and a `message`.
+Errors are also logged once when they happen.
+
+```cpp
+auto click = soundcoe::play_sound("missing.wav");
+if (!click) {
+    if (click.error().code == soundcoe::error_code::file_not_found)
+        std::cerr << click.error().message << '\n';
+}
+```
+
 ## API Reference
 
 ### Initialization
 ```cpp
-soundcoe::initialize(
+auto result = soundcoe::initialize(
     "./audio",        // Audio root directory (relative to executable)
     64,              // Max sources (default: 64)
     soundcoe::UNLIMITED_CACHE, // Cache size MB (default: unlimited, cap it once you've profiled real usage)

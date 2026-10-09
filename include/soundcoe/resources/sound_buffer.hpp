@@ -1,9 +1,10 @@
 #pragma once
 
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/resources/audio_data.hpp>
-#include <string>
 #include <AL/al.h>
-#include <AL/alc.h>
+#include <expected>
+#include <string>
 
 namespace soundcoe
 {
@@ -20,13 +21,11 @@ namespace soundcoe
             bool m_stream           = false;
             std::string m_filename = "";
 
-            void load_from_audio_data(audio_data &&audio_data_);
-            void generate_buffer(const void* data);
+            [[nodiscard]] std::expected<void, error> load_from_audio_data(audio_data &&audio_data_);
+            [[nodiscard]] std::expected<void, error> generate_buffer(const void* data);
 
         public:
             sound_buffer();
-            sound_buffer(const std::string &filename);
-            sound_buffer(const void *data, ALenum format, ALsizei size, ALsizei sample_rate);
             ~sound_buffer();
 
             sound_buffer(const sound_buffer &) = delete;
@@ -34,8 +33,9 @@ namespace soundcoe
             sound_buffer(sound_buffer &&other) noexcept;
             sound_buffer &operator=(sound_buffer &&other) noexcept;
 
-            void load_from_file(const std::string &filename);
-            void load_from_memory(const void *data, ALenum format, ALsizei size, ALsizei sample_rate);
+            [[nodiscard]] std::expected<void, error> load_from_file(const std::string &filename);
+            [[nodiscard]] std::expected<void, error> load_from_memory(const void *data, ALenum format, ALsizei size,
+                                                                        ALsizei sample_rate);
             void unload();
 
             ALuint get_buffer_id() const;

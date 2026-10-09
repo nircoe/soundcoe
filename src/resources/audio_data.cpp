@@ -1,10 +1,12 @@
 #include <soundcoe/resources/audio_data.hpp>
 #include <soundcoe/core/error_handler.hpp>
-#include <exception>
 
 #include <dr_libs/dr_wav.h>
 #include <dr_libs/dr_mp3.h>
 #include <stb/stb_vorbis.h>
+
+#include <utility>
+#include <cstdlib>
 
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
@@ -41,9 +43,10 @@ namespace soundcoe
                 drmp3_free(m_pcm_data, nullptr);
                 break;
             case audio_format::ogg:
-            default:
                 free(m_pcm_data);
                 break;
+            case audio_format::unsupported:
+                std::unreachable();
             }
         }
 
@@ -96,14 +99,15 @@ namespace soundcoe
 
         audio_data::~audio_data() { cleanup(); }
 
-        audio_data audio_data::load_from_wav(const std::string &filename)
+        std::expected<audio_data, error> audio_data::load_from_wav(const std::string &filename)
         {
             unsigned int channels, sample_rate, bits_per_sample;
             drwav_uint64 total_frame_count;
             void *pcm_data;
             drwav wav;
             if (!drwav_init_file(&wav, filename.c_str(), nullptr))
-                error_handler::throw_on_audio_error(filename, audio_format::wav, audio_decoder_operation::open_file);
+                return std::unexpected(error_handler::make_audio_decode_error(
+                    filename, audio_format::wav, audio_decoder_operation::open_file));
 
             bits_per_sample = wav.bitsPerSample;
             drwav_uninit(&wav);
@@ -114,7 +118,8 @@ namespace soundcoe
                                                                                             &total_frame_count, nullptr);
 
             if (!pcm_data)
-                error_handler::throw_on_audio_error(filename, audio_format::wav, audio_decoder_operation::decode_audio);
+                return std::unexpected(error_handler::make_audio_decode_error(
+                    filename, audio_format::wav, audio_decoder_operation::decode_audio));
 
             ALsizei bytes_per_sample = (bits_per_sample <= 16) ? sizeof(drwav_int16) : sizeof(drwav_int32);
             ALsizei pcm_data_size = static_cast<ALsizei>(total_frame_count * channels * bytes_per_sample);
@@ -123,13 +128,14 @@ namespace soundcoe
                             static_cast<ALsizei>(sample_rate), audio_format::wav);
         }
 
-        audio_data audio_data::load_from_ogg(const std::string &filename)
+        std::expected<audio_data, error> audio_data::load_from_ogg(const std::string &filename)
         {
             int channels, sample_rate;
             short *pcm_data;
             int total_samples = stb_vorbis_decode_filename(filename.c_str(), &channels, &sample_rate, &pcm_data);
             if (total_samples <= 0 || !pcm_data)
-                error_handler::throw_on_audio_error(filename, audio_format::ogg, audio_decoder_operation::decode_audio);
+                return std::unexpected(error_handler::make_audio_decode_error(
+                    filename, audio_format::ogg, audio_decoder_operation::decode_audio));
 
             ALsizei pcm_data_size = static_cast<ALsizei>(total_samples * sizeof(short));
 
@@ -137,14 +143,15 @@ namespace soundcoe
                             static_cast<ALsizei>(sample_rate), audio_format::ogg);
         }
 
-        audio_data audio_data::load_from_mp3(const std::string &filename)
+        std::expected<audio_data, error> audio_data::load_from_mp3(const std::string &filename)
         {
             drmp3_config config;
             drmp3_uint64 total_frame_count;
 
             drmp3_int16 *pcm_data = drmp3_open_file_and_read_pcm_frames_s16(filename.c_str(), &config, &total_frame_count, nullptr);
             if (!pcm_data)
-                error_handler::throw_on_audio_error(filename, audio_format::mp3, audio_decoder_operation::decode_audio);
+                return std::unexpected(error_handler::make_audio_decode_error(
+                    filename, audio_format::mp3, audio_decoder_operation::decode_audio));
 
             ALsizei pcm_data_size = static_cast<ALsizei>(total_frame_count * config.channels * sizeof(drmp3_int16));
 

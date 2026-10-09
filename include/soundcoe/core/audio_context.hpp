@@ -1,11 +1,10 @@
 #pragma once
 
-#include <string>
-#include <memory>
-#include <mutex>
-#include <utility>
-#include <AL/al.h>
+#include <soundcoe/core/error.hpp>
 #include <AL/alc.h>
+#include <expected>
+#include <mutex>
+#include <string>
 
 namespace soundcoe
 {
@@ -27,8 +26,8 @@ namespace soundcoe
             audio_context();
             ~audio_context();
 
-            void initialize(const std::string &device_name = "");
-            void shutdown();
+            [[nodiscard]] std::expected<void, error> initialize(const std::string &device_name = "");
+            [[nodiscard]] std::expected<void, error> shutdown();
 
             bool is_initialized() const;
             ALCdevice *get_device() const;

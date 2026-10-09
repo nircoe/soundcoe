@@ -1,10 +1,16 @@
 #include <gtest/gtest.h>
 #include <soundcoe/core/audio_context.hpp>
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe/core/types.hpp>
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <thread>
 #include <chrono>
 #include <future>
+#include <expected>
+#include <string>
+#include <vector>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -27,14 +33,12 @@ protected:
 
     void SetUp() override
     {
-        try { m_audio_context.initialize(); }
-        catch(...) { }
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) { }
+        static_cast<void>(m_audio_context.shutdown());
     }
 };
 
@@ -48,9 +52,9 @@ TEST_F(AudioContextTests, AutoInitialization)
 
 TEST_F(AudioContextTests, MultipleShutdownCalls)
 {
-    EXPECT_NO_THROW(m_audio_context.shutdown());
-    EXPECT_NO_THROW(m_audio_context.shutdown());
-    EXPECT_NO_THROW(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
+    EXPECT_TRUE(m_audio_context.shutdown());
 
     EXPECT_FALSE(m_audio_context.is_initialized());
 }
@@ -94,14 +98,12 @@ protected:
 
     void SetUp() override
     {
-        try { m_audio_context.initialize(); }
-        catch(...) { }
+        ASSERT_TRUE(m_audio_context.initialize());
     }
 
     void TearDown() override
     {
-        try { m_audio_context.shutdown(); }
-        catch(...) { }
+        static_cast<void>(m_audio_context.shutdown());
     }
 };
 
@@ -127,10 +129,50 @@ TEST_F(ErrorHandlerTests, ALCErrorStringConversion)
     EXPECT_EQ(error_handler::get_alc_error_as_string(static_cast<ALCenum>(9999)), "UNKNOWN ERROR");
 }
 
-TEST_F(ErrorHandlerTests, CheckErrorFunctions)
+TEST_F(ErrorHandlerTests, CheckOpenALError)
 {
-    EXPECT_NO_THROW(error_handler::throw_on_openal_error("Test Operation"));
-    EXPECT_NO_THROW(error_handler::throw_on_alc_error(m_audio_context.get_device(), "Test Operation"));
+    // Test 1: no pending error is a success
+    {
+        error_handler::clear_openal_error();
+        EXPECT_TRUE(error_handler::check_openal_error("Test Operation").has_value());
+    }
+
+    // Test 2: a bad call gives an openal_error with the AL error name in the message
+    {
+        ALint value = 0;
+        alGetSourcei(0xDEADBEEF, AL_BUFFER, &value);
+
+        auto r = error_handler::check_openal_error("Test Operation");
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::openal_error);
+        EXPECT_NE(r.error().message.find("AL_INVALID_NAME"), std::string::npos);
+        EXPECT_NE(r.error().message.find("Test Operation"), std::string::npos);
+    }
+
+    // Test 3: the failed check cleared the AL error, so the next check succeeds
+    {
+        EXPECT_TRUE(error_handler::check_openal_error("Test Operation").has_value());
+    }
+}
+
+TEST_F(ErrorHandlerTests, CheckALCError)
+{
+    // Test 1: no pending error is a success
+    {
+        error_handler::clear_alc_error(m_audio_context.get_device());
+        EXPECT_TRUE(error_handler::check_alc_error(m_audio_context.get_device(), "Test Operation").has_value());
+    }
+
+    // Test 2: a bad call gives an alc_error with the ALC error name in the message
+    {
+        alcGetIntegerv(m_audio_context.get_device(), 999999, 1, nullptr);
+
+        auto r = error_handler::check_alc_error(m_audio_context.get_device(), "Test Operation");
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::alc_error);
+        EXPECT_NE(r.error().message.find("ALC_INVALID_VALUE"), std::string::npos);
+        EXPECT_NE(r.error().message.find("Test Operation"), std::string::npos);
+    }
 }
 
 TEST_F(ErrorHandlerTests, ClearErrorFunctions)
@@ -148,6 +190,56 @@ TEST_F(ErrorHandlerTests, ClearErrorFunctions)
 
     ALCenum second_alc_call = error_handler::clear_alc_error(m_audio_context.get_device());
     EXPECT_EQ(second_alc_call, ALC_NO_ERROR);
+}
+
+//==============================================================================
+//                    ErrorTests - error and to_string tests
+//==============================================================================
+
+TEST(ErrorTests, ErrorConstruction)
+{
+    // Test 1: error holds the code and message it was built with
+    {
+        error err{error_code::invalid_argument, "x"};
+        EXPECT_EQ(err.code, error_code::invalid_argument);
+        EXPECT_EQ(err.message, "x");
+    }
+
+    // Test 2: make_error returns the same code and message it was given
+    {
+        error err = error_handler::make_error(error_code::file_not_found, "missing file");
+        EXPECT_EQ(err.code, error_code::file_not_found);
+        EXPECT_EQ(err.message, "missing file");
+    }
+
+    // Test 3: std::expected carries the error through std::unexpected
+    {
+        std::expected<void, error> r =
+            std::unexpected(error_handler::make_error(error_code::invalid_state, "bad state"));
+        ASSERT_FALSE(r);
+        EXPECT_EQ(r.error().code, error_code::invalid_state);
+        EXPECT_EQ(r.error().message, "bad state");
+
+        std::expected<void, error> ok;
+        EXPECT_TRUE(ok.has_value());
+    }
+}
+
+TEST(ErrorTests, ToStringConversion)
+{
+    // Test 1: every audio_format has a name
+    {
+        EXPECT_EQ(to_string(audio_format::wav), "WAV");
+        EXPECT_EQ(to_string(audio_format::ogg), "OGG");
+        EXPECT_EQ(to_string(audio_format::mp3), "MP3");
+        EXPECT_EQ(to_string(audio_format::unsupported), "Unsupported");
+    }
+
+    // Test 2: every audio_decoder_operation has a name
+    {
+        EXPECT_EQ(to_string(audio_decoder_operation::open_file), "Open File");
+        EXPECT_EQ(to_string(audio_decoder_operation::decode_audio), "Decode Audio");
+    }
 }
 
 //==============================================================================

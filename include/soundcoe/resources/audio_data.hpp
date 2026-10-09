@@ -1,8 +1,10 @@
 #pragma once
 
+#include <soundcoe/core/error.hpp>
 #include <soundcoe/core/types.hpp>
 #include <AL/al.h>
 #include <string>
+#include <expected>
 
 namespace soundcoe
 {
@@ -40,9 +42,9 @@ namespace soundcoe
             audio_data &operator=(audio_data &&other) noexcept;
             ~audio_data();
 
-            static audio_data load_from_wav(const std::string &filename);
-            static audio_data load_from_ogg(const std::string &filename);
-            static audio_data load_from_mp3(const std::string &filename);
+            [[nodiscard]] static std::expected<audio_data, error> load_from_wav(const std::string &filename);
+            [[nodiscard]] static std::expected<audio_data, error> load_from_ogg(const std::string &filename);
+            [[nodiscard]] static std::expected<audio_data, error> load_from_mp3(const std::string &filename);
             static audio_format detect_format(const std::string &filename);
 
             ALvoid *get_pcm_data() const;

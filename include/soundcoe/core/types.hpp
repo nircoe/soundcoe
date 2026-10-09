@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 #include <string_view>
-#include <sstream>
 #include <limits>
+#include <utility>
 #include <soundcoe_config.hpp>
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
@@ -118,9 +119,10 @@ namespace soundcoe
                 return "OGG";
             case audio_format::mp3:
                 return "MP3";
-            default:
-                return "";
+            case audio_format::unsupported:
+                return "Unsupported";
             }
+            std::unreachable();
         }
 
         enum class audio_decoder_operation
@@ -137,9 +139,8 @@ namespace soundcoe
                 return "Open File";
             case audio_decoder_operation::decode_audio:
                 return "Decode Audio";
-            default:
-                return "";
             }
+            std::unreachable();
         }
     } // namespace internal
 } // namespace soundcoe

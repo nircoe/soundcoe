@@ -22,27 +22,20 @@ jobs:
           - name: "Linux (Ubuntu) Host"
             os: ubuntu-latest
             emsdk-version: '3.1.57'
-            setup-deps: 'sudo apt-get update && sudo apt-get install -y ninja-build'
-            
-          - name: "Windows Host" 
+
+          - name: "Windows Host"
             os: windows-latest
             emsdk-version: '3.1.57'
-            setup-deps: 'choco install ninja'
-            
+
           - name: "macOS Host"
             os: macos-latest
             emsdk-version: '3.1.57'
-            setup-deps: 'brew install ninja'
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
       with:
         submodules: 'recursive'
-
-    - name: Install host dependencies
-      run: ${{ matrix.setup-deps }}
-      shell: bash
 
     - name: Setup Emscripten cache
       uses: actions/cache@v4
