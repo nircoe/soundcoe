@@ -10,33 +10,23 @@ set(SOUNDCOE_SOURCE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include(FetchContent)
 include(cmake/soundcoe_config.cmake)
 
-add_subdirectory(external)
+option(SOUNDCOE_BUILD_TESTS "Build the soundcoe test suite" OFF)
 
 find_package(Threads REQUIRED)
 
-fetch_openal_soft()
-fetch_logcoe()
+soundcoe_fetch_openal_soft()
+soundcoe_fetch_logcoe()
+if(SOUNDCOE_BUILD_TESTS)
+    soundcoe_fetch_testcoe()
+endif()
 
-generate_soundcoe_config_header()
+soundcoe_generate_config_header()
 
+add_subdirectory(external)
 add_subdirectory(include)
 add_subdirectory(src)
 
-option(SOUNDCOE_BUILD_TESTS "Build soundcoe tests" OFF)
 if(SOUNDCOE_BUILD_TESTS)
-  message(STATUS "[soundcoe] Building soundcoe tests")
-  add_subdirectory(tests)
+    message(STATUS "[soundcoe] Building soundcoe tests")
+    add_subdirectory(tests)
 endif()
-
-install(TARGETS soundcoe soundcoe_headers stb_vorbis dr_libs
-    EXPORT soundcoe-targets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-)
-
-install(EXPORT soundcoe-targets
-    FILE soundcoe-targets.cmake
-    DESTINATION lib/cmake/soundcoe
-)

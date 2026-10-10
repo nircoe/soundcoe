@@ -1,4 +1,4 @@
-set(SOURCES
+set(sources
     core/audio_context.cpp
     core/error_handler.cpp
     resources/audio_data.cpp
@@ -10,11 +10,10 @@ set(SOURCES
     soundcoe.cpp
 )
 
-add_library(soundcoe ${SOURCES})
+add_library(soundcoe STATIC ${sources})
 
-enable_strict_warnings(soundcoe)
+soundcoe_enable_strict_warnings(soundcoe)
 
-# Link libraries based on platform
 if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     target_link_libraries(soundcoe
         PUBLIC
@@ -25,7 +24,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             stb_vorbis
             dr_libs
     )
-    # Link with Emscripten's built-in OpenAL implementation
     target_link_options(soundcoe PRIVATE -lopenal)
 else()
     target_link_libraries(soundcoe

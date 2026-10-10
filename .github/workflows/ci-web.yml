@@ -64,7 +64,6 @@ jobs:
           -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
           -DSOUNDCOE_USE_LOGCOE=ON
-        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
     - name: Build WebAssembly artifacts
@@ -78,11 +77,6 @@ jobs:
         echo "=== Validating WebAssembly build artifacts ==="
         cd build
         
-        # Look for .wasm and .js files  
-        echo "=== WebAssembly Files Found ==="
-        find . -name "*.wasm" -type f | head -10
-        find . -name "*.js" -type f | head -10
-        
         # Validate soundcoe library was built
         SOUNDCOE_LIB=$(find . -name "libsoundcoe.a" -type f)
         if [ -n "$SOUNDCOE_LIB" ]; then
@@ -93,7 +87,6 @@ jobs:
         fi
         
         echo "WebAssembly build validation completed"
-        echo "Note: Tests disabled for Emscripten due to testcoe/backward-cpp unwind conflicts"
       shell: bash
 
 
