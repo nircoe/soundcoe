@@ -14,7 +14,7 @@ option(SOUNDCOE_BUILD_TESTS "Build the soundcoe test suite" OFF)
 
 find_package(Threads REQUIRED)
 
-fetch_openal_soft()
+soundcoe_fetch_openal_soft()
 soundcoe_fetch_logcoe()
 if(SOUNDCOE_BUILD_TESTS)
     soundcoe_fetch_testcoe()
