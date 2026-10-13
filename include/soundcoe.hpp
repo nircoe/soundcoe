@@ -19,11 +19,7 @@ namespace soundcoe
 
 namespace soundcoe
 {
-    /**
-     * @brief Configuration bundle for initialize(), for callers that want to hold/forward init
-     *        settings as a single value (e.g. gamecoe's game::create()) instead of six positional
-     *        arguments.
-     */
+    // Settings for initialize(), bundled in one struct.
     struct init_config
     {
         std::string audio_root_directory = "assets/audio";
@@ -35,46 +31,13 @@ namespace soundcoe
     };
 
     /**
-     * @brief Initializes soundcoe with the specified configuration.
-     *
-     * Sets up an audio context, resource management, and loads the "general" audio directory if it exists.
-     * This function must be called before using any other soundcoe functionality.
-     *
-     * @param audio_root_directory Path to the root audio directory (relative to executable). The
-     *                          "general" subdirectory is optional and will be automatically loaded
-     *                          during initialization if exists, and will be loaded till soundcoe::shutdown() will be called.
-     * @param max_sources Maximum number of concurrent audio sources that can be played simultaneously.
-     *                   Higher values allow more concurrent audio but consume more system resources.
-     *                   Default is 64.
-     * @param max_cache_size_mb Maximum size in megabytes for the audio buffer cache. Larger values keep
-     *                       more audio files in memory for faster playback but consume more RAM.
-     *                       Default is soundcoe::UNLIMITED_CACHE, so nothing evicts during development;
-     *                       set a real budget once you've profiled actual usage for shipping.
-     * @param sound_subdir Name of the subdirectory within each audio directory (general, scenes) that
-     *                    contains sound effects. Default is "sfx".
-     * @param music_subdir Name of the subdirectory within each audio directory (general, scenes) that
-     *                    contains music files. Default is "music".
-     * @param level Logging level for soundcoe operations. Controls the verbosity of log output.
-     *              Default is LogLevel::DEBUG.
-     *
-     * @return An empty std::expected on success, or an error: already_initialized if called twice,
-     *         invalid_argument for an empty directory, directory_not_found if the directory is missing or isn't a
-     *         directory, or the error from the audio context or the "general" preload.
-     *
-     * @note This function should only be called once at application startup. Multiple calls will
-     *       return an already_initialized error. Call shutdown() before calling initialize() again if needed.
-     *
-     * @example
-     * // Basic initialization - will load ./audio/general/sfx/ and ./audio/general/music/ if they exist
-     * if (auto r = soundcoe::initialize("./audio"); !r) {
-     *     std::cerr << "Failed to initialize audio: " << r.error().message << std::endl;
-     * }
-     *
-     * @example
-     * // Custom subdirectory names - will load ./game_audio/general/sounds/ and ./game_audio/general/bgm/
-     * if (auto r = soundcoe::initialize("./game_audio", 64, 128, "sounds", "bgm", LogLevel::WARNING); !r) {
-     *     // Handle initialization failure
-     * }
+     * Starts soundcoe and loads the optional "general" folder under audio_root_directory. Call this before anything
+     * else, and call shutdown() before initializing again. A relative audio_root_directory resolves from the working
+     * directory. sound_subdir and music_subdir are the folder names for sound effects and music inside "general" and
+     * each scene folder. max_sources is how many sounds and music tracks can play at once. max_cache_size_mb is the
+     * size limit in MB for the cache of loaded audio, UNLIMITED_CACHE removes the limit.
+     * Errors: already_initialized, invalid_argument (empty directory), directory_not_found, filesystem_error,
+     * OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> initialize(
         const std::string &audio_root_directory, size_t max_sources = 64,
@@ -82,67 +45,40 @@ namespace soundcoe
         const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
 
     /**
-     * @brief Initializes soundcoe from an init_config bundle. Forwards to the flat-parameter
-     *        overload above - see its documentation for behavior/return value.
+     * Starts soundcoe with the settings from an init_config and loads the optional "general" folder under its
+     * audio_root_directory. Call this before anything else, and call shutdown() before initializing again.
+     * Errors: already_initialized, invalid_argument (empty directory), directory_not_found, filesystem_error,
+     * OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> initialize(const init_config &config);
 
     /**
-     * @brief Shuts down soundcoe and releases all resources.
-     * 
-     * Stops all playing audio, unloads all cached audio files, and cleans up the audio context.
-     * After calling this function, initialize() must be called again before using soundcoe.
-     * 
-     * @note This function should be called at application shutdown or before re-initializing.
+     * Stops all audio, unloads all loaded audio files and closes the audio device. Call initialize() to use
+     * soundcoe again.
      */
     void shutdown();
 
-    /**
-     * @brief Checks if soundcoe is currently initialized.
-     * 
-     * @return true if soundcoe has been successfully initialized, false otherwise.
-     */
+    // Checks if soundcoe is initialized.
     bool is_initialized();
 
     /**
-     * @brief Preloads all audio files from a scene directory.
-     * 
-     * Loads audio files from audio_root_directory/{scene_name}/{sound_subdir}/ and 
-     * audio_root_directory/{scene_name}/{music_subdir}/ into memory for faster playback.
-     * 
-     * @param scene_name Name of the scene directory to preload.
-     * @return An empty std::expected on success, or an error (not_initialized, invalid_argument for an empty name,
-     *         directory_not_found if the directory doesn't exist, filesystem_error). A file that fails to load
-     *         inside the scene is skipped with a log and doesn't fail the call.
+     * Loads a scene's audio into memory. scene_name is the scene's folder under the audio root. Every audio file in
+     * it is loaded, subfolders included. A file that fails to load is skipped with a log and doesn't fail the call.
+     * Errors: not_initialized, invalid_argument (empty name), directory_not_found, filesystem_error.
      */
     [[nodiscard]] std::expected<void, error> preload_scene(const std::string &scene_name);
 
-    /**
-     * @brief Unloads a previously loaded scene and frees its audio resources.
-     * 
-     * @param scene_name Name of the scene directory to unload.
-     * @return An empty std::expected on success, or an error (not_initialized).
-     */
+    // Unloads a scene's audio from memory. Errors: not_initialized.
     [[nodiscard]] std::expected<void, error> unload_scene(const std::string &scene_name);
 
-    /**
-     * @brief Checks if a scene is currently loaded.
-     * 
-     * @param scene_name Name of the scene to check.
-     * @return true if the scene is loaded, false otherwise.
-     */
+    // Checks if a scene is loaded.
     bool is_scene_loaded(const std::string &scene_name);
 
     // in the future: std::expected<void, error> preload_scene/unload_scene and
     // bool is_scene_loaded(const Scene &scene);
     // with gamecoe::Scene object!
 
-    /**
-     * @brief Updates soundcoe internal systems (fade effects, cleanup).
-     * 
-     * Should be called regularly (once per frame) to process fade effects
-     * and clean up stopped audio sources.
-     */
+    // Call once per frame. Fades only advance when it runs, and stopped sounds and music are cleaned up.
     void update();
 
     /**
