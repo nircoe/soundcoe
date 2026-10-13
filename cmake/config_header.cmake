@@ -1,4 +1,4 @@
-function(generate_soundcoe_config_header)
+function(soundcoe_generate_config_header)
     set(SOUNDCOE_CONFIG_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/config")
     set(SOUNDCOE_CONFIG_DIR ${SOUNDCOE_CONFIG_DIR} PARENT_SCOPE)
 

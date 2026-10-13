@@ -40,7 +40,7 @@ soundcoe/
 - macOS uses real CoreAudio.
 - The Linux Clang job builds with libc++ (installed in `ci-linux.yml`), because libstdc++'s `<expected>` is incompatible
   with Clang.
-- Web is build-only. Tests are not built (testcoe and backward-cpp conflict).
+- Web is build-only. Tests are not built (they link the `OpenAL` target, which Emscripten does not have).
 
 The null backend has no audible output, so verify playback locally.
 

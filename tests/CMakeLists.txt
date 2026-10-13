@@ -1,18 +1,7 @@
-message(STATUS "[soundcoe] Fetching testcoe from source...")
-include(FetchContent)
-FetchContent_Declare(
-    testcoe
-    GIT_REPOSITORY https://github.com/nircoe/testcoe.git
-    GIT_TAG v0.1.2
-    GIT_SHALLOW TRUE
-)
-
-FetchContent_MakeAvailable(testcoe)
-
-ignore_external_warnings(gtest)
-ignore_external_warnings(gtest_main)
-ignore_external_warnings(gmock)
-ignore_external_warnings(gmock_main)
+soundcoe_ignore_external_warnings(gtest)
+soundcoe_ignore_external_warnings(gtest_main)
+soundcoe_ignore_external_warnings(gmock)
+soundcoe_ignore_external_warnings(gmock_main)
 
 add_executable(soundcoe_tests
     main.cpp
@@ -29,7 +18,7 @@ target_link_libraries(soundcoe_tests
         OpenAL
 )
 
-enable_strict_warnings(soundcoe_tests)
+soundcoe_enable_strict_warnings(soundcoe_tests)
 
 if(WIN32)
     add_custom_command(TARGET soundcoe_tests POST_BUILD
