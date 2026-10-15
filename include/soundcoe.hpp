@@ -31,11 +31,12 @@ namespace soundcoe
     };
 
     /**
-     * Starts soundcoe and loads the optional "general" folder under audio_root_directory. Call this before anything
-     * else, and call shutdown() before initializing again. A relative audio_root_directory resolves from the working
-     * directory. sound_subdir and music_subdir are the folder names for sound effects and music inside "general" and
-     * each scene folder. max_sources is how many sounds and music tracks can play at once. max_cache_size_mb is the
-     * size limit in MB for the cache of loaded audio, UNLIMITED_CACHE removes the limit.
+     * Starts soundcoe and loads the optional "general" folder under audio_root_directory, for audio that stays loaded
+     * until shutdown(). Call this before anything else, and call shutdown() before initializing again. A relative
+     * audio_root_directory resolves from the working directory. sound_subdir and music_subdir are the folder names for
+     * sound effects and music inside "general" and each scene folder. max_sources is how many sound effects and music
+     * tracks can play at once. max_cache_size_mb is the size limit in MB for the cache of loaded audio, UNLIMITED_CACHE
+     * removes the limit.
      * Errors: already_initialized, invalid_argument (empty directory), directory_not_found, filesystem_error,
      * OpenAL error.
      */
@@ -46,15 +47,16 @@ namespace soundcoe
 
     /**
      * Starts soundcoe with the settings from an init_config and loads the optional "general" folder under its
-     * audio_root_directory. Call this before anything else, and call shutdown() before initializing again.
+     * audio_root_directory, for audio that stays loaded until shutdown(). Call this before anything else, and call
+     * shutdown() before initializing again.
      * Errors: already_initialized, invalid_argument (empty directory), directory_not_found, filesystem_error,
      * OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> initialize(const init_config &config);
 
     /**
-     * Stops all audio, unloads all loaded audio files and closes the audio device. Call initialize() to use
-     * soundcoe again.
+     * Stops all audio, unloads all loaded audio files and closes the audio device. Call initialize() to use soundcoe
+     * again.
      */
     void shutdown();
 
@@ -62,8 +64,9 @@ namespace soundcoe
     bool is_initialized();
 
     /**
-     * Loads a scene's audio into memory. scene_name is the scene's folder under the audio root. Every audio file in
-     * it is loaded, subfolders included. A file that fails to load is skipped with a log and doesn't fail the call.
+     * Loads a scene's audio into memory, so its files can be played. scene_name is the scene's folder under the audio
+     * root. Every audio file in it is loaded, subfolders included. A file that fails to load is logged and skipped. It
+     * doesn't fail the call.
      * Errors: not_initialized, invalid_argument (empty name), directory_not_found, filesystem_error.
      */
     [[nodiscard]] std::expected<void, error> preload_scene(const std::string &scene_name);
@@ -78,38 +81,30 @@ namespace soundcoe
     // bool is_scene_loaded(const Scene &scene);
     // with gamecoe::Scene object!
 
-    // Call once per frame. Fades only advance when it runs, and stopped sounds and music are cleaned up.
+    /**
+     * Call once per frame. Fades only advance when it runs. It also removes the handles of sound effects and music
+     * tracks that were cut off, like when a higher priority one took their place.
+     */
     void update();
 
     /**
-     * @brief Plays a sound file with specified properties.
-     *
-     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{sound_subdir}/ subdirectory).
-     * @param volume Volume level. Default is 1.0.
-     * @param pitch Pitch multiplier. Default is 1.0.
-     * @param loop Whether to loop the sound. Default is false.
-     * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or an error (not_initialized, invalid_argument for an
-     *         empty filename, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
-     *         resource_exhausted, or an OpenAL error) if playback failed.
+     * Plays a sound effect from the sound_subdir folder of "general" or a loaded scene. When max_sources (set in
+     * initialize()) are all in use, the lowest priority sound effect or music track is stopped to make room. If all of
+     * them have a higher priority, resource_exhausted is returned.
+     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
+     * filesystem_error, resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<sound_handle, error> play_sound(
         const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
         sound_priority priority = sound_priority::medium);
 
     /**
-     * @brief Plays a 3D positioned sound with spatial audio properties.
-     *
-     * @param filename Name of the sound file to play (should be in a loaded <general or scene>/{sound_subdir}/ subdirectory).
-     * @param position 3D world position of the sound source.
-     * @param velocity 3D velocity vector for doppler effect. Default is zero.
-     * @param volume Volume level. Default is 1.0.
-     * @param pitch Pitch multiplier. Default is 1.0.
-     * @param loop Whether to loop the sound. Default is false.
-     * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or an error (not_initialized, invalid_argument for an
-     *         empty filename, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
-     *         resource_exhausted, or an OpenAL error) if playback failed.
+     * Plays a sound effect at a position in the world, from the sound_subdir folder of "general" or a loaded scene. The
+     * velocity is used for the doppler effect. When max_sources (set in initialize()) are all in use, the lowest
+     * priority sound effect or music track is stopped to make room. If all of them have a higher priority,
+     * resource_exhausted is returned.
+     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
+     * filesystem_error, resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<sound_handle, error> play_sound3d(
         const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
@@ -117,230 +112,113 @@ namespace soundcoe
         sound_priority priority = sound_priority::medium);
 
     /**
-     * @brief Plays a music file with specified properties.
-     *
-     * @param filename Name of the music file to play (should be in a loaded <general or scene>/{music_subdir}/ subdirectory).
-     * @param volume Volume level. Default is 1.0.
-     * @param pitch Pitch multiplier. Default is 1.0.
-     * @param loop Whether to loop the music. Default is true.
-     * @param priority Music priority for resource allocation. Default is Critical.
-     * @return music_handle to control the playing music, or an error (not_initialized, invalid_argument for an
-     *         empty filename, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
-     *         resource_exhausted, or an OpenAL error) if playback failed.
+     * Plays a music track from the music_subdir folder of "general" or a loaded scene. Loops by default. When
+     * max_sources (set in initialize()) are all in use, the lowest priority sound effect or music track is stopped to
+     * make room. If all of them have a higher priority, resource_exhausted is returned.
+     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
+     * filesystem_error, resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<music_handle, error> play_music(
         const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
         sound_priority priority = sound_priority::critical);
 
-    /**
-     * @brief Pauses a specific sound.
-     * 
-     * @param handle Handle of the sound to pause.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Pauses a sound effect. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> pause_sound(sound_handle handle);
 
-    /**
-     * @brief Pauses a specific music track.
-     * 
-     * @param handle Handle of the music to pause.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Pauses a music track. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> pause_music(music_handle handle);
 
-    /**
-     * @brief Pauses all currently playing sounds.
-     */
+    // Pauses all sound effects.
     void pause_all_sounds();
 
-    /**
-     * @brief Pauses all currently playing music tracks.
-     */
+    // Pauses all music tracks.
     void pause_all_music();
 
-    /**
-     * @brief Pauses all currently playing sounds and music.
-     */
+    // Pauses all sound effects and music tracks.
     void pause_all();
 
-    /**
-     * @brief Resumes a paused sound.
-     * 
-     * @param handle Handle of the sound to resume.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, invalid_state if
-     *         the sound isn't paused, or an OpenAL error).
-     */
+    // Resumes a paused sound effect. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> resume_sound(sound_handle handle);
 
-    /**
-     * @brief Resumes a paused music track.
-     * 
-     * @param handle Handle of the music to resume.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, invalid_state if
-     *         the music isn't paused, or an OpenAL error).
-     */
+    // Resumes a paused music track. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> resume_music(music_handle handle);
 
-    /**
-     * @brief Resumes all paused sounds.
-     */
+    // Resumes all paused sound effects.
     void resume_all_sounds();
 
-    /**
-     * @brief Resumes all paused music tracks.
-     */
+    // Resumes all paused music tracks.
     void resume_all_music();
 
-    /**
-     * @brief Resumes all paused sounds and music.
-     */
+    // Resumes all paused sound effects and music tracks.
     void resume_all();
 
     /**
-     * @brief Stops a playing or paused sound.
-     * 
-     * @param handle Handle of the sound to stop.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
+     * Stops a sound effect. The handle can't be used afterwards.
+     * Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> stop_sound(sound_handle handle);
 
     /**
-     * @brief Stops a playing or paused music track.
-     * 
-     * @param handle Handle of the music to stop.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
+     * Stops a music track. The handle can't be used afterwards.
+     * Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> stop_music(music_handle handle);
 
-    /**
-     * @brief Stops all currently active sounds.
-     */
+    // Stops all sound effects.
     void stop_all_sounds();
 
-    /**
-     * @brief Stops all currently active music tracks.
-     */
+    // Stops all music tracks.
     void stop_all_music();
 
-    /**
-     * @brief Stops all currently active sounds and music.
-     */
+    // Stops all sound effects and music tracks.
     void stop_all();
 
-    /**
-     * @brief Sets the volume of a specific sound.
-     * 
-     * @param handle Handle of the sound to modify.
-     * @param volume New volume level.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Sets a sound effect's volume. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> set_sound_volume(sound_handle handle, float volume);
 
-    /**
-     * @brief Sets the volume of a specific music track.
-     * 
-     * @param handle Handle of the music to modify.
-     * @param volume New volume level.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Sets a music track's volume. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> set_music_volume(music_handle handle, float volume);
 
-    /**
-     * @brief Sets the pitch of a specific sound.
-     * 
-     * @param handle Handle of the sound to modify.
-     * @param pitch New pitch multiplier.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Sets a sound effect's pitch. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> set_sound_pitch(sound_handle handle, float pitch);
 
-    /**
-     * @brief Sets the pitch of a specific music track.
-     * 
-     * @param handle Handle of the music to modify.
-     * @param pitch New pitch multiplier.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
-     */
+    // Sets a music track's pitch. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
     [[nodiscard]] std::expected<void, error> set_music_pitch(music_handle handle, float pitch);
 
     /**
-     * @brief Sets the 3D position of a sound source.
-     * 
-     * @param handle Handle of the sound to modify.
-     * @param position New 3D world position.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
+     * Sets a sound effect's position in the world.
+     * Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> set_sound_position(sound_handle handle, const vec3 &position);
 
     /**
-     * @brief Sets the 3D velocity of a sound source for doppler effect.
-     * 
-     * @param handle Handle of the sound to modify.
-     * @param velocity New 3D velocity vector.
-     * @return An empty std::expected on success, or an error (invalid_handle, source_inactive, or an OpenAL error).
+     * Sets a sound effect's velocity, used for the doppler effect.
+     * Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> set_sound_velocity(sound_handle handle, const vec3 &velocity);
 
-    /**
-     * @brief Checks if a sound is currently playing.
-     * 
-     * @param handle Handle of the sound to check.
-     * @return true if the sound is playing and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a sound effect is playing. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_sound_playing(sound_handle handle);
 
-    /**
-     * @brief Checks if a music track is currently playing.
-     * 
-     * @param handle Handle of the music to check.
-     * @return true if the music is playing and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a music track is playing. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_music_playing(music_handle handle);
 
-    /**
-     * @brief Checks if a sound is currently paused.
-     * 
-     * @param handle Handle of the sound to check.
-     * @return true if the sound is paused and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a sound effect is paused. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_sound_paused(sound_handle handle);
 
-    /**
-     * @brief Checks if a music track is currently paused.
-     * 
-     * @param handle Handle of the music to check.
-     * @return true if the music is paused and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a music track is paused. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_music_paused(music_handle handle);
 
-    /**
-     * @brief Checks if a sound is currently stopped.
-     * 
-     * @param handle Handle of the sound to check.
-     * @return true if the sound is stopped and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a sound effect is stopped. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_sound_stopped(sound_handle handle);
 
-    /**
-     * @brief Checks if a music track is currently stopped.
-     * 
-     * @param handle Handle of the music to check.
-     * @return true if the music is stopped and false if it isn't, or an error (invalid_handle, source_inactive).
-     */
+    // Checks if a music track is stopped. Errors: invalid_handle, source_inactive (playback was cut off).
     [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
-    /**
-     * @brief Gets the number of currently active sound sources.
-     * 
-     * @return Number of sounds that are active.
-     */
+    // Gets the number of sound effects that were started and not stopped yet, finished ones included.
     size_t get_active_sounds_count();
 
-    /**
-     * @brief Gets the number of currently active music tracks.
-     * 
-     * @return Number of music tracks that are active.
-     */
+    // Gets the number of music tracks that were started and not stopped yet, finished ones included.
     size_t get_active_music_count();
 
     /**
