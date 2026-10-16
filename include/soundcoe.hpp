@@ -91,8 +91,8 @@ namespace soundcoe
      * Plays a sound effect from the sound_subdir folder of "general" or a loaded scene. When max_sources (set in
      * initialize()) are all in use, the lowest priority sound effect or music track is stopped to make room. If all of
      * them have a higher priority, resource_exhausted is returned.
-     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
-     * filesystem_error, resource_exhausted, OpenAL error.
+     * Errors: not_initialized, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
+     * resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<sound_handle, error> play_sound(
         const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
@@ -103,8 +103,8 @@ namespace soundcoe
      * velocity is used for the doppler effect. When max_sources (set in initialize()) are all in use, the lowest
      * priority sound effect or music track is stopped to make room. If all of them have a higher priority,
      * resource_exhausted is returned.
-     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
-     * filesystem_error, resource_exhausted, OpenAL error.
+     * Errors: not_initialized, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
+     * resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<sound_handle, error> play_sound3d(
         const std::string &filename, const vec3 &position, const vec3 &velocity = vec3::zero(),
@@ -115,8 +115,8 @@ namespace soundcoe
      * Plays a music track from the music_subdir folder of "general" or a loaded scene. Loops by default. When
      * max_sources (set in initialize()) are all in use, the lowest priority sound effect or music track is stopped to
      * make room. If all of them have a higher priority, resource_exhausted is returned.
-     * Errors: not_initialized, invalid_argument (empty name), file_not_found, unsupported_format, audio_decode_failure,
-     * filesystem_error, resource_exhausted, OpenAL error.
+     * Errors: not_initialized, file_not_found, unsupported_format, audio_decode_failure, filesystem_error,
+     * resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<music_handle, error> play_music(
         const std::string &filename, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
@@ -137,10 +137,16 @@ namespace soundcoe
     // Pauses all sound effects and music tracks.
     void pause_all();
 
-    // Resumes a paused sound effect. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
+    /**
+     * Resumes a paused sound effect.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_state (not paused), OpenAL error.
+     */
     [[nodiscard]] std::expected<void, error> resume_sound(sound_handle handle);
 
-    // Resumes a paused music track. Errors: invalid_handle, source_inactive (playback was cut off), OpenAL error.
+    /**
+     * Resumes a paused music track.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_state (not paused), OpenAL error.
+     */
     [[nodiscard]] std::expected<void, error> resume_music(music_handle handle);
 
     // Resumes all paused sound effects.
@@ -222,297 +228,160 @@ namespace soundcoe
     size_t get_active_music_count();
 
     /**
-     * @brief Plays a sound with a fade-in effect from silence to target volume.
-     *
-     * @param filename Name of the sound file to play (relative to loaded sound effects directories).
-     * @param duration Fade-in duration in seconds.
-     * @param volume Target volume level. Default is 1.0.
-     * @param pitch Pitch multiplier. Default is 1.0.
-     * @param loop Whether to loop the sound. Default is false.
-     * @param priority Sound priority for resource allocation. Default is Medium.
-     * @return sound_handle to control the playing sound, or an error if playback or the fade failed
-     *         (invalid_argument for a non-positive duration, checked before anything plays, plus the errors
-     *         of play_sound()). If starting the fade fails, the sound is stopped.
+     * Plays a sound effect from the sound_subdir folder of "general" or a loaded scene and fades it in from silence to
+     * volume over duration seconds. The fade advances in update(). When max_sources (set in initialize()) are all in
+     * use, the lowest priority sound effect or music track is stopped to make room. If all of them have a higher
+     * priority, resource_exhausted is returned.
+     * Errors: invalid_argument (duration <= 0), not_initialized, file_not_found, unsupported_format,
+     * audio_decode_failure, filesystem_error, resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<sound_handle, error> fade_in_sound(
         const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f, bool loop = false,
         sound_priority priority = sound_priority::medium);
 
     /**
-     * @brief Plays music with a fade-in effect from silence to target volume.
-     *
-     * @param filename Name of the music file to play (relative to loaded music directories).
-     * @param duration Fade-in duration in seconds.
-     * @param volume Target volume level. Default is 1.0.
-     * @param pitch Pitch multiplier. Default is 1.0.
-     * @param loop Whether to loop the music. Default is true.
-     * @param priority Music priority for resource allocation. Default is Critical.
-     * @return music_handle to control the playing music, or an error if playback or the fade failed
-     *         (invalid_argument for a non-positive duration, checked before anything plays, plus the errors
-     *         of play_music()). If starting the fade fails, the music is stopped.
+     * Plays a music track from the music_subdir folder of "general" or a loaded scene and fades it in from silence to
+     * volume over duration seconds. Loops by default. The fade advances in update(). When max_sources (set in
+     * initialize()) are all in use, the lowest priority sound effect or music track is stopped to make room. If all of
+     * them have a higher priority, resource_exhausted is returned.
+     * Errors: invalid_argument (duration <= 0), not_initialized, file_not_found, unsupported_format,
+     * audio_decode_failure, filesystem_error, resource_exhausted, OpenAL error.
      */
     [[nodiscard]] std::expected<music_handle, error> fade_in_music(
         const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f, bool loop = true,
         sound_priority priority = sound_priority::critical);
 
     /**
-     * @brief Fades out a sound from current volume to silence, then stops it.
-     * 
-     * @param handle Handle of the sound to fade out.
-     * @param duration Fade-out duration in seconds.
-     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
-     *         non-positive duration, invalid_state if the sound isn't playing, source_inactive).
+     * Fades a sound effect to silence over duration seconds, then stops it. The fade advances in update(), and the
+     * handle can't be used once it ends.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_argument (duration <= 0),
+     * invalid_state (paused or stopped).
      */
     [[nodiscard]] std::expected<void, error> fade_out_sound(sound_handle handle, float duration);
 
     /**
-     * @brief Fades out music from current volume to silence, then stops it.
-     * 
-     * @param handle Handle of the music to fade out.
-     * @param duration Fade-out duration in seconds.
-     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
-     *         non-positive duration, invalid_state if the music isn't playing, source_inactive).
+     * Fades a music track to silence over duration seconds, then stops it. The fade advances in update(), and the
+     * handle can't be used once it ends.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_argument (duration <= 0),
+     * invalid_state (paused or stopped).
      */
     [[nodiscard]] std::expected<void, error> fade_out_music(music_handle handle, float duration);
 
     /**
-     * @brief Fades a sound from current volume to a target volume over time.
-     * 
-     * @param handle Handle of the sound to fade.
-     * @param target_volume Target volume level.
-     * @param duration Fade duration in seconds.
-     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
-     *         negative target volume or non-positive duration, invalid_state if the sound isn't playing,
-     *         source_inactive).
+     * Fades a sound effect from its current volume to target_volume over duration seconds. The fade advances in
+     * update(). A target_volume of 0 stops it, and the handle can't be used afterwards.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_argument (duration <= 0 or
+     * target_volume < 0), invalid_state (paused or stopped).
      */
     [[nodiscard]] std::expected<void, error> fade_to_volume_sound(sound_handle handle, float target_volume,
                                                                   float duration);
 
     /**
-     * @brief Fades music from current volume to a target volume over time.
-     * 
-     * @param handle Handle of the music to fade.
-     * @param target_volume Target volume level.
-     * @param duration Fade duration in seconds.
-     * @return An empty std::expected if the fade started, or an error (invalid_handle, invalid_argument for a
-     *         negative target volume or non-positive duration, invalid_state if the music isn't playing,
-     *         source_inactive).
+     * Fades a music track from its current volume to target_volume over duration seconds. The fade advances in
+     * update(). A target_volume of 0 stops it, and the handle can't be used afterwards.
+     * Errors: invalid_handle, source_inactive (playback was cut off), invalid_argument (duration <= 0 or
+     * target_volume < 0), invalid_state (paused or stopped).
      */
     [[nodiscard]] std::expected<void, error> fade_to_volume_music(music_handle handle, float target_volume,
                                                                   float duration);
 
-    /**
-     * @brief Sets the master volume multiplier for all audio (sounds and music).
-     * 
-     * @param volume Master volume multiplier level.
-     */
+    // Sets the master volume multiplier for all audio.
     void set_master_volume(float volume);
 
-    /**
-     * @brief Sets the master volume multiplier for all sound effects.
-     * 
-     * @param volume Sounds master volume level multiplier.
-     */
+    // Sets the master volume multiplier for sound effects.
     void set_master_sounds_volume(float volume);
 
-    /**
-     * @brief Sets the master volume multiplier for all music tracks.
-     * 
-     * @param volume Music master volume level multiplier.
-     */
+    // Sets the master volume multiplier for music tracks.
     void set_master_music_volume(float volume);
 
-    /**
-     * @brief Sets the master pitch multiplier for all audio (sounds and music).
-     * 
-     * @param pitch Master pitch multiplier.
-     */
+    // Sets the master pitch multiplier for all audio.
     void set_master_pitch(float pitch);
 
-    /**
-     * @brief Sets the master pitch multiplier for all sounds effects.
-     * 
-     * @param pitch Sounds master pitch multiplier.
-     */
+    // Sets the master pitch multiplier for sound effects.
     void set_master_sounds_pitch(float pitch);
 
-    /**
-     * @brief Sets the master pitch multiplier for all music tracks.
-     * 
-     * @param pitch Music master pitch multiplier.
-     */
+    // Sets the master pitch multiplier for music tracks.
     void set_master_music_pitch(float pitch);
 
-    /**
-     * @brief Gets the current master volume multiplier for all audio.
-     *
-     * @return Current master volume level multiplier.
-     */
+    // Gets the master volume multiplier for all audio.
     float get_master_volume();
 
-    /**
-     * @brief Gets the current master volume multiplier for sound effects.
-     *
-     * @return Current sounds master volume level multiplier.
-     */
+    // Gets the master volume multiplier for sound effects.
     float get_master_sounds_volume();
 
-    /**
-     * @brief Gets the current master volume multiplier for music tracks.
-     *
-     * @return Current music master volume level multiplier.
-     */
+    // Gets the master volume multiplier for music tracks.
     float get_master_music_volume();
 
-    /**
-     * @brief Gets the current master pitch multiplier for all audio.
-     *
-     * @return Current master pitch multiplier.
-     */
+    // Gets the master pitch multiplier for all audio.
     float get_master_pitch();
 
-    /**
-     * @brief Gets the current master pitch multiplier for sound effects.
-     *
-     * @return Current sounds master pitch multiplier.
-     */
+    // Gets the master pitch multiplier for sound effects.
     float get_master_sounds_pitch();
 
-    /**
-     * @brief Gets the current master pitch multiplier for music tracks.
-     *
-     * @return Current music master pitch multiplier.
-     */
+    // Gets the master pitch multiplier for music tracks.
     float get_master_music_pitch();
 
-    /**
-     * @brief Mutes all sound effects while preserving their volume settings.
-     */
+    // Mutes all sound effects. Unmuting restores their volume.
     void mute_all_sounds();
 
-    /**
-     * @brief Mutes all music tracks while preserving their volume settings.
-     */
+    // Mutes all music tracks. Unmuting restores their volume.
     void mute_all_music();
 
-    /**
-     * @brief Mutes all audio (sounds and music) while preserving volume settings.
-     */
+    // Mutes all sound effects and music tracks. Unmuting restores their volume.
     void mute_all();
 
-    /**
-     * @brief Unmutes all sound effects, restoring their previous volume settings.
-     */
+    // Unmutes all sound effects. Doesn't undo mute_all(), use unmute_all() for that.
     void unmute_all_sounds();
 
-    /**
-     * @brief Unmutes all music, restoring their previous volume settings.
-     */
+    // Unmutes all music tracks. Doesn't undo mute_all(), use unmute_all() for that.
     void unmute_all_music();
 
-    /**
-     * @brief Unmutes all audio (sounds and music), restoring previous volume settings.
-     */
+    // Unmutes all sound effects and music tracks.
     void unmute_all();
 
-    /**
-     * @brief Checks if all audio is currently muted.
-     * 
-     * @return true if all audio is muted, false otherwise.
-     */
+    // Checks if all audio is muted with mute_all().
     bool is_muted();
 
-    /**
-     * @brief Checks if all sound effects are currently muted.
-     * 
-     * @return true if sounds are muted, false otherwise.
-     */
+    // Checks if sound effects are muted with mute_all_sounds().
     bool is_sounds_muted();
 
-    /**
-     * @brief Checks if all music tracks are currently muted.
-     * 
-     * @return true if music is muted, false otherwise.
-     */
+    // Checks if music tracks are muted with mute_all_music().
     bool is_music_muted();
 
     /**
-     * @brief Updates all 3D audio listener properties at once.
-     * 
-     * @param position 3D world position of the listener.
-     * @param velocity 3D velocity vector for doppler effect.
-     * @param forward Forward direction vector (must be normalized).
-     * @param up Up direction vector (must be normalized). Default is vec3::up().
-     * @return An empty std::expected on success, or an OpenAL error.
+     * Sets the listener's position, velocity, forward and up at once. forward and up must be normalized.
+     * Errors: OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> update_listener(
         const vec3 &position, const vec3 &velocity, const vec3 &forward, const vec3 &up = vec3::up());
 
-    /**
-     * @brief Sets the 3D position of the audio listener.
-     * 
-     * @param position 3D world position of the listener.
-     * @return An empty std::expected on success, or an OpenAL error.
-     */
+    // Sets the listener's position. Errors: OpenAL error.
     [[nodiscard]] std::expected<void, error> set_listener_position(const vec3 &position);
 
-    /**
-     * @brief Sets the velocity of the audio listener for doppler effect.
-     * 
-     * @param velocity 3D velocity vector of the listener.
-     * @return An empty std::expected on success, or an OpenAL error.
-     */
+    // Sets the listener's velocity, used for the doppler effect. Errors: OpenAL error.
     [[nodiscard]] std::expected<void, error> set_listener_velocity(const vec3 &velocity);
 
-    /**
-     * @brief Sets the forward direction of the audio listener.
-     * 
-     * @param forward Forward direction vector (must be normalized).
-     * @return An empty std::expected on success, or an OpenAL error.
-     */
+    // Sets the listener's forward direction. forward must be normalized. Errors: OpenAL error.
     [[nodiscard]] std::expected<void, error> set_listener_forward(const vec3 &forward);
 
-    /**
-     * @brief Sets the up direction of the audio listener.
-     * 
-     * @param up Up direction vector (must be normalized).
-     * @return An empty std::expected on success, or an OpenAL error.
-     */
+    // Sets the listener's up direction. up must be normalized. Errors: OpenAL error.
     [[nodiscard]] std::expected<void, error> set_listener_up(const vec3 &up);
 
-    /**
-     * @brief Gets the current 3D position of the audio listener.
-     * 
-     * @return Current listener position.
-     */
+    // Gets the listener's position.
     vec3 get_listener_position();
 
-    /**
-     * @brief Gets the current velocity of the audio listener.
-     * 
-     * @return Current listener velocity vector.
-     */
+    // Gets the listener's velocity.
     vec3 get_listener_velocity();
 
-    /**
-     * @brief Gets the current forward direction of the audio listener.
-     * 
-     * @return Current listener forward direction vector.
-     */
+    // Gets the listener's forward direction.
     vec3 get_listener_forward();
 
-    /**
-     * @brief Gets the current up direction of the audio listener.
-     * 
-     * @return Current listener up direction vector.
-     */
+    // Gets the listener's up direction.
     vec3 get_listener_up();
 
     /**
-     * @brief Checks if a handle (sound or music) is valid and active.
-     * 
-     * @param handle Handle to validate.
-     * @return true if handle is valid and represents active audio, false otherwise.
+     * Checks that a handle isn't INVALID_SOUND_HANDLE or INVALID_MUSIC_HANDLE. It doesn't check that the audio is still
+     * playing.
      */
     bool is_handle_valid(size_t handle);
 } // namespace soundcoe
