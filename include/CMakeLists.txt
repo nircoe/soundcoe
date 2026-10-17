@@ -6,6 +6,11 @@ target_include_directories(soundcoe_headers
         $<BUILD_INTERFACE:${SOUNDCOE_CONFIG_DIR}>
 )
 
+target_compile_features(soundcoe_headers
+    INTERFACE
+        cxx_std_23
+)
+
 target_link_libraries(soundcoe_headers
     INTERFACE
         $<$<BOOL:${SOUNDCOE_USE_LOGCOE}>:logcoe>
