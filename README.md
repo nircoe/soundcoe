@@ -55,7 +55,8 @@ your_game/
             └── menu_ambient.ogg
 ```
 
-Note: Ensure your audio directory is accessible relative to your executable at runtime (copy it to your build directory during the build process).
+Note: A relative audio path resolves from the working directory, so make sure the audio directory is there at runtime
+(copy it to your build directory during the build process).
 
 ### 3. Use in your application
 
@@ -63,7 +64,7 @@ Note: Ensure your audio directory is accessible relative to your executable at r
 #include <soundcoe.hpp>
 
 int main() {
-    if (!soundcoe::initialize("./audio") || !soundcoe::preload_scene("menu"))  // relative to executable
+    if (!soundcoe::initialize("./audio") || !soundcoe::preload_scene("menu"))  // relative to working directory
         return 1;
 
     auto click = soundcoe::play_sound("ui_click.wav");
@@ -99,7 +100,7 @@ if (!click) {
 ### Initialization
 ```cpp
 auto result = soundcoe::initialize(
-    "./audio",        // Audio root directory (relative to executable)
+    "./audio",        // Audio root directory (relative to working directory)
     64,              // Max sources (default: 64)
     soundcoe::UNLIMITED_CACHE, // Cache size MB (default: unlimited, cap it once you've profiled real usage)
     "sfx",           // Sound subdirectory inside each scene/general (default: "sfx")
