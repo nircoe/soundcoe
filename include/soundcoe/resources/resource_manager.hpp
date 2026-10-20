@@ -34,7 +34,7 @@ namespace soundcoe
         struct buffer_cache_entry
         {
             std::unique_ptr<sound_buffer> m_buffer;
-            size_t m_reference_count;
+            std::size_t m_reference_count;
             std::chrono::steady_clock::time_point m_last_accessed;
         };
 
@@ -43,20 +43,20 @@ namespace soundcoe
             audio_context m_audio_context;
             bool m_initialized = false;
             std::filesystem::path m_audio_root_directory;
-            size_t m_max_sources = 64;
+            std::size_t m_max_sources = 64;
             mutable std::mutex m_mutex;
 
             std::vector<source_allocation> m_source_pool;
-            std::deque<size_t> m_free_source_indices;
+            std::deque<std::size_t> m_free_source_indices;
 
             std::unordered_map<std::string, buffer_cache_entry> m_buffer_cache;
-            size_t m_max_cache_size = 64 * 1024 * 1024; // 64MB
-            size_t m_current_cache_size = 0;
+            std::size_t m_max_cache_size = 64 * 1024 * 1024; // 64MB
+            std::size_t m_current_cache_size = 0;
 
             std::vector<std::filesystem::path> m_loaded_directories;
 
             void create_source_pool();
-            bool find_source_to_replace(sound_priority new_priority, size_t &replace_index);
+            bool find_source_to_replace(sound_priority new_priority, std::size_t &replace_index);
             void free_buffers();
             std::filesystem::path normalize_path(const std::string &path) const;
             bool scan_directory_for_files(const std::filesystem::path &subdirectory, std::vector<std::filesystem::path> &files);
@@ -88,15 +88,15 @@ namespace soundcoe
             void release_buffer(std::reference_wrapper<sound_buffer> buffer);
             void release_buffer(const std::string &filename);
 
-            size_t get_active_source_count() const;
-            size_t get_total_source_count() const;
-            size_t get_cached_buffer_count() const;
-            size_t get_cache_size_bytes() const;
+            std::size_t get_active_source_count() const;
+            std::size_t get_total_source_count() const;
+            std::size_t get_cached_buffer_count() const;
+            std::size_t get_cache_size_bytes() const;
             std::vector<std::filesystem::path> get_loaded_directories() const;
             bool is_directory_loaded(const std::string &subdirectory) const;
-            size_t cleanup_unused_buffers();
+            std::size_t cleanup_unused_buffers();
 
-            std::optional<std::reference_wrapper<source_allocation>> get_source_allocation(size_t index);
+            std::optional<std::reference_wrapper<source_allocation>> get_source_allocation(std::size_t index);
         };
     } // namespace internal
 } // namespace soundcoe

@@ -6,6 +6,7 @@
 #include <iterator>
 #include <system_error>
 #include <utility>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -123,8 +124,16 @@ namespace soundcoe
             if (scan_directory_for_files(subdirectory, audio_files))
             {
                 // One bad file doesn't fail the whole scene
+                std::size_t failed_count = 0;
                 for (const auto &file : audio_files)
-                    static_cast<void>(preload_file_impl(file));
+                {
+                    if (auto r = preload_file_impl(file); !r)
+                        ++failed_count;
+                }
+
+                if (failed_count > 0)
+                    logcoe::warning(std::format("resource_manager::preload_directory: {} of {} files failed to preload",
+                                                failed_count, audio_files.size()));
 
                 m_loaded_directories.push_back(subdirectory);
                 return {};
@@ -142,7 +151,8 @@ namespace soundcoe
 
             if (subdirectory.empty())
             {
-                logcoe::warning("resource_manager::unload_directory: Subdirectory path cannot be empty - specify a valid directory path");
+                logcoe::warning("resource_manager::unload_directory: Subdirectory path cannot be empty - "
+                                "specify a valid directory path");
                 return {};
             }
 
@@ -159,8 +169,7 @@ namespace soundcoe
             else
                 logcoe::warning("resource_manager::unload_directory: No audio files found in directory: " + subdirectory);
 
-            m_loaded_directories.erase(std::remove(m_loaded_directories.begin(), m_loaded_directories.end(), subdirectory),
-                                    m_loaded_directories.end());
+            std::erase(m_loaded_directories, subdirectory);
             return {};
         }
 
@@ -171,7 +180,7 @@ namespace soundcoe
             if (!m_initialized)
                 return not_initialized("acquire_source");
 
-            size_t index;
+            std::size_t index;
             if (m_free_source_indices.empty())
             {
                 if (!find_source_to_replace(priority, index))
@@ -214,7 +223,7 @@ namespace soundcoe
                     "resource_manager::get_buffer: No such file in the loaded directories: " + filename));
 
             std::string cache_key = found_path.lexically_normal().string();
-            if (m_buffer_cache.find(cache_key) == m_buffer_cache.end())
+            if (!m_buffer_cache.contains(cache_key))
             {
                 if (auto r = preload_file_impl(found_path); !r)
                     return std::unexpected(r.error());
@@ -240,7 +249,7 @@ namespace soundcoe
                 return;
             }
 
-            for (size_t i = 0; i < m_source_pool.size(); ++i)
+            for (std::size_t i = 0; i < m_source_pool.size(); ++i)
             {
                 auto &allocation = m_source_pool[i];
                 if (!allocation.m_active || allocation.m_source->get_source_id() != source.get().get_source_id())
@@ -270,7 +279,7 @@ namespace soundcoe
             release_buffer_impl(filename);
         }
 
-        size_t resource_manager::get_active_source_count() const
+        std::size_t resource_manager::get_active_source_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
@@ -282,7 +291,7 @@ namespace soundcoe
             return m_source_pool.size() - m_free_source_indices.size();
         }
 
-        size_t resource_manager::get_total_source_count() const
+        std::size_t resource_manager::get_total_source_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
@@ -294,7 +303,7 @@ namespace soundcoe
             return m_source_pool.size();
         }
 
-        size_t resource_manager::get_cached_buffer_count() const
+        std::size_t resource_manager::get_cached_buffer_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
@@ -306,7 +315,7 @@ namespace soundcoe
             return m_buffer_cache.size();
         }
 
-        size_t resource_manager::get_cache_size_bytes() const
+        std::size_t resource_manager::get_cache_size_bytes() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
@@ -341,14 +350,15 @@ namespace soundcoe
 
             if (subdirectory.empty())
             {
-                logcoe::warning("resource_manager::is_directory_loaded: Subdirectory cannot be empty - specify a valid directory path");
+                logcoe::warning("resource_manager::is_directory_loaded: Subdirectory cannot be empty - "
+                                "specify a valid directory path");
                 return false;
             }
 
             return is_directory_loaded_impl(subdirectory);
         }
 
-        size_t resource_manager::cleanup_unused_buffers()
+        std::size_t resource_manager::cleanup_unused_buffers()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (!m_initialized)
@@ -357,20 +367,14 @@ namespace soundcoe
                 return 0;
             }
 
-            size_t removed = 0;
-            for (auto it = m_buffer_cache.begin(); it != m_buffer_cache.end();)
-            {
-                if (it->second.m_reference_count == 0)
-                {
-                    m_current_cache_size -= it->second.m_buffer->get_size();
-                    it = m_buffer_cache.erase(it);
-                    ++removed;
-                }
-                else
-                    ++it;
-            }
+            return std::erase_if(m_buffer_cache, [this](const auto &item)
+                                {
+                                    if (item.second.m_reference_count != 0)
+                                        return false;
 
-            return removed;
+                                    m_current_cache_size -= item.second.m_buffer->get_size();
+                                    return true;
+                                });
         }
 
         void resource_manager::create_source_pool()
@@ -379,7 +383,7 @@ namespace soundcoe
             m_free_source_indices.clear();
             auto time = std::chrono::steady_clock::now();
 
-            for (size_t index = 0; index < m_max_sources; ++index)
+            for (std::size_t index = 0; index < m_max_sources; ++index)
             {
                 m_source_pool[index].m_source = std::make_unique<sound_source>();
                 m_source_pool[index].m_priority = sound_priority::medium;
@@ -389,7 +393,7 @@ namespace soundcoe
             }
         }
 
-        bool resource_manager::find_source_to_replace(sound_priority new_priority, size_t &replace_index)
+        bool resource_manager::find_source_to_replace(sound_priority new_priority, std::size_t &replace_index)
         {
             if (m_source_pool.empty())
             {
@@ -426,7 +430,9 @@ namespace soundcoe
 
                 if (source_to_replace->m_active)
                 {
-                    static_cast<void>(source_to_replace->m_source->stop());
+                    if (auto r = source_to_replace->m_source->stop(); !r)
+                        logcoe::warning("resource_manager::find_source_to_replace: Failed to stop the Source to replace: " +
+                                        r.error().message);
                     source_to_replace->m_active = false;
                 }
             }
@@ -457,7 +463,7 @@ namespace soundcoe
                                             });
 
                 auto oldest_buffer_id = to_free->second.m_buffer->get_buffer_id();
-                for (size_t i = 0; i < m_source_pool.size(); ++i)
+                for (std::size_t i = 0; i < m_source_pool.size(); ++i)
                 {
                     auto &allocation = m_source_pool[i];
                     if (!allocation.m_active || allocation.m_source->get_buffer_id() != oldest_buffer_id)
@@ -530,7 +536,7 @@ namespace soundcoe
                     "resource_manager::preload_file_impl: Not a File: \"" + file_path.string() + "\""));
 
             std::string cache_key = file_path.string();
-            if (m_buffer_cache.find(cache_key) != m_buffer_cache.end())
+            if (m_buffer_cache.contains(cache_key))
                 return {};
 
             buffer_cache_entry entry;
@@ -573,17 +579,18 @@ namespace soundcoe
             }
 
             std::string cache_key = file_path.string();
-            if (m_buffer_cache.find(cache_key) == m_buffer_cache.end())
+            auto it = m_buffer_cache.find(cache_key);
+            if (it == m_buffer_cache.end())
             {
                 logcoe::warning("resource_manager::unload_file_impl: File is not loaded: \"" + cache_key + "\"");
                 return;
             }
 
-            auto &entry = m_buffer_cache[cache_key];
+            auto &entry = it->second;
             if (entry.m_reference_count > 0)
             {
                 auto buffer_id = entry.m_buffer->get_buffer_id();
-                for (size_t i = 0; i < m_source_pool.size(); ++i)
+                for (std::size_t i = 0; i < m_source_pool.size(); ++i)
                 {
                     auto &allocation = m_source_pool[i];
                     if (!allocation.m_active || allocation.m_source->get_buffer_id() != buffer_id)
@@ -640,13 +647,14 @@ namespace soundcoe
             }
 
             std::string cache_key = found_path.lexically_normal().string();
-            if (m_buffer_cache.find(cache_key) == m_buffer_cache.end())
+            auto it = m_buffer_cache.find(cache_key);
+            if (it == m_buffer_cache.end())
             {
                 logcoe::warning("resource_manager::release_buffer_impl: Buffer is not loaded in cache: " + cache_key);
                 return;
             }
 
-            auto &entry = m_buffer_cache[cache_key];
+            auto &entry = it->second;
             if (entry.m_reference_count == 0)
             {
                 logcoe::warning("resource_manager::release_buffer_impl: Not a single Source is using this Buffer at the moment");
@@ -678,7 +686,7 @@ namespace soundcoe
             return std::filesystem::path();
         }
 
-        std::optional<std::reference_wrapper<source_allocation>> resource_manager::get_source_allocation(size_t index)
+        std::optional<std::reference_wrapper<source_allocation>> resource_manager::get_source_allocation(std::size_t index)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (index < m_source_pool.size())

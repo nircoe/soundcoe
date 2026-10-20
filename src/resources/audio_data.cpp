@@ -9,6 +9,7 @@
 #include <cstdlib>
 
 #include <soundcoe_config.hpp>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -112,10 +113,10 @@ namespace soundcoe
             bits_per_sample = wav.bitsPerSample;
             drwav_uninit(&wav);
 
-            pcm_data = (bits_per_sample <= 16) ? (void *)drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sample_rate,
-                                                                                            &total_frame_count, nullptr)
-                                            : (void *)drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sample_rate,
-                                                                                            &total_frame_count, nullptr);
+            pcm_data = (bits_per_sample <= 16) ? static_cast<void *>(drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sample_rate,
+                                                                                            &total_frame_count, nullptr))
+                                            : static_cast<void *>(drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sample_rate,
+                                                                                            &total_frame_count, nullptr));
 
             if (!pcm_data)
                 return std::unexpected(error_handler::make_audio_decode_error(

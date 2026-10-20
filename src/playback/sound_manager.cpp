@@ -9,6 +9,7 @@
 #include <memory>
 #include <system_error>
 #include <utility>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -19,16 +20,30 @@ namespace soundcoe
     {
         void sound_manager::update_all_sounds_volume()
         {
-            update_all_audio_property(m_active_sounds, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { static_cast<void>(audio->set_volume(value)); }, [&](const active_audio &audio)
-                                   { return (m_sounds_mute || m_mute) ? 0.0f : audio.m_base_volume; }, m_master_volume, m_master_sounds_volume);
+            auto set_volume = [](std::unique_ptr<sound_source> &audio, float value)
+            {
+                if (auto r = audio->set_volume(value); !r)
+                    logcoe::warning("sound_manager::update_all_sounds_volume: Failed to set volume: " + r.error().message);
+            };
+            auto get_base_volume = [&](const active_audio &audio)
+            {
+                return (m_sounds_mute || m_mute) ? 0.0f : audio.m_base_volume;
+            };
+            update_all_audio_property(m_active_sounds, set_volume, get_base_volume, m_master_volume, m_master_sounds_volume);
         }
 
         void sound_manager::update_all_music_volume()
         {
-            update_all_audio_property(m_active_music, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { static_cast<void>(audio->set_volume(value)); }, [&](const active_audio &audio)
-                                   { return (m_music_mute || m_mute) ? 0.0f : audio.m_base_volume; }, m_master_volume, m_master_music_volume);
+            auto set_volume = [](std::unique_ptr<sound_source> &audio, float value)
+            {
+                if (auto r = audio->set_volume(value); !r)
+                    logcoe::warning("sound_manager::update_all_music_volume: Failed to set volume: " + r.error().message);
+            };
+            auto get_base_volume = [&](const active_audio &audio)
+            {
+                return (m_music_mute || m_mute) ? 0.0f : audio.m_base_volume;
+            };
+            update_all_audio_property(m_active_music, set_volume, get_base_volume, m_master_volume, m_master_music_volume);
         }
 
         void sound_manager::update_all_volume()
@@ -39,16 +54,30 @@ namespace soundcoe
 
         void sound_manager::update_all_sounds_pitch()
         {
-            update_all_audio_property(m_active_sounds, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { static_cast<void>(audio->set_pitch(value)); }, [](const active_audio &audio)
-                                   { return audio.m_base_pitch; }, m_master_pitch, m_master_sounds_pitch);
+            auto set_pitch = [](std::unique_ptr<sound_source> &audio, float value)
+            {
+                if (auto r = audio->set_pitch(value); !r)
+                    logcoe::warning("sound_manager::update_all_sounds_pitch: Failed to set pitch: " + r.error().message);
+            };
+            auto get_base_pitch = [](const active_audio &audio)
+            {
+                return audio.m_base_pitch;
+            };
+            update_all_audio_property(m_active_sounds, set_pitch, get_base_pitch, m_master_pitch, m_master_sounds_pitch);
         }
 
         void sound_manager::update_all_music_pitch()
         {
-            update_all_audio_property(m_active_music, [](std::unique_ptr<sound_source> &audio, float value)
-                                   { static_cast<void>(audio->set_pitch(value)); }, [](const active_audio &audio)
-                                   { return audio.m_base_pitch; }, m_master_pitch, m_master_music_pitch);
+            auto set_pitch = [](std::unique_ptr<sound_source> &audio, float value)
+            {
+                if (auto r = audio->set_pitch(value); !r)
+                    logcoe::warning("sound_manager::update_all_music_pitch: Failed to set pitch: " + r.error().message);
+            };
+            auto get_base_pitch = [](const active_audio &audio)
+            {
+                return audio.m_base_pitch;
+            };
+            update_all_audio_property(m_active_music, set_pitch, get_base_pitch, m_master_pitch, m_master_music_pitch);
         }
 
         void sound_manager::update_all_pitch()
@@ -124,7 +153,7 @@ namespace soundcoe
         } // namespace
 
         std::expected<void, error> sound_manager::fade_to_volume(
-            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, float target_volume,
             float duration, const std::string &method)
         {
             auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
@@ -158,7 +187,7 @@ namespace soundcoe
         }
 
         std::expected<void, error> sound_manager::fade(
-            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, bool fade_in, float duration,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, bool fade_in, float duration,
             const std::string &method)
         {
             auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
@@ -187,7 +216,7 @@ namespace soundcoe
         }
 
         std::expected<bool, error> sound_manager::check_audio_state(
-            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, sound_state state,
             const std::string &method)
         {
             auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
@@ -206,7 +235,7 @@ namespace soundcoe
         }
 
         std::expected<void, error> sound_manager::set_audio_property(
-            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, property_type type,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, property_type type,
             const std::string &method, float value, float y, float z)
         {
             auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
@@ -233,7 +262,7 @@ namespace soundcoe
         }
 
         std::expected<void, error> sound_manager::audio_operation(
-            std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, sound_state operation,
             const std::string &method)
         {
             auto found = find_active_source(m_resource_manager, active_audio_, handle, method);
@@ -262,7 +291,7 @@ namespace soundcoe
         }
 
         std::expected<void, error> sound_manager::audio_operation_all(
-            std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
+            std::unordered_map<std::size_t, active_audio> &active_audio_, sound_state operation,
             const std::string &method)
         {
             for (auto it = active_audio_.begin(); it != active_audio_.end();)
@@ -310,9 +339,9 @@ namespace soundcoe
             return {};
         }
 
-        std::expected<size_t, error> sound_manager::play(
-            std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename, float volume,
-            float pitch, bool loop, sound_priority priority, std::atomic<size_t> &next_handle,
+        std::expected<std::size_t, error> sound_manager::play(
+            std::unordered_map<std::size_t, active_audio> &active_audio_, const std::string &filename, float volume,
+            float pitch, bool loop, sound_priority priority, std::atomic<std::size_t> &next_handle,
             const std::string &method, float master_category_volume, float master_category_pitch,
             bool is_3d, const vec3 &position, const vec3 &velocity)
         {
@@ -320,7 +349,7 @@ namespace soundcoe
             if (!buffer)
                 return std::unexpected(buffer.error());
 
-            size_t pool_index;
+            std::size_t pool_index;
             auto source = m_resource_manager.acquire_source(pool_index, priority);
             if (!source)
             {
@@ -373,7 +402,7 @@ namespace soundcoe
             // In the roadmap, not yet implemented
         }
 
-        void sound_manager::handle_fade_effects(std::unordered_map<size_t, active_audio> &active_audio_,
+        void sound_manager::handle_fade_effects(std::unordered_map<std::size_t, active_audio> &active_audio_,
                                              float category_multiplier, float delta_time)
         {
             for (auto it = active_audio_.begin(); it != active_audio_.end();)
@@ -442,19 +471,17 @@ namespace soundcoe
             }
         }
 
-        void sound_manager::handle_inactive_audio(std::unordered_map<size_t, active_audio> &active_audio_)
+        void sound_manager::handle_inactive_audio(std::unordered_map<std::size_t, active_audio> &active_audio_)
         {
-            for (auto it = active_audio_.begin(); it != active_audio_.end();)
-            {
-                auto source_allocation = m_resource_manager.get_source_allocation(it->second.m_source_index);
-                if (!(source_allocation.has_value()) || !(source_allocation.value().get().m_active))
-                {
-                    logcoe::debug("sound_manager::update: Cleaning up inactive audio handle: " + std::to_string(it->first));
-                    it = active_audio_.erase(it);
-                }
-                else
-                    ++it;
-            }
+            std::erase_if(active_audio_, [this](const auto &item)
+                          {
+                              auto source_allocation = m_resource_manager.get_source_allocation(item.second.m_source_index);
+                              if (source_allocation.has_value() && source_allocation.value().get().m_active)
+                                  return false;
+
+                              logcoe::debug("sound_manager::update: Cleaning up inactive audio handle: " + std::to_string(item.first));
+                              return true;
+                          });
         }
 
         sound_manager::sound_manager() : m_resource_manager(), m_next_sound_handle(1), m_next_music_handle(1),
@@ -468,7 +495,7 @@ namespace soundcoe
         }
 
         std::expected<void, error> sound_manager::initialize(
-            const std::string &audio_root_directory, size_t max_sources, size_t max_cache_size_mb,
+            const std::string &audio_root_directory, std::size_t max_sources, std::size_t max_cache_size_mb,
             const std::string &sound_subdir, const std::string &music_subdir, LogLevel level)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -854,13 +881,13 @@ namespace soundcoe
             return check_audio_state(m_active_music, handle, sound_state::stopped, "is_music_stopped");
         }
 
-        size_t sound_manager::get_active_sounds_count() const
+        std::size_t sound_manager::get_active_sounds_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_active_sounds.size();
         }
 
-        size_t sound_manager::get_active_music_count() const
+        std::size_t sound_manager::get_active_music_count() const
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             return m_active_music.size();
@@ -887,7 +914,9 @@ namespace soundcoe
 
             if (auto r = fade(m_active_sounds, *handle, true, duration, "fade_in_sound"); !r)
             {
-                static_cast<void>(audio_operation(m_active_sounds, *handle, sound_state::stopped, "fade_in_sound"));
+                if (auto rollback = audio_operation(m_active_sounds, *handle, sound_state::stopped, "fade_in_sound"); !rollback)
+                    logcoe::warning("sound_manager::fade_in_sound: Failed to stop the sound after the fade failed: " +
+                                    rollback.error().message);
                 return std::unexpected(r.error());
             }
 
@@ -914,7 +943,9 @@ namespace soundcoe
 
             if (auto r = fade(m_active_music, *handle, true, duration, "fade_in_music"); !r)
             {
-                static_cast<void>(audio_operation(m_active_music, *handle, sound_state::stopped, "fade_in_music"));
+                if (auto rollback = audio_operation(m_active_music, *handle, sound_state::stopped, "fade_in_music"); !rollback)
+                    logcoe::warning("sound_manager::fade_in_music: Failed to stop the music after the fade failed: " +
+                                    rollback.error().message);
                 return std::unexpected(r.error());
             }
 
@@ -1180,6 +1211,6 @@ namespace soundcoe
             return m_listener_up;
         }
 
-        bool sound_manager::is_handle_valid(size_t handle) { return handle != INVALID_SOUND_HANDLE; }
+        bool sound_manager::is_handle_valid(std::size_t handle) { return handle != INVALID_SOUND_HANDLE; }
     } // namespace internal
 } // namespace soundcoe

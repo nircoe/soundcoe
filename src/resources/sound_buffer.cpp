@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <system_error>
 #include <utility>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif

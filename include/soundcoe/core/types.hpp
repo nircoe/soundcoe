@@ -6,6 +6,7 @@
 #include <limits>
 #include <utility>
 #include <soundcoe_config.hpp>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -14,10 +15,10 @@ namespace soundcoe
 {
     using LogLevel = logcoe::LogLevel;
 
-    constexpr size_t UNLIMITED_CACHE = std::numeric_limits<size_t>::max();
+    constexpr std::size_t UNLIMITED_CACHE = std::numeric_limits<std::size_t>::max();
 
-    using sound_handle = size_t;
-    using music_handle = size_t;
+    using sound_handle = std::size_t;
+    using music_handle = std::size_t;
 
     enum class sound_state
     {

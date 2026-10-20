@@ -20,14 +20,14 @@ namespace soundcoe
     {
         struct active_audio
         {
-            size_t m_source_index;
+            std::size_t m_source_index;
             std::string m_filename;
             float m_base_volume;
             float m_base_pitch;
             bool m_loop;
 
             bool m_stream = false;
-            size_t m_stream_buffer_size = 0;
+            std::size_t m_stream_buffer_size = 0;
             float m_stream_position = 0.0f;
             bool m_stream_needs_refill = false;
 
@@ -46,8 +46,8 @@ namespace soundcoe
             std::string m_sound_subdir;
             std::string m_music_subdir;
 
-            std::atomic<size_t> m_next_sound_handle;
-            std::atomic<size_t> m_next_music_handle;
+            std::atomic<std::size_t> m_next_sound_handle;
+            std::atomic<std::size_t> m_next_music_handle;
 
             mutable std::mutex m_mutex;
             std::unordered_map<sound_handle, active_audio> m_active_sounds;
@@ -73,7 +73,7 @@ namespace soundcoe
             bool m_first_update = true;
 
             template <typename Setter, typename Getter>
-            void update_all_audio_property(std::unordered_map<size_t, active_audio> &active_audio_,
+            void update_all_audio_property(std::unordered_map<std::size_t, active_audio> &active_audio_,
                                         Setter set_property, Getter get_base_property,
                                         float master_multiplier, float category_multiplier)
             {
@@ -104,45 +104,45 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> set_listener_orientation_impl(const vec3 &forward, const vec3 &up);
 
             [[nodiscard]] std::expected<void, error> fade_to_volume(
-                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, float target_volume,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, float target_volume,
                 float duration, const std::string &method);
             [[nodiscard]] std::expected<void, error> fade(
-                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, bool fade_in, float duration,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, bool fade_in, float duration,
                 const std::string &method);
 
             [[nodiscard]] std::expected<bool, error> check_audio_state(
-                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state state,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, sound_state state,
                 const std::string &method);
 
             [[nodiscard]] std::expected<void, error> set_audio_property(
-                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, property_type type,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, property_type type,
                 const std::string &method, float value, float y = 0.0f, float z = 0.0f);
 
             [[nodiscard]] std::expected<void, error> audio_operation(
-                std::unordered_map<size_t, active_audio> &active_audio_, size_t handle, sound_state operation,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, std::size_t handle, sound_state operation,
                 const std::string &method);
             [[nodiscard]] std::expected<void, error> audio_operation_all(
-                std::unordered_map<size_t, active_audio> &active_audio_, sound_state operation,
+                std::unordered_map<std::size_t, active_audio> &active_audio_, sound_state operation,
                 const std::string &method);
 
-            [[nodiscard]] std::expected<size_t, error> play(
-                std::unordered_map<size_t, active_audio> &active_audio_, const std::string &filename, float volume,
-                float pitch, bool loop, sound_priority priority, std::atomic<size_t> &next_handle,
+            [[nodiscard]] std::expected<std::size_t, error> play(
+                std::unordered_map<std::size_t, active_audio> &active_audio_, const std::string &filename, float volume,
+                float pitch, bool loop, sound_priority priority, std::atomic<std::size_t> &next_handle,
                 const std::string &method, float master_category_volume, float master_category_pitch,
                 bool is_3d = false, const vec3 &position = vec3::zero(), const vec3 &velocity = vec3::zero());
 
             void handle_streaming_audio();
-            void handle_fade_effects(std::unordered_map<size_t, active_audio> &active_audio_,
+            void handle_fade_effects(std::unordered_map<std::size_t, active_audio> &active_audio_,
                                 float category_multiplier, float delta_time);
-            void handle_inactive_audio(std::unordered_map<size_t, active_audio> &active_audio_);
+            void handle_inactive_audio(std::unordered_map<std::size_t, active_audio> &active_audio_);
 
         public:
             sound_manager();
             ~sound_manager();
 
             [[nodiscard]] std::expected<void, error> initialize(
-                const std::string &audio_root_directory, size_t max_sources = 64,
-                size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+                const std::string &audio_root_directory, std::size_t max_sources = 64,
+                std::size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
                 const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
             void shutdown();
             bool is_initialized() const;
@@ -193,8 +193,8 @@ namespace soundcoe
             [[nodiscard]] std::expected<bool, error> is_sound_stopped(sound_handle handle);
             [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
-            size_t get_active_sounds_count() const;
-            size_t get_active_music_count() const;
+            std::size_t get_active_sounds_count() const;
+            std::size_t get_active_music_count() const;
 
             [[nodiscard]] std::expected<sound_handle, error> fade_in_sound(
                 const std::string &filename, float duration, float volume = 1.0f, float pitch = 1.0f,
@@ -244,7 +244,7 @@ namespace soundcoe
             vec3 get_listener_forward();
             vec3 get_listener_up();
 
-            static bool is_handle_valid(size_t handle);
+            static bool is_handle_valid(std::size_t handle);
         };
     } // namespace internal
 } // namespace soundcoe

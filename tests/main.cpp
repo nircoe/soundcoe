@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         else if (!askForAll && arg.substr(0, 7) == "--test=")
         {
             std::string fullTest = arg.substr(7);
-            size_t dotPos = fullTest.find('.');
+            std::size_t dotPos = fullTest.find('.');
             if (dotPos != std::string::npos)
             {
                 suiteName = fullTest.substr(0, dotPos);

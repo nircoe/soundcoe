@@ -70,7 +70,7 @@ TEST_F(ResourceManagerTests, MultipleShutdown)
 
 TEST_F(ResourceManagerTests, SourceAcquisitionAndRelease)
 {
-    size_t pool_index;
+    std::size_t pool_index;
     auto source_opt = m_resource_manager.acquire_source(pool_index, sound_priority::medium);
     EXPECT_TRUE(source_opt.has_value());
     EXPECT_EQ(m_resource_manager.get_active_source_count(), 1);
@@ -88,7 +88,7 @@ TEST_F(ResourceManagerTests, SourcePoolExhaustion)
 
     for(int i = 0; i < 4; ++i)
     {
-        size_t pool_index;
+        std::size_t pool_index;
         auto source_opt = m_resource_manager.acquire_source(pool_index, sound_priority::low);
         EXPECT_TRUE(source_opt.has_value());
         if(source_opt.has_value())
@@ -97,7 +97,7 @@ TEST_F(ResourceManagerTests, SourcePoolExhaustion)
 
     EXPECT_EQ(m_resource_manager.get_active_source_count(), 4);
 
-    size_t high_pool_index;
+    std::size_t high_pool_index;
     auto high_priority_opt = m_resource_manager.acquire_source(high_pool_index, sound_priority::high);
     EXPECT_TRUE(high_priority_opt.has_value());
     EXPECT_EQ(m_resource_manager.get_active_source_count(), 4);
@@ -115,13 +115,13 @@ TEST_F(ResourceManagerTests, PriorityReplacement)
 
     for(int i = 0; i < 4; ++i)
     {
-        size_t pool_index;
+        std::size_t pool_index;
         auto source_opt = m_resource_manager.acquire_source(pool_index, sound_priority::low);
         if(source_opt.has_value())
             low_sources.push_back(source_opt.value());
     }
 
-    size_t critical_index;
+    std::size_t critical_index;
     auto critical_opt = m_resource_manager.acquire_source(critical_index, sound_priority::critical);
     EXPECT_TRUE(critical_opt.has_value());
 
@@ -182,7 +182,7 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
     m_resource_manager.release_buffer(filename);
 
     EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 files in cache
-    size_t cleaned = m_resource_manager.cleanup_unused_buffers();
+    std::size_t cleaned = m_resource_manager.cleanup_unused_buffers();
     EXPECT_EQ(cleaned, 2); // Both files should be cleaned (both have ref count 0)
     EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 0);
 }
@@ -226,7 +226,7 @@ TEST_F(ResourceManagerTests, DirectoryOperations)
     auto dirs = m_resource_manager.get_loaded_directories();
     EXPECT_FALSE(dirs.empty());
 
-    size_t buffers_before = m_resource_manager.get_cached_buffer_count();
+    std::size_t buffers_before = m_resource_manager.get_cached_buffer_count();
     EXPECT_TRUE(m_resource_manager.unload_directory("sounds"));
     EXPECT_FALSE(m_resource_manager.is_directory_loaded("sounds"));
     EXPECT_LT(m_resource_manager.get_cached_buffer_count(), buffers_before);
@@ -276,7 +276,7 @@ TEST_F(ResourceManagerTests, ConcurrentSourceAccess)
             std::vector<std::reference_wrapper<sound_source>> sources;
             for (int j = 0; j < 2; ++j)
             {
-                size_t pool_index;
+                std::size_t pool_index;
                 auto source_opt = m_resource_manager.acquire_source(pool_index, priority);
                 if (source_opt.has_value())
                     sources.push_back(source_opt.value());
@@ -339,7 +339,7 @@ TEST_F(ResourceManagerTests, CompleteWorkflow)
     EXPECT_TRUE(m_resource_manager.preload_directory("sounds"));
     EXPECT_GT(m_resource_manager.get_cached_buffer_count(), 0);
 
-    size_t pool_index1, pool_index2;
+    std::size_t pool_index1, pool_index2;
     auto source1 = m_resource_manager.acquire_source(pool_index1, sound_priority::medium);
     auto source2 = m_resource_manager.acquire_source(pool_index2, sound_priority::medium);
     auto buffer1 = m_resource_manager.get_buffer("test1.wav");
@@ -351,7 +351,7 @@ TEST_F(ResourceManagerTests, CompleteWorkflow)
     EXPECT_TRUE(buffer2.has_value());
     EXPECT_EQ(m_resource_manager.get_active_source_count(), 2);
 
-    size_t high_index;
+    std::size_t high_index;
     auto high_priority = m_resource_manager.acquire_source(high_index, sound_priority::high);
     EXPECT_TRUE(high_priority.has_value());
 
@@ -468,13 +468,13 @@ TEST_F(ResourceManagerTests, UninitializedErrors)
 TEST_F(ResourceManagerTests, ProperShutdown)
 {
     ASSERT_TRUE(m_resource_manager.preload_directory("sounds"));
-    size_t pool_index;
+    std::size_t pool_index;
     [[maybe_unused]] auto source = m_resource_manager.acquire_source(pool_index, sound_priority::medium);
 
     EXPECT_NO_THROW(m_resource_manager.shutdown());
     EXPECT_FALSE(m_resource_manager.is_initialized());
 
-    size_t new_index;
+    std::size_t new_index;
     auto new_source = m_resource_manager.acquire_source(new_index, sound_priority::medium);
     ASSERT_FALSE(new_source);
     EXPECT_EQ(new_source.error().code, error_code::not_initialized);

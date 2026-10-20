@@ -1,6 +1,7 @@
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe_config.hpp>
 #include <format>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif

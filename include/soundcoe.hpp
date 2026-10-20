@@ -25,8 +25,8 @@ namespace soundcoe
         std::string audio_root_directory = "assets/audio";
         std::string sound_subdir = "sfx";
         std::string music_subdir = "music";
-        size_t max_sources = 64;
-        size_t max_cache_size_mb = UNLIMITED_CACHE;
+        std::size_t max_sources = 64;
+        std::size_t max_cache_size_mb = UNLIMITED_CACHE;
         LogLevel level = LogLevel::DEBUG;
     };
 
@@ -41,8 +41,8 @@ namespace soundcoe
      * OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> initialize(
-        const std::string &audio_root_directory, size_t max_sources = 64,
-        size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+        const std::string &audio_root_directory, std::size_t max_sources = 64,
+        std::size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
         const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
 
     /**
@@ -222,10 +222,10 @@ namespace soundcoe
     [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
     // Gets the number of sound effects that were started and not stopped yet, finished ones included.
-    size_t get_active_sounds_count();
+    std::size_t get_active_sounds_count();
 
     // Gets the number of music tracks that were started and not stopped yet, finished ones included.
-    size_t get_active_music_count();
+    std::size_t get_active_music_count();
 
     /**
      * Plays a sound effect from the sound_subdir folder of "general" or a loaded scene and fades it in from silence to
@@ -383,5 +383,5 @@ namespace soundcoe
      * Checks that a handle isn't INVALID_SOUND_HANDLE or INVALID_MUSIC_HANDLE. It doesn't check that the audio is still
      * playing.
      */
-    bool is_handle_valid(size_t handle);
+    bool is_handle_valid(std::size_t handle);
 } // namespace soundcoe

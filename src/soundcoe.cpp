@@ -2,6 +2,7 @@
 #include <soundcoe/playback/sound_manager.hpp>
 #include <cassert>
 #include <soundcoe_config.hpp>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -17,8 +18,8 @@ namespace soundcoe
         }
     }
 
-    std::expected<void, error> initialize(const std::string &audio_root_directory, size_t max_sources,
-                                          size_t max_cache_size_mb, const std::string &sound_subdir,
+    std::expected<void, error> initialize(const std::string &audio_root_directory, std::size_t max_sources,
+                                          std::size_t max_cache_size_mb, const std::string &sound_subdir,
                                           const std::string &music_subdir, LogLevel level)
     {
         return internal::get_sound_manager_instance().initialize(audio_root_directory, max_sources, max_cache_size_mb,
@@ -224,12 +225,12 @@ namespace soundcoe
         return internal::get_sound_manager_instance().is_music_stopped(handle);
     }
 
-    size_t get_active_sounds_count()
+    std::size_t get_active_sounds_count()
     {
         return internal::get_sound_manager_instance().get_active_sounds_count();
     }
 
-    size_t get_active_music_count()
+    std::size_t get_active_music_count()
     {
         return internal::get_sound_manager_instance().get_active_music_count();
     }
@@ -417,7 +418,7 @@ namespace soundcoe
         return internal::get_sound_manager_instance().get_listener_up();
     }
 
-    bool is_handle_valid(size_t handle)
+    bool is_handle_valid(std::size_t handle)
     {
         return internal::get_sound_manager_instance().is_handle_valid(handle);
     }
