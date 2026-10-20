@@ -38,7 +38,7 @@ jobs:
         submodules: 'recursive'
 
     - name: Setup Emscripten cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ env.EM_CACHE_FOLDER }}
         key: emsdk-${{ matrix.emsdk-version }}-${{ runner.os }}
@@ -76,7 +76,7 @@ jobs:
       run: |
         echo "=== Validating WebAssembly build artifacts ==="
         cd build
-        
+
         # Validate soundcoe library was built
         SOUNDCOE_LIB=$(find . -name "libsoundcoe.a" -type f)
         if [ -n "$SOUNDCOE_LIB" ]; then
@@ -85,8 +85,6 @@ jobs:
           echo "soundcoe library missing"
           exit 1
         fi
-        
+
         echo "WebAssembly build validation completed"
       shell: bash
-
-
