@@ -12,14 +12,14 @@ namespace soundcoe
     {
         class sound_buffer
         {
-            ALuint m_buffer_id       = 0;
-            ALenum m_format         = 0;
-            ALsizei m_size          = 0;
-            ALsizei m_sample_rate    = 0;
-            ALfloat m_duration      = 0.0f;
-            bool m_loaded           = false;
-            bool m_stream           = false;
-            std::string m_filename = "";
+            std::string m_filename;
+            ALuint m_buffer_id = 0;
+            ALenum m_format = 0;
+            ALsizei m_size = 0;
+            ALsizei m_sample_rate = 0;
+            ALfloat m_duration = 0.0f;
+            bool m_loaded = false;
+            bool m_stream = false;
 
             [[nodiscard]] std::expected<void, error> load_from_audio_data(audio_data &&audio_data_);
             [[nodiscard]] std::expected<void, error> generate_buffer(const void* data);
@@ -38,14 +38,14 @@ namespace soundcoe
                                                                         ALsizei sample_rate);
             void unload();
 
-            ALuint get_buffer_id() const;
-            ALenum get_format() const;
-            ALsizei get_size() const;
-            ALsizei get_sample_rate() const;
-            ALfloat get_duration() const;
-            bool is_loaded() const;
-            bool is_streaming() const;
-            const std::string &get_filename() const;
+            [[nodiscard]] ALuint get_buffer_id() const noexcept;
+            [[nodiscard]] ALenum get_format() const noexcept;
+            [[nodiscard]] ALsizei get_size() const noexcept;
+            [[nodiscard]] ALsizei get_sample_rate() const noexcept;
+            [[nodiscard]] ALfloat get_duration() const noexcept;
+            [[nodiscard]] bool is_loaded() const noexcept;
+            [[nodiscard]] bool is_streaming() const noexcept;
+            [[nodiscard]] const std::string &get_filename() const noexcept;
         };
     } // namespace internal
 } // namespace soundcoe

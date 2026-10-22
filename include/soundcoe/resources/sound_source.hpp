@@ -30,7 +30,7 @@ namespace soundcoe
 
             [[nodiscard]] std::expected<void, error> create();
             [[nodiscard]] std::expected<void, error> destroy();
-            bool is_created() const;
+            [[nodiscard]] bool is_created() const noexcept;
 
             [[nodiscard]] std::expected<void, error> attach_buffer(const sound_buffer &buffer);
             [[nodiscard]] std::expected<void, error> detach_buffer();
@@ -44,19 +44,19 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> set_position(const vec3 &position);
             [[nodiscard]] std::expected<void, error> set_velocity(const vec3 &velocity);
             [[nodiscard]] std::expected<void, error> set_looping(bool looping);
-            float get_volume() const;
-            float get_pitch() const;
-            const vec3 &get_position() const;
-            const vec3 &get_velocity() const;
-            bool is_looping() const;
+            [[nodiscard]] float get_volume() const noexcept;
+            [[nodiscard]] float get_pitch() const noexcept;
+            [[nodiscard]] const vec3 &get_position() const noexcept;
+            [[nodiscard]] const vec3 &get_velocity() const noexcept;
+            [[nodiscard]] bool is_looping() const noexcept;
 
-            sound_state get_state() const;
-            bool is_playing() const;
-            bool is_paused() const;
-            bool is_stopped() const;
+            [[nodiscard]] sound_state get_state() const;
+            [[nodiscard]] bool is_playing() const;
+            [[nodiscard]] bool is_paused() const;
+            [[nodiscard]] bool is_stopped() const;
 
-            ALuint get_source_id() const;
-            ALuint get_buffer_id() const;
+            [[nodiscard]] ALuint get_source_id() const noexcept;
+            [[nodiscard]] ALuint get_buffer_id() const;
         };
     } // namespace internal
 } // namespace soundcoe

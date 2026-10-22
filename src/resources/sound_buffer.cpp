@@ -53,21 +53,12 @@ namespace soundcoe
             unload();
         }
 
-        sound_buffer::sound_buffer(sound_buffer &&other) noexcept : m_buffer_id(other.m_buffer_id),
-                                                                m_format(other.m_format),
-                                                                m_size(other.m_size),
-                                                                m_sample_rate(other.m_sample_rate),
-                                                                m_duration(other.m_duration),
-                                                                m_loaded(other.m_loaded),
-                                                                m_filename(std::move(other.m_filename))
-        {
-            other.m_buffer_id = 0;
-            other.m_loaded = false;
-            other.m_format = AL_NONE;
-            other.m_size = 0;
-            other.m_sample_rate = 0;
-            other.m_duration = 0.0f;
-        }
+        sound_buffer::sound_buffer(sound_buffer &&other) noexcept :
+            m_filename(std::move(other.m_filename)), m_buffer_id(std::exchange(other.m_buffer_id, 0)),
+            m_format(std::exchange(other.m_format, AL_NONE)), m_size(std::exchange(other.m_size, 0)),
+            m_sample_rate(std::exchange(other.m_sample_rate, 0)), m_duration(std::exchange(other.m_duration, 0.0f)),
+            m_loaded(std::exchange(other.m_loaded, false))
+        { }
 
         sound_buffer &sound_buffer::operator=(sound_buffer &&other) noexcept
         {
@@ -75,20 +66,13 @@ namespace soundcoe
 
             unload();
 
-            m_buffer_id = other.m_buffer_id;
+            m_buffer_id = std::exchange(other.m_buffer_id, 0);
             m_filename = std::move(other.m_filename);
-            m_loaded = other.m_loaded;
-            m_format = other.m_format;
-            m_size = other.m_size;
-            m_sample_rate = other.m_sample_rate;
-            m_duration = other.m_duration;
-
-            other.m_buffer_id = 0;
-            other.m_loaded = false;
-            other.m_format = AL_NONE;
-            other.m_size = 0;
-            other.m_sample_rate = 0;
-            other.m_duration = 0.0f;
+            m_loaded = std::exchange(other.m_loaded, false);
+            m_format = std::exchange(other.m_format, AL_NONE);
+            m_size = std::exchange(other.m_size, 0);
+            m_sample_rate = std::exchange(other.m_sample_rate, 0);
+            m_duration = std::exchange(other.m_duration, 0.0f);
 
             return *this;
         }
@@ -190,20 +174,20 @@ namespace soundcoe
             m_loaded = false;
         }
 
-        ALuint sound_buffer::get_buffer_id() const { return m_buffer_id; }
+        ALuint sound_buffer::get_buffer_id() const noexcept { return m_buffer_id; }
 
-        ALenum sound_buffer::get_format() const { return m_format; }
+        ALenum sound_buffer::get_format() const noexcept { return m_format; }
 
-        ALsizei sound_buffer::get_size() const { return m_size; }
+        ALsizei sound_buffer::get_size() const noexcept { return m_size; }
 
-        ALsizei sound_buffer::get_sample_rate() const { return m_sample_rate; }
+        ALsizei sound_buffer::get_sample_rate() const noexcept { return m_sample_rate; }
 
-        ALfloat sound_buffer::get_duration() const { return m_duration; }
+        ALfloat sound_buffer::get_duration() const noexcept { return m_duration; }
 
-        bool sound_buffer::is_loaded() const { return m_loaded; }
+        bool sound_buffer::is_loaded() const noexcept { return m_loaded; }
 
-        bool sound_buffer::is_streaming() const { return m_stream; }
+        bool sound_buffer::is_streaming() const noexcept { return m_stream; }
 
-        const std::string &sound_buffer::get_filename() const { return m_filename; }
+        const std::string &sound_buffer::get_filename() const noexcept { return m_filename; }
     } // namespace internal
 } // namespace soundcoe

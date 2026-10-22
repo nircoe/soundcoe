@@ -485,9 +485,8 @@ namespace soundcoe
         }
 
         sound_manager::sound_manager() : m_resource_manager(), m_next_sound_handle(1), m_next_music_handle(1),
-                                       m_active_sounds(), m_active_music(), m_listener_position(),
-                                       m_listener_velocity(), m_listener_forward(), m_listener_up(),
-                                       m_last_update() { }
+                                       m_active_sounds(), m_active_music(), m_last_update(), m_listener_position(),
+                                       m_listener_velocity(), m_listener_forward(), m_listener_up() { }
 
         sound_manager::~sound_manager() 
         {
