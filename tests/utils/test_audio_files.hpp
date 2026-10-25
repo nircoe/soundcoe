@@ -78,35 +78,35 @@ private:
 
         // WAV header (44 bytes)
         file.write("RIFF", 4);
-        uint32_t file_size = 36 + 88200; // Header + data
+        std::uint32_t file_size = 36 + 88200; // Header + data
         file.write(reinterpret_cast<const char*>(&file_size), 4);
         file.write("WAVE", 4);
 
         // Format chunk
         file.write("fmt ", 4);
-        uint32_t fmt_size = 16;
+        std::uint32_t fmt_size = 16;
         file.write(reinterpret_cast<const char*>(&fmt_size), 4);
-        uint16_t audio_format = 1; // PCM
+        std::uint16_t audio_format = 1; // PCM
         file.write(reinterpret_cast<const char*>(&audio_format), 2);
-        uint16_t num_channels = 1;
+        std::uint16_t num_channels = 1;
         file.write(reinterpret_cast<const char*>(&num_channels), 2);
-        uint32_t sample_rate = 44100;
+        std::uint32_t sample_rate = 44100;
         file.write(reinterpret_cast<const char*>(&sample_rate), 4);
-        uint32_t byte_rate = sample_rate * num_channels * 2;
+        std::uint32_t byte_rate = sample_rate * num_channels * 2;
         file.write(reinterpret_cast<const char*>(&byte_rate), 4);
-        uint16_t block_align = num_channels * 2;
+        std::uint16_t block_align = num_channels * 2;
         file.write(reinterpret_cast<const char*>(&block_align), 2);
-        uint16_t bits_per_sample = 16;
+        std::uint16_t bits_per_sample = 16;
         file.write(reinterpret_cast<const char*>(&bits_per_sample), 2);
 
         // Data chunk
         file.write("data", 4);
-        uint32_t data_size = 88200; // ~1 second at 44100 Hz, 16-bit, mono
+        std::uint32_t data_size = 88200; // ~1 second at 44100 Hz, 16-bit, mono
         file.write(reinterpret_cast<const char*>(&data_size), 4);
 
         // Simple sine wave data
-        for (uint32_t i = 0; i < data_size / 2; ++i) {
-            int16_t sample = static_cast<int16_t>(10000 * sin(2.0 * M_PI * 440.0 * i / sample_rate));
+        for (std::uint32_t i = 0; i < data_size / 2; ++i) {
+            std::int16_t sample = static_cast<std::int16_t>(10000 * sin(2.0 * M_PI * 440.0 * i / sample_rate));
             file.write(reinterpret_cast<const char*>(&sample), 2);
         }
     }

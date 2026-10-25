@@ -2,6 +2,7 @@
 #include <soundcoe/core/error_handler.hpp>
 #include <soundcoe_config.hpp>
 #include <format>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -23,7 +24,11 @@ namespace soundcoe
 
         audio_context::audio_context() { }
 
-        audio_context::~audio_context() { static_cast<void>(shutdown()); }
+        audio_context::~audio_context()
+        {
+            if (auto r = shutdown(); !r)
+                logcoe::warning("audio_context::~audio_context: Failed to shut down: " + r.error().message);
+        }
 
         std::expected<void, error> audio_context::initialize(const std::string &device_name)
         {

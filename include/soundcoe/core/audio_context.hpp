@@ -12,10 +12,10 @@ namespace soundcoe
     {
         class audio_context
         {
-            ALCdevice *m_device     = nullptr;
-            ALCcontext *m_context   = nullptr;
-            bool m_initialized      = false;
+            ALCdevice *m_device = nullptr;
+            ALCcontext *m_context = nullptr;
             mutable std::mutex m_mutex;
+            bool m_initialized = false;
 
             audio_context(const audio_context &) = delete;
             audio_context &operator=(const audio_context &) = delete;
@@ -29,9 +29,9 @@ namespace soundcoe
             [[nodiscard]] std::expected<void, error> initialize(const std::string &device_name = "");
             [[nodiscard]] std::expected<void, error> shutdown();
 
-            bool is_initialized() const;
-            ALCdevice *get_device() const;
-            ALCcontext *get_context() const;
+            [[nodiscard]] bool is_initialized() const;
+            [[nodiscard]] ALCdevice *get_device() const;
+            [[nodiscard]] ALCcontext *get_context() const;
         };
     } // namespace internal
 } // namespace soundcoe

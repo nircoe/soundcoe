@@ -25,8 +25,8 @@ namespace soundcoe
         std::string audio_root_directory = "assets/audio";
         std::string sound_subdir = "sfx";
         std::string music_subdir = "music";
-        size_t max_sources = 64;
-        size_t max_cache_size_mb = UNLIMITED_CACHE;
+        std::size_t max_sources = 64;
+        std::size_t max_cache_size_mb = UNLIMITED_CACHE;
         LogLevel level = LogLevel::DEBUG;
     };
 
@@ -41,8 +41,8 @@ namespace soundcoe
      * OpenAL error.
      */
     [[nodiscard]] std::expected<void, error> initialize(
-        const std::string &audio_root_directory, size_t max_sources = 64,
-        size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
+        const std::string &audio_root_directory, std::size_t max_sources = 64,
+        std::size_t max_cache_size_mb = UNLIMITED_CACHE, const std::string &sound_subdir = "sfx",
         const std::string &music_subdir = "music", LogLevel level = LogLevel::DEBUG);
 
     /**
@@ -61,7 +61,7 @@ namespace soundcoe
     void shutdown();
 
     // Checks if soundcoe is initialized.
-    bool is_initialized();
+    [[nodiscard]] bool is_initialized();
 
     /**
      * Loads a scene's audio into memory, so its files can be played. scene_name is the scene's folder under the audio
@@ -75,11 +75,7 @@ namespace soundcoe
     [[nodiscard]] std::expected<void, error> unload_scene(const std::string &scene_name);
 
     // Checks if a scene is loaded.
-    bool is_scene_loaded(const std::string &scene_name);
-
-    // in the future: std::expected<void, error> preload_scene/unload_scene and
-    // bool is_scene_loaded(const Scene &scene);
-    // with gamecoe::Scene object!
+    [[nodiscard]] bool is_scene_loaded(const std::string &scene_name);
 
     /**
      * Call once per frame. Fades only advance when it runs. It also removes the handles of sound effects and music
@@ -222,10 +218,10 @@ namespace soundcoe
     [[nodiscard]] std::expected<bool, error> is_music_stopped(music_handle handle);
 
     // Gets the number of sound effects that were started and not stopped yet, finished ones included.
-    size_t get_active_sounds_count();
+    [[nodiscard]] std::size_t get_active_sounds_count();
 
     // Gets the number of music tracks that were started and not stopped yet, finished ones included.
-    size_t get_active_music_count();
+    [[nodiscard]] std::size_t get_active_music_count();
 
     /**
      * Plays a sound effect from the sound_subdir folder of "general" or a loaded scene and fades it in from silence to
@@ -304,22 +300,22 @@ namespace soundcoe
     void set_master_music_pitch(float pitch);
 
     // Gets the master volume multiplier for all audio.
-    float get_master_volume();
+    [[nodiscard]] float get_master_volume();
 
     // Gets the master volume multiplier for sound effects.
-    float get_master_sounds_volume();
+    [[nodiscard]] float get_master_sounds_volume();
 
     // Gets the master volume multiplier for music tracks.
-    float get_master_music_volume();
+    [[nodiscard]] float get_master_music_volume();
 
     // Gets the master pitch multiplier for all audio.
-    float get_master_pitch();
+    [[nodiscard]] float get_master_pitch();
 
     // Gets the master pitch multiplier for sound effects.
-    float get_master_sounds_pitch();
+    [[nodiscard]] float get_master_sounds_pitch();
 
     // Gets the master pitch multiplier for music tracks.
-    float get_master_music_pitch();
+    [[nodiscard]] float get_master_music_pitch();
 
     // Mutes all sound effects. Unmuting restores their volume.
     void mute_all_sounds();
@@ -340,13 +336,13 @@ namespace soundcoe
     void unmute_all();
 
     // Checks if all audio is muted with mute_all().
-    bool is_muted();
+    [[nodiscard]] bool is_muted();
 
     // Checks if sound effects are muted with mute_all_sounds().
-    bool is_sounds_muted();
+    [[nodiscard]] bool is_sounds_muted();
 
     // Checks if music tracks are muted with mute_all_music().
-    bool is_music_muted();
+    [[nodiscard]] bool is_music_muted();
 
     /**
      * Sets the listener's position, velocity, forward and up at once. forward and up must be normalized.
@@ -368,20 +364,20 @@ namespace soundcoe
     [[nodiscard]] std::expected<void, error> set_listener_up(const vec3 &up);
 
     // Gets the listener's position.
-    vec3 get_listener_position();
+    [[nodiscard]] vec3 get_listener_position();
 
     // Gets the listener's velocity.
-    vec3 get_listener_velocity();
+    [[nodiscard]] vec3 get_listener_velocity();
 
     // Gets the listener's forward direction.
-    vec3 get_listener_forward();
+    [[nodiscard]] vec3 get_listener_forward();
 
     // Gets the listener's up direction.
-    vec3 get_listener_up();
+    [[nodiscard]] vec3 get_listener_up();
 
     /**
      * Checks that a handle isn't INVALID_SOUND_HANDLE or INVALID_MUSIC_HANDLE. It doesn't check that the audio is still
      * playing.
      */
-    bool is_handle_valid(size_t handle);
+    [[nodiscard]] bool is_handle_valid(std::size_t handle);
 } // namespace soundcoe

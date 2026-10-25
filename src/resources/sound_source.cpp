@@ -4,6 +4,8 @@
 #include <expected>
 #include <format>
 #include <string_view>
+#include <utility>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -24,45 +26,33 @@ namespace soundcoe
         sound_source::sound_source() : m_position(vec3::zero()), m_velocity(vec3::zero()) { }
 
         sound_source::sound_source(sound_source &&other) noexcept :
-            m_source_id(other.m_source_id), m_volume(other.m_volume), m_pitch(other.m_pitch), m_position(other.m_position),
-            m_velocity(other.m_velocity), m_looping(other.m_looping), m_created(other.m_created)
-        {
-            other.m_source_id = 0;
-            other.m_volume = 1.0f;
-            other.m_pitch = 1.0f;
-            other.m_position = vec3::zero();
-            other.m_velocity = vec3::zero();
-            other.m_looping = AL_FALSE;
-            other.m_created = false;
-        }
+            m_source_id(std::exchange(other.m_source_id, 0)), m_volume(std::exchange(other.m_volume, 1.0f)),
+            m_pitch(std::exchange(other.m_pitch, 1.0f)), m_position(std::exchange(other.m_position, vec3::zero())),
+            m_velocity(std::exchange(other.m_velocity, vec3::zero())),
+            m_looping(std::exchange(other.m_looping, AL_FALSE)), m_created(std::exchange(other.m_created, false))
+        { }
 
         sound_source &sound_source::operator=(sound_source &&other) noexcept
         {
             if(this == &other) return *this;
 
-            static_cast<void>(destroy());
+            if (auto r = destroy(); !r)
+                logcoe::warning("sound_source::operator=: Failed to destroy the previous source: " + r.error().message);
 
-            m_source_id = other.m_source_id;
-            m_volume = other.m_volume;
-            m_pitch = other.m_pitch;
-            m_position = other.m_position;
-            m_velocity = other.m_velocity;
-            m_looping = other.m_looping;
-            m_created = other.m_created;
-
-            other.m_source_id = 0;
-            other.m_volume = 1.0f;
-            other.m_pitch = 1.0f;
-            other.m_position = vec3::zero();
-            other.m_velocity = vec3::zero();
-            other.m_looping = AL_FALSE;
-            other.m_created = false;
+            m_source_id = std::exchange(other.m_source_id, 0);
+            m_volume = std::exchange(other.m_volume, 1.0f);
+            m_pitch = std::exchange(other.m_pitch, 1.0f);
+            m_position = std::exchange(other.m_position, vec3::zero());
+            m_velocity = std::exchange(other.m_velocity, vec3::zero());
+            m_looping = std::exchange(other.m_looping, AL_FALSE);
+            m_created = std::exchange(other.m_created, false);
             return *this;
         }
 
         sound_source::~sound_source()
         {
-            static_cast<void>(destroy());
+            if (auto r = destroy(); !r)
+                logcoe::warning("sound_source::~sound_source: Failed to destroy the source: " + r.error().message);
         }
 
         std::expected<void, error> sound_source::create()
@@ -94,8 +84,14 @@ namespace soundcoe
         {
             if(!m_created) return {};
 
-            if(is_playing() || is_paused()) static_cast<void>(stop());
-            static_cast<void>(detach_buffer());
+            if (is_playing() || is_paused())
+            {
+                if (auto r = stop(); !r)
+                    logcoe::warning("sound_source::destroy: Failed to stop the source: " + r.error().message);
+            }
+
+            if (auto r = detach_buffer(); !r)
+                logcoe::warning("sound_source::destroy: Failed to detach the buffer: " + r.error().message);
 
             alDeleteSources(1, &m_source_id);
             auto r = error_handler::check_openal_error("Delete Source");
@@ -106,7 +102,7 @@ namespace soundcoe
             return r;
         }
 
-        bool sound_source::is_created() const
+        bool sound_source::is_created() const noexcept
         {
             return m_created;
         }
@@ -135,7 +131,11 @@ namespace soundcoe
         {
             if(!m_created) return {};
 
-            if(is_playing() || is_paused()) static_cast<void>(stop());
+            if (is_playing() || is_paused())
+            {
+                if (auto r = stop(); !r)
+                    logcoe::warning("sound_source::detach_buffer: Failed to stop the source: " + r.error().message);
+            }
 
             alSourcei(m_source_id, AL_BUFFER, 0);
             return error_handler::check_openal_error("Detach Buffer from Source");
@@ -256,15 +256,15 @@ namespace soundcoe
             return {};
         }
 
-        float sound_source::get_volume() const { return static_cast<float>(m_volume); }
+        float sound_source::get_volume() const noexcept { return static_cast<float>(m_volume); }
 
-        float sound_source::get_pitch() const { return static_cast<float>(m_pitch); }
+        float sound_source::get_pitch() const noexcept { return static_cast<float>(m_pitch); }
 
-        const vec3 &sound_source::get_position() const { return m_position; }
+        const vec3 &sound_source::get_position() const noexcept { return m_position; }
 
-        const vec3 &sound_source::get_velocity() const { return m_velocity; }
+        const vec3 &sound_source::get_velocity() const noexcept { return m_velocity; }
 
-        bool sound_source::is_looping() const { return static_cast<bool>(m_looping); }
+        bool sound_source::is_looping() const noexcept { return static_cast<bool>(m_looping); }
 
         sound_state sound_source::get_state() const
         {
@@ -296,7 +296,7 @@ namespace soundcoe
 
         bool sound_source::is_stopped() const { return get_state() == sound_state::stopped; }
 
-        ALuint sound_source::get_source_id() const { return m_source_id; }
+        ALuint sound_source::get_source_id() const noexcept { return m_source_id; }
 
         ALuint sound_source::get_buffer_id() const
         {

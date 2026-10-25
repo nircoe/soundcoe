@@ -1,14 +1,12 @@
 #include <soundcoe/resources/audio_data.hpp>
 #include <soundcoe/core/error_handler.hpp>
-
-#include <dr_libs/dr_wav.h>
-#include <dr_libs/dr_mp3.h>
-#include <stb/stb_vorbis.h>
-
-#include <utility>
-#include <cstdlib>
-
 #include <soundcoe_config.hpp>
+#include <dr_libs/dr_mp3.h>
+#include <dr_libs/dr_wav.h>
+#include <stb/stb_vorbis.h>
+#include <cstdlib>
+#include <utility>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -17,8 +15,7 @@ namespace soundcoe
 {
     namespace internal
     {
-        audio_data::audio_data() : m_pcm_data(nullptr), m_pcm_data_size(0), m_channels(0), m_bits_per_sample(0), m_sample_rate(0),
-                                    m_duration(0.0f), m_openal_format(AL_NONE), m_source_format(audio_format::unsupported) { }
+        audio_data::audio_data() { }
 
         audio_data::audio_data(ALvoid *pcm_data, ALsizei pcm_data_size, ALsizei channels, ALsizei bits_per_sample,
                              ALsizei sample_rate, audio_format source_format) : m_pcm_data(pcm_data), m_pcm_data_size(pcm_data_size), m_channels(channels), m_bits_per_sample(bits_per_sample),
@@ -43,7 +40,7 @@ namespace soundcoe
                 drmp3_free(m_pcm_data, nullptr);
                 break;
             case audio_format::ogg:
-                free(m_pcm_data);
+                std::free(m_pcm_data);
                 break;
             case audio_format::unsupported:
                 std::unreachable();
@@ -70,12 +67,12 @@ namespace soundcoe
             return AL_NONE;
         }
 
-        audio_data::audio_data(audio_data &&other) noexcept : m_pcm_data(other.m_pcm_data), m_pcm_data_size(other.m_pcm_data_size), m_channels(other.m_channels),
-                                                        m_bits_per_sample(other.m_bits_per_sample), m_sample_rate(other.m_sample_rate), m_duration(other.m_duration),
-                                                        m_openal_format(other.m_openal_format), m_source_format(other.m_source_format)
-        {
-            other.m_pcm_data = nullptr;
-        }
+        audio_data::audio_data(audio_data &&other) noexcept :
+            m_pcm_data(std::exchange(other.m_pcm_data, nullptr)), m_pcm_data_size(other.m_pcm_data_size),
+            m_channels(other.m_channels), m_bits_per_sample(other.m_bits_per_sample),
+            m_sample_rate(other.m_sample_rate), m_duration(other.m_duration), m_openal_format(other.m_openal_format),
+            m_source_format(other.m_source_format)
+        { }
 
         audio_data &audio_data::operator=(audio_data &&other) noexcept
         {
@@ -84,7 +81,7 @@ namespace soundcoe
 
             cleanup();
 
-            m_pcm_data = other.m_pcm_data;
+            m_pcm_data = std::exchange(other.m_pcm_data, nullptr);
             m_pcm_data_size = other.m_pcm_data_size;
             m_channels = other.m_channels;
             m_bits_per_sample = other.m_bits_per_sample;
@@ -93,7 +90,6 @@ namespace soundcoe
             m_openal_format = other.m_openal_format;
             m_source_format = other.m_source_format;
 
-            other.m_pcm_data = nullptr;
             return *this;
         }
 
@@ -112,10 +108,10 @@ namespace soundcoe
             bits_per_sample = wav.bitsPerSample;
             drwav_uninit(&wav);
 
-            pcm_data = (bits_per_sample <= 16) ? (void *)drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sample_rate,
-                                                                                            &total_frame_count, nullptr)
-                                            : (void *)drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sample_rate,
-                                                                                            &total_frame_count, nullptr);
+            pcm_data = (bits_per_sample <= 16) ? static_cast<void *>(drwav_open_file_and_read_pcm_frames_s16(filename.c_str(), &channels, &sample_rate,
+                                                                                            &total_frame_count, nullptr))
+                                            : static_cast<void *>(drwav_open_file_and_read_pcm_frames_s32(filename.c_str(), &channels, &sample_rate,
+                                                                                            &total_frame_count, nullptr));
 
             if (!pcm_data)
                 return std::unexpected(error_handler::make_audio_decode_error(
@@ -159,23 +155,23 @@ namespace soundcoe
                             static_cast<ALsizei>(config.sampleRate), audio_format::mp3);
         }
 
-        ALvoid *audio_data::get_pcm_data() const { return m_pcm_data; }
+        ALvoid *audio_data::get_pcm_data() const noexcept { return m_pcm_data; }
 
-        ALsizei audio_data::get_pcm_data_size() const { return m_pcm_data_size; }
+        ALsizei audio_data::get_pcm_data_size() const noexcept { return m_pcm_data_size; }
 
-        ALsizei audio_data::get_channels() const { return m_channels; }
+        ALsizei audio_data::get_channels() const noexcept { return m_channels; }
 
-        ALsizei audio_data::get_bits_per_sample() const { return m_bits_per_sample; }
+        ALsizei audio_data::get_bits_per_sample() const noexcept { return m_bits_per_sample; }
 
-        ALsizei audio_data::get_sample_rate() const { return m_sample_rate; }
+        ALsizei audio_data::get_sample_rate() const noexcept { return m_sample_rate; }
 
-        ALfloat audio_data::get_duration() const { return m_duration; }
+        ALfloat audio_data::get_duration() const noexcept { return m_duration; }
 
-        ALenum audio_data::get_openal_format() const { return m_openal_format; }
+        ALenum audio_data::get_openal_format() const noexcept { return m_openal_format; }
 
-        audio_format audio_data::get_source_format() const { return m_source_format; }
+        audio_format audio_data::get_source_format() const noexcept { return m_source_format; }
 
-        ALboolean audio_data::is_valid() const { return m_pcm_data != nullptr && m_pcm_data_size > 0; }
+        ALboolean audio_data::is_valid() const noexcept { return m_pcm_data != nullptr && m_pcm_data_size > 0; }
 
         bool audio_data::is_valid_wav(const std::string &filename)
         {

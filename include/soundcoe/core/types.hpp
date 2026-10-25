@@ -1,11 +1,12 @@
 #pragma once
 
+#include <soundcoe_config.hpp>
 #include <cmath>
 #include <cstddef>
-#include <string_view>
 #include <limits>
+#include <string_view>
 #include <utility>
-#include <soundcoe_config.hpp>
+
 #if SOUNDCOE_USE_LOGCOE
 #include <logcoe.hpp>
 #endif
@@ -14,10 +15,10 @@ namespace soundcoe
 {
     using LogLevel = logcoe::LogLevel;
 
-    constexpr size_t UNLIMITED_CACHE = std::numeric_limits<size_t>::max();
+    constexpr std::size_t UNLIMITED_CACHE = std::numeric_limits<std::size_t>::max();
 
-    using sound_handle = size_t;
-    using music_handle = size_t;
+    using sound_handle = std::size_t;
+    using music_handle = std::size_t;
 
     enum class sound_state
     {
@@ -42,20 +43,23 @@ namespace soundcoe
         float z = 0.0f;
 
         vec3() = default;
-        vec3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
+        vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
 
-        static vec3 zero() { return vec3(); }
-        static vec3 up() { return vec3(0.0f, 1.0f, 0.0f); }
-        static float dot(const vec3 &v, const vec3 &u) { return v.dot(u); }
-        static vec3 cross(const vec3 &v, const vec3 &u) { return v.cross(u); }
-        static float distance(const vec3 &v, const vec3 &u) { return v.distance(u); }
-        static vec3 lerp(const vec3 &v, const vec3 &u, float t) { return v.lerp(u, t); }
+        [[nodiscard]] static vec3 zero() { return vec3(); }
+        [[nodiscard]] static vec3 up() { return vec3(0.0f, 1.0f, 0.0f); }
+        [[nodiscard]] static float dot(const vec3 &v, const vec3 &u) { return v.dot(u); }
+        [[nodiscard]] static vec3 cross(const vec3 &v, const vec3 &u) { return v.cross(u); }
+        [[nodiscard]] static float distance(const vec3 &v, const vec3 &u) { return v.distance(u); }
+        [[nodiscard]] static vec3 lerp(const vec3 &v, const vec3 &u, float t) { return v.lerp(u, t); }
 
-        vec3 operator+(const vec3 &other) const { return vec3(x + other.x, y + other.y, z + other.z); }
-        vec3 operator-(const vec3 &other) const { return vec3(x - other.x, y - other.y, z - other.z); }
-        vec3 operator*(float f) const { return vec3(f * x, f * y, f * z); }
-        bool operator==(const vec3 &other) const { return (x == other.x && y == other.y && z == other.z); }
-        bool operator!=(const vec3 &other) const { return !(*this == other); }
+        [[nodiscard]] vec3 operator+(const vec3 &other) const { return vec3(x + other.x, y + other.y, z + other.z); }
+        [[nodiscard]] vec3 operator-(const vec3 &other) const { return vec3(x - other.x, y - other.y, z - other.z); }
+        [[nodiscard]] vec3 operator*(float f) const { return vec3(f * x, f * y, f * z); }
+        [[nodiscard]] bool operator==(const vec3 &other) const
+        {
+            return (x == other.x && y == other.y && z == other.z);
+        }
+        [[nodiscard]] bool operator!=(const vec3 &other) const { return !(*this == other); }
         void operator+=(const vec3 &other)
         {
             x += other.x;
@@ -75,20 +79,23 @@ namespace soundcoe
             z *= f;
         }
 
-        float length() const { return sqrtf((x * x) + (y * y) + (z * z)); }
-        float length_squared() const { return (x * x) + (y * y) + (z * z); }
-        vec3 normalized() const
+        [[nodiscard]] float length() const { return sqrtf((x * x) + (y * y) + (z * z)); }
+        [[nodiscard]] float length_squared() const { return (x * x) + (y * y) + (z * z); }
+        [[nodiscard]] vec3 normalized() const
         {
             float len = this->length();
             return len == 0.0f ? vec3() : vec3(x / len, y / len, z / len);
         }
         void normalize() { *this = this->normalized(); }
-        float distance(const vec3 &other) const { return (*this - other).length(); }
-        float distance_squared(const vec3 &other) const { return (*this - other).length_squared(); }
-        float dot(const vec3 &other) const { return (x * other.x) + (y * other.y) + (z * other.z); }
-        vec3 cross(const vec3 &other) const { return vec3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x); }
-        vec3 lerp(const vec3 &other, float t) const { return ((*this) * (1 - t)) + (other * t); }
-        float angle(const vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
+        [[nodiscard]] float distance(const vec3 &other) const { return (*this - other).length(); }
+        [[nodiscard]] float distance_squared(const vec3 &other) const { return (*this - other).length_squared(); }
+        [[nodiscard]] float dot(const vec3 &other) const { return (x * other.x) + (y * other.y) + (z * other.z); }
+        [[nodiscard]] vec3 cross(const vec3 &other) const
+        {
+            return vec3(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
+        }
+        [[nodiscard]] vec3 lerp(const vec3 &other, float t) const { return ((*this) * (1 - t)) + (other * t); }
+        [[nodiscard]] float angle(const vec3 &other) const { return acosf(this->normalized().dot(other.normalized())); }
     };
 
     namespace internal
