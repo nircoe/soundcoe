@@ -5,10 +5,16 @@ soundcoe_ignore_external_warnings(gmock_main)
 
 add_executable(soundcoe_tests
     main.cpp
-    core_tests.cpp
-    resources_tests.cpp
-    math_tests.cpp
-    playback_tests.cpp
+    core/audio_context_tests.cpp
+    core/error_handler_tests.cpp
+    core/error_tests.cpp
+    core/types_tests.cpp
+    resources/audio_data_tests.cpp
+    resources/resource_manager_tests.cpp
+    resources/sound_buffer_tests.cpp
+    resources/sound_source_tests.cpp
+    playback/sound_manager_tests.cpp
+    utils/math_tests.cpp
 )
 
 target_link_libraries(soundcoe_tests
@@ -16,6 +22,11 @@ target_link_libraries(soundcoe_tests
         soundcoe
         testcoe
         OpenAL
+)
+
+target_include_directories(soundcoe_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 soundcoe_enable_strict_warnings(soundcoe_tests)
