@@ -45,7 +45,7 @@ protected:
     void wait_for_fade(float duration)
     {
         auto start = std::chrono::steady_clock::now();
-        auto targetDuration = std::chrono::duration<float>(duration + 0.1f); // Small buffer
+        auto targetDuration = std::chrono::duration<float>(duration + 0.1f);
 
         while (std::chrono::steady_clock::now() - start < targetDuration)
         {

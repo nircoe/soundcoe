@@ -49,7 +49,7 @@ namespace soundcoe
             std::deque<std::size_t> m_free_source_indices;
 
             std::unordered_map<std::string, buffer_cache_entry> m_buffer_cache;
-            std::size_t m_max_cache_size = 64 * 1024 * 1024; // 64MB
+            std::size_t m_max_cache_size = 64 * 1024 * 1024;
             std::size_t m_current_cache_size = 0;
 
             std::vector<std::filesystem::path> m_loaded_directories;

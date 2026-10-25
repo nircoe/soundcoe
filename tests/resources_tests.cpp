@@ -134,7 +134,6 @@ TEST_F(ResourceManagerTests, PriorityReplacement)
 
 TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
 {
-    // First preload the directory to make files available
     EXPECT_TRUE(m_resource_manager.preload_directory("sounds"));
 
     auto buffer_opt1 = m_resource_manager.get_buffer("test1.wav");
@@ -150,7 +149,7 @@ TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
         EXPECT_EQ(&buffer_opt1.value().get(), &buffer_opt2.value().get());
     }
 
-    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 total files
+    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2);
 
     m_resource_manager.release_buffer("test1.wav");
     m_resource_manager.release_buffer("test1.wav");
@@ -158,7 +157,6 @@ TEST_F(ResourceManagerTests, BufferLoadingAndCaching)
 
 TEST_F(ResourceManagerTests, BufferReferenceCounting)
 {
-    // First preload the directory to make files available
     EXPECT_TRUE(m_resource_manager.preload_directory("sounds"));
 
     const std::string filename = "test1.wav";
@@ -174,14 +172,14 @@ TEST_F(ResourceManagerTests, BufferReferenceCounting)
 
     m_resource_manager.release_buffer(filename);
     m_resource_manager.release_buffer(filename);
-    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 total files
+    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2);
 
     m_resource_manager.release_buffer(filename);
     buffer1 = m_resource_manager.get_buffer(filename);
     EXPECT_TRUE(buffer1.has_value());
     m_resource_manager.release_buffer(filename);
 
-    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2); // Still 2 files in cache
+    EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 2);
     std::size_t cleaned = m_resource_manager.cleanup_unused_buffers();
     EXPECT_EQ(cleaned, 2); // Both files should be cleaned (both have ref count 0)
     EXPECT_EQ(m_resource_manager.get_cached_buffer_count(), 0);

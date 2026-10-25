@@ -77,10 +77,6 @@ namespace soundcoe
     // Checks if a scene is loaded.
     [[nodiscard]] bool is_scene_loaded(const std::string &scene_name);
 
-    // in the future: std::expected<void, error> preload_scene/unload_scene and
-    // bool is_scene_loaded(const Scene &scene);
-    // with gamecoe::Scene object!
-
     /**
      * Call once per frame. Fades only advance when it runs. It also removes the handles of sound effects and music
      * tracks that were cut off, like when a higher priority one took their place.
